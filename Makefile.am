@@ -1,6 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
 MAINTAINERCLEANFILES = 			\
+	INSTALL				\
 	aclocal.m4			\
 	config.guess			\
 	config.h.in			\
