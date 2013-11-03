@@ -41,7 +41,6 @@ clients_gedit_src_libcodeassistance_la_VALAFLAGS =		\
 	--vapidir $(top_srcdir)/clients/gedit/vapi		\
 	--vapi clients/gedit/src/libcodeassistance.vapi		\
 	--library libcodeassistance				\
-	--pkg gio-2.0						\
 	--pkg gee-1.0						\
 	--pkg gca-utils						\
 	--pkg gedit						\
