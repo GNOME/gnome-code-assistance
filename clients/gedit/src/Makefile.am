@@ -31,6 +31,10 @@ clients_gedit_vala_sources =					\
 clients_gedit_libcodeassistance_NOINSTHFILES =			\
 	clients/gedit/src/gca-utils-c.h
 
+BUILT_SOURCES +=						\
+	clients/gedit/src/libcodeassistance.vapi		\
+	$(srcdir)/clients_gedit_src_libcodeassistance_la_vala.stamp
+
 EXTRA_DIST += $(clients_gedit_libcodeassistance_NOINSTHFILES)
 
 clients_gedit_src_libcodeassistance_la_SOURCES =		\
@@ -53,11 +57,11 @@ clients_gedit_src_libcodeassistance_la_CFLAGS = $(GEDIT_CFLAGS) -I$(top_srcdir) 
 clients_gedit_src_libcodeassistance_la_LDFLAGS = -module -shared -avoid-version $(GEDIT_LIBS)
 
 CLEANFILES += 							\
-	$(clients_gedit_vala_sources:.vala=.c)
+	$(clients_gedit_vala_sources:.vala=.c)			\
+	clients_gedit_src_libcodeassistance_la_vala.stamp
 
 GITIGNOREFILES +=						\
 	clients/gedit/src/libcodeassistance.vapi		\
-	clients_gedit_src_libcodeassistance_la_vala.stamp	\
 	clients/gedit/src/$(DEPDIR)				\
 	clients/gedit/src/*.lo					\
 	clients/gedit/src/*.o					\

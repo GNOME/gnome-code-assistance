@@ -24,12 +24,13 @@ MAINTAINERCLEANFILES = 			\
 CLEANFILES =
 EXTRA_DIST =
 GITIGNOREFILES =
+BUILT_SOURCES =
 
 if GEDIT_ENABLE
 include clients/gedit/Makefile.am
 endif
 
-dist-hook:
+dist-hook-changelog:
 	@if test -d "$(srcdir)/.git"; \
 	then \
 		echo Creating ChangeLog && \
@@ -42,5 +43,10 @@ dist-hook:
 	else \
 		echo A git clone is required to generate a ChangeLog >&2; \
 	fi
+
+dist-hook-built-sources:
+	cd $(distdir); rm -f $(BUILT_SOURCES)
+
+dist-hook: dist-hook-changelog dist-hook-built-sources
 
 -include $(top_srcdir)/git.mk
