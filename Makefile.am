@@ -31,6 +31,8 @@ if GEDIT_ENABLE
 include clients/gedit/Makefile.am
 endif
 
+include backends/Makefile.am
+
 dist-hook-changelog:
 	@if test -d "$(srcdir)/.git"; \
 	then \

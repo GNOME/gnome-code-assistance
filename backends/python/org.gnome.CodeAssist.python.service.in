@@ -1,0 +1,3 @@
+[D-BUS Service]
+Names=org.gnome.CodeAssist.python
+Exec=@backendexecdir@/python --transport dbus

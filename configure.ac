@@ -21,6 +21,22 @@ AM_SILENT_RULES([yes])
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
+dnl adl_RECURSIVE_EVAL(VALUE, RESULT)
+dnl =================================
+dnl Interpolate the VALUE in loop until it doesn't change,
+dnl and set the result to $RESULT.
+dnl WARNING: It's easy to get an infinite loop with some unsane input.
+AC_DEFUN([adl_RECURSIVE_EVAL],
+[_lcl_receval="$1"
+$2=`(test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+     test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
+     _lcl_receval_old=''
+     while test "[$]_lcl_receval_old" != "[$]_lcl_receval"; do
+       _lcl_receval_old="[$]_lcl_receval"
+       eval _lcl_receval="\"[$]_lcl_receval\""
+     done
+     echo "[$]_lcl_receval")`])
+
 #AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [])
 
 #if test "x$LLVM_CONFIG" = "x"; then
@@ -137,9 +153,26 @@ fi
 
 AM_CONDITIONAL(GEDIT_ENABLE, test "x$enable_gedit" = "xyes")
 
+AM_CONDITIONAL(BACKENDS_PYTHON_ENABLE, test "x$PYTHON" != "x")
+
+backendexecdir_unex="$libexecdir/gnome-code-assistance"
+adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
+AC_SUBST(backendexecdir)
+
+GCA_BACKENDS_EXEC_DIR="$libexecdir/gnome-code-assistance"
+AC_SUBST(GCA_BACKENDS_EXEC_DIR)
+
+GCA_BACKENDS_DIR="$libexecdir/gnome-code-assistance/backends"
+AC_SUBST(GCA_BACKENDS_DIR)
+
+adl_RECURSIVE_EVAL("$GCA_BACKENDS_DIR", [GCA_BACKENDS_DIR_EX])
+AC_SUBST(GCA_BACKENDS_DIR_EX)
+
 AC_CONFIG_FILES([
 Makefile
 clients/gedit/data/codeassistance.plugin
+backends/python/org.gnome.CodeAssist.python.service
+backends/python/python
 ])
 
 AC_OUTPUT
