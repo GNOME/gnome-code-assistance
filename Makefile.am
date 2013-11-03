@@ -1,5 +1,3 @@
-SUBDIRS = data src vapi backends
-
 ACLOCAL_AMFLAGS = -I m4
 
 MAINTAINERCLEANFILES = 			\
@@ -8,7 +6,7 @@ MAINTAINERCLEANFILES = 			\
 	config.h.in			\
 	config.sub			\
 	depcomp				\
-	gedit-code-assistance.doap	\
+	gnome-code-assistance.doap	\
 	gtk-doc.make			\
 	install-sh			\
 	ltmain.sh			\
@@ -22,6 +20,14 @@ MAINTAINERCLEANFILES = 			\
 	m4/ltversion.m4			\
 	m4/lt~obsolete.m4		\
 	`find "$(srcdir)" -type f -name Makefile.in -print`
+
+CLEANFILES =
+EXTRA_DIST =
+GITIGNOREFILES =
+
+if GEDIT_ENABLE
+include clients/gedit/Makefile.am
+endif
 
 dist-hook:
 	@if test -d "$(srcdir)/.git"; \

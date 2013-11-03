@@ -1,9 +1,0 @@
-[Plugin]
-Module=gcp
-IAge=3
-Name=Code Assistance
-Description=Code assistance plugin for various languages
-Authors=Jesse van den Kieboom <jessevdk@gnome.org>
-Copyright=Copyright © 2011 Jesse van den Kieboom
-Website=http://www.gedit.org
-Version=@VERSION@
