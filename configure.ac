@@ -153,7 +153,45 @@ fi
 
 AM_CONDITIONAL(GEDIT_ENABLE, test "x$enable_gedit" = "xyes")
 
-AM_CONDITIONAL(BACKENDS_PYTHON_ENABLE, test "x$PYTHON" != "x")
+
+
+dnl ================================================================
+dnl python support
+dnl ================================================================
+AM_CONDITIONAL(PYTHON_ENABLE, test "x$PYTHON" != "x")
+
+
+
+dnl ================================================================
+dnl python backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([python],
+              AS_HELP_STRING([--enable-python],[enable python backend]),
+              [enable_python=$enableval],
+              [enable_python=auto])
+
+AC_MSG_CHECKING([python backend])
+
+if test "x$enable_python" = "xauto"; then
+	if test "x$PYTHON" = "x"; then
+		AC_MSG_RESULT([no])
+		enable_python=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_python=yes
+	fi
+elif test "x$enable_python" != "xno"; then
+	if test "x$PYTHON" = "x"; then
+		AC_MSG_ERROR([python not found])
+	else
+		AC_MSG_RESULT([yes])
+		enable_python=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+AM_CONDITIONAL(BACKENDS_PYTHON_ENABLE, test "x$enable_python" = "xyes")
 
 backendexecdir_unex="$libexecdir/gnome-code-assistance"
 adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
@@ -181,9 +219,12 @@ echo "
 
 Configuration:
 
-	Prefix:                 ${prefix}
-	Source code location:	${srcdir}
-	Compiler:		${CC}
+	prefix:                 ${prefix}
+	source code location:	${srcdir}
+	compiler:		${CC}
+
+	backends:
+		python:		$enable_python
 
 	clients:
 		gedit:          $enable_gedit
