@@ -22,21 +22,10 @@ using Gtk;
 namespace Gca
 {
 
-public class Document : GLib.Object
+public class Document : Object
 {
-	public Gedit.Document document
-	{
-		get
-		{
-			return d_document;
-		}
-		construct
-		{
-			d_document = value;
-		}
-	}
-
 	private Gedit.Document d_document;
+	private DocumentServices d_services;
 
 	private bool d_untitled;
 	private bool d_modified;
@@ -48,32 +37,36 @@ public class Document : GLib.Object
 	public signal void location_changed(File? previous_location);
 	public signal void changed();
 
+	public Gedit.Document document
+	{
+		get { return d_document; }
+	}
+
+	public DocumentServices services
+	{
+		get { return d_services; }
+	}
+
 	public static string error_mark_category
 	{
-		get
-		{
-			return "Gca.Document.ErrorCategory";
-		}
+		get { return "Gca.Document.ErrorCategory"; }
 	}
 
 	public static string warning_mark_category
 	{
-		get
-		{
-			return "Gca.Document.WarningCategory";
-		}
+		get { return "Gca.Document.WarningCategory"; }
 	}
 
 	public static string info_mark_category
 	{
-		get
-		{
-			return "Gca.Document.InfoCategory";
-		}
+		get { return "Gca.Document.InfoCategory"; }
 	}
 
-	construct
+	public Document(Gedit.Document document, DocumentServices services)
 	{
+		d_document = document;
+		d_services = services;
+
 		d_untitled = d_document.is_untitled();
 		d_modified = false;
 		d_text = null;
@@ -89,11 +82,9 @@ public class Document : GLib.Object
 
 		update_location();
 
-		DiagnosticSupport diag = this as DiagnosticSupport;
-
-		if (diag != null)
+		if (d_services.diagnostics != null)
 		{
-			diag.diagnostics_updated.connect(on_diagnostic_updated);
+			d_services.diagnostics.diagnostics_updated.connect(on_diagnostic_updated);
 		}
 	}
 
@@ -124,11 +115,9 @@ public class Document : GLib.Object
 			d_document.end_user_action.disconnect(on_document_end_user_action);
 			d_document.saved.disconnect(on_document_saved);
 
-			DiagnosticSupport diag = this as DiagnosticSupport;
-
-			if (diag != null)
+			if (d_services.diagnostics != null)
 			{
-				diag.diagnostics_updated.disconnect(on_diagnostic_updated);
+				d_services.diagnostics.diagnostics_updated.disconnect(on_diagnostic_updated);
 				remove_marks();
 			}
 		}
@@ -166,9 +155,9 @@ public class Document : GLib.Object
 	                                   TextIter   start,
 	                                   TextIter   end)
 	{
-		DiagnosticSupport sup = this as DiagnosticSupport;
+		DiagnosticSupport sup = d_services.diagnostics;
 
-		TextTag? tag = sup.get_diagnostic_tags()[diagnostic.severity];
+		TextTag? tag = sup.diagnostic_tags[diagnostic.severity];
 		string? category = mark_category_for_severity(diagnostic.severity);
 
 		d_document.apply_tag(tag, start, end);
@@ -212,7 +201,7 @@ public class Document : GLib.Object
 		TextIter start;
 		TextIter end;
 
-		DiagnosticSupport sup = this as DiagnosticSupport;
+		DiagnosticSupport sup = d_services.diagnostics;
 
 		for (uint i = 0; i < diagnostic.ranges.length; ++i)
 		{
@@ -235,7 +224,7 @@ public class Document : GLib.Object
 
 			mark_diagnostic_range(diagnostic, start, end);
 
-			d_document.apply_tag(sup.get_diagnostic_tags().location_tag, start, end);
+			d_document.apply_tag(sup.diagnostic_tags.location_tag, start, end);
 		}
 
 		for (uint i = 0; i < diagnostic.fixits.length; ++i)
@@ -244,7 +233,7 @@ public class Document : GLib.Object
 
 			if (source_range(r, out start, out end))
 			{
-				d_document.apply_tag(sup.get_diagnostic_tags().fixit_tag, start, end);
+				d_document.apply_tag(sup.diagnostic_tags.fixit_tag, start, end);
 			}
 		}
 	}
@@ -256,7 +245,7 @@ public class Document : GLib.Object
 
 		d_document.get_bounds(out start, out end);
 
-		var tags = diagnostic.get_diagnostic_tags();
+		var tags = diagnostic.diagnostic_tags;
 
 		d_document.remove_tag(tags.error_tag, start, end);
 		d_document.remove_tag(tags.warning_tag, start, end);
@@ -266,12 +255,10 @@ public class Document : GLib.Object
 
 		remove_marks();
 
-		diagnostic.with_diagnostics((diagnostics) => {
-			foreach (var diag in diagnostics)
-			{
-				mark_diagnostic((Diagnostic)diag);
-			}
-		});
+		foreach (var diag in diagnostic.diagnostics)
+		{
+			mark_diagnostic((Diagnostic)diag);
+		}
 	}
 
 	private void set_location(File? location)
@@ -363,26 +350,17 @@ public class Document : GLib.Object
 
 	public File? location
 	{
-		get
-		{
-			return d_location;
-		}
+		get { return d_location; }
 	}
 
 	public unowned string text
 	{
-		get
-		{
-			return d_text;
-		}
+		get { return d_text; }
 	}
 
 	public bool is_modified
 	{
-		get
-		{
-			return d_modified;
-		}
+		get { return d_modified; }
 	}
 
 	private void on_document_end_user_action()

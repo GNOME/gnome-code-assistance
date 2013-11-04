@@ -17,22 +17,42 @@
  * along with gedit-code-assistant.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Gee;
-
 namespace Gca
 {
 
 class BackendManager
 {
 	private static BackendManager s_instance;
+	private Gee.HashMap<string, Backend?> d_backends;
 
 	private BackendManager()
 	{
+		d_backends = new Gee.HashMap<string, Backend?>();
 	}
 
-	public Backend? get(string language)
+	public async Backend? backend(string language)
 	{
-		return null;
+		if (d_backends.has_key(language))
+		{
+			return d_backends[language];
+		}
+
+		var name = "org.gnome.CodeAssist." + language;
+		var path = "/org/gnome/CodeAssist/" + language;
+
+		try
+		{
+			var service = yield Bus.get_proxy<DBus.Service>(BusType.SESSION, name, path);
+			var backend = new Backend(service);
+
+			d_backends[language] = backend;
+			return backend;
+		}
+		catch
+		{
+			d_backends[language] = null;
+			return null;
+		}
 	}
 
 	public static BackendManager instance

@@ -22,27 +22,26 @@ using Gee;
 namespace Gca
 {
 
-public delegate void WithDiagnosticsCallback(SourceIndex diagnostics);
-
-public interface DiagnosticSupport : Document
+public class DiagnosticSupport : Object
 {
+	private Gca.DiagnosticTags d_diagnostic_tags;
+	private Gca.SourceIndex d_diagnostics;
+
 	public signal void diagnostics_updated();
 
-	public abstract SourceIndex begin_diagnostics();
-	public abstract void end_diagnostics();
+	construct
+	{
+		d_diagnostics = new SourceIndex();
+	}
 
 	public Diagnostic[] find_at(SourceLocation location)
 	{
 		Diagnostic[] ret = new Diagnostic[0];
 
-		var diagnostics = begin_diagnostics();
-
-		foreach (var d in diagnostics.find_at(location))
+		foreach (var d in d_diagnostics.find_at(location))
 		{
 			ret += (Diagnostic)d;
 		}
-
-		end_diagnostics();
 
 		Posix.qsort(ret, ret.length, sizeof(Diagnostic), (Posix.compar_fn_t)sort_on_severity);
 
@@ -67,29 +66,30 @@ public interface DiagnosticSupport : Document
 	{
 		Diagnostic[] ret = new Diagnostic[0];
 
-		var diagnostics = begin_diagnostics();
-
-		foreach (var d in diagnostics.find_at_line(line))
+		foreach (var d in d_diagnostics.find_at_line(line))
 		{
 			ret += (Diagnostic)d;
 		}
-
-		end_diagnostics();
 
 		Posix.qsort(ret, ret.length, sizeof(Diagnostic), (Posix.compar_fn_t)sort_on_severity);
 
 		return ret;
 	}
 
-	public void with_diagnostics(WithDiagnosticsCallback callback)
+	public SourceIndex diagnostics
 	{
-		var d = begin_diagnostics();
-		callback(d);
-		end_diagnostics();
+		get { return d_diagnostics; }
+		set
+		{
+			d_diagnostics = value;
+		}
 	}
 
-	public abstract void set_diagnostic_tags(Gca.DiagnosticTags tags);
-	public abstract Gca.DiagnosticTags get_diagnostic_tags();
+	public Gca.DiagnosticTags diagnostic_tags
+	{
+		get { return d_diagnostic_tags; }
+		set { d_diagnostic_tags = value; }
+	}
 }
 
 }

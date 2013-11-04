@@ -12,9 +12,9 @@ clients_gedit_vala_sources =					\
 	clients/gedit/src/gca-source-index.vala			\
 	clients/gedit/src/gca-view.vala				\
 	clients/gedit/src/gca-document.vala			\
+	clients/gedit/src/gca-document-services.vala		\
 	clients/gedit/src/gca-scrollbar-marker.vala		\
 	clients/gedit/src/gca-backend.vala			\
-	clients/gedit/src/gca-backend-implementation.vala	\
 	clients/gedit/src/gca-backend-manager.vala		\
 	clients/gedit/src/gca-unsaved-file.vala			\
 	clients/gedit/src/gca-semantic-value.vala		\
@@ -26,6 +26,7 @@ clients_gedit_vala_sources =					\
 	clients/gedit/src/gca-diagnostic-tags.vala		\
 	clients/gedit/src/gca-diagnostic-support.vala		\
 	clients/gedit/src/gca-diagnostic-message.vala		\
+	clients/gedit/src/gca-dbus.vala				\
 	clients/gedit/src/gca-log.vala
 
 clients_gedit_libcodeassistance_NOINSTHFILES =			\
@@ -45,6 +46,7 @@ clients_gedit_src_libcodeassistance_la_VALAFLAGS =		\
 	--vapidir $(top_srcdir)/clients/gedit/vapi		\
 	--vapi clients/gedit/src/libcodeassistance.vapi		\
 	--library libcodeassistance				\
+	--pkg gio-unix-2.0					\
 	--pkg gee-1.0						\
 	--pkg gca-utils						\
 	--pkg gedit						\

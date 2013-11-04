@@ -17,16 +17,72 @@
  * along with gedit-code-assistant.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Gee;
+
 namespace Gca
 {
 
-public interface Backend : Object
+public class Backend : Object
 {
-	public abstract int size { get; }
-	public abstract new Document get(int idx);
+	private ArrayList<Document> d_documents;
+	private DBus.Service d_service;
 
-	public abstract Document ?register_document(Gedit.Document ?document);
-	public abstract void unregister_document(Document ?document);
+	public int size
+	{
+		get { return d_documents.size; }
+	}
+
+	public new Document get(int idx)
+	{
+		return d_documents[idx];
+	}
+
+	public Backend(DBus.Service service)
+	{
+		d_service = service;
+		d_documents = new ArrayList<Document>();
+	}
+
+	public Document ?register_document(Gedit.Document ?document)
+	{
+		if (document == null)
+		{
+			return null;
+		}
+
+		Document ret = new Document(document, DocumentServices());
+		d_documents.add(ret);
+
+		ret.changed.connect(on_document_changed);
+
+		return ret;
+	}
+
+	public void unregister_document(Document ?document)
+	{
+		if (document == null)
+		{
+			return;
+		}
+
+		destroy_document(document);
+		d_documents.remove(document);
+	}
+
+	protected virtual void destroy_document(Document document)
+	{
+		document.changed.disconnect(on_document_changed);
+	}
+
+	protected virtual void on_document_changed(Document doc)
+	{
+		SymbolBrowserSupport? s = doc as SymbolBrowserSupport;
+
+		if (s != null)
+		{
+			s.symbol_browser.tainted = true;
+		}
+	}
 }
 
 }

@@ -291,16 +291,18 @@ class View : Object
 
 	private void update_backend()
 	{
-		/* Update the backend according to the current language on the buffer */
-		Backend? backend = null;
+		unregister_backend();
 
+		/* Update the backend according to the current language on the buffer */
 		if (d_buffer != null && d_buffer.language != null)
 		{
-			backend = BackendManager.instance[d_buffer.language.id];
-		}
+			var manager = BackendManager.instance;
 
-		unregister_backend();
-		register_backend(backend);
+			manager.backend.begin(d_buffer.language.id, (obj, res) => {
+				var backend = manager.backend.end(res);
+				register_backend(backend);
+			});
+		}
 	}
 
 	private void unregister_backend()
@@ -416,13 +418,13 @@ class View : Object
 		{
 			d_document = d_backend.register_document(d_view.buffer as Gedit.Document);
 
-			DiagnosticSupport? diag = d_document as DiagnosticSupport;
+			var diag = d_document.services.diagnostics;
 
 			if (diag != null)
 			{
 				SourceMarkAttributes attr;
 
-				diag.set_diagnostic_tags(d_tags);
+				diag.diagnostic_tags = d_tags;
 				diag.diagnostics_updated.connect(on_diagnostic_updated);
 
 				// Error
@@ -456,7 +458,7 @@ class View : Object
 				d_buffer.cursor_moved.connect(on_cursor_diagnostics_moved);
 			}
 
-			SemanticValueSupport? sem = d_document as SemanticValueSupport;
+			var sem = d_document.services.semantic_value;
 
 			if (sem != null)
 			{
@@ -539,36 +541,34 @@ class View : Object
 
 		uint mid = d_scrollbarMarker.new_merge_id();
 
-		diagnostics.with_diagnostics((diagnostics) => {
-			foreach (var obj in diagnostics)
+		foreach (var obj in diagnostics.diagnostics)
+		{
+			Diagnostic d = (Diagnostic)obj;
+
+			Gdk.RGBA color = colors[d.severity];
+			Gdk.RGBA mix = mixed[d.severity];
+
+			foreach (SourceRange range in d.ranges)
 			{
-				Diagnostic d = (Diagnostic)obj;
+				d_scrollbarMarker.add_with_id(mid, range, color);
 
-				Gdk.RGBA color = colors[d.severity];
-				Gdk.RGBA mix = mixed[d.severity];
-
-				foreach (SourceRange range in d.ranges)
+				if (range.start.line == range.end.line &&
+					range.start.column == range.end.column)
 				{
-					d_scrollbarMarker.add_with_id(mid, range, color);
-
-					if (range.start.line == range.end.line &&
-						range.start.column == range.end.column)
+					if (diagnostic_is_at_end(range.start))
 					{
-						if (diagnostic_is_at_end(range.start))
-						{
-							add_diagnostic_at_end(range.start, mix);
-						}
+						add_diagnostic_at_end(range.start, mix);
 					}
 				}
-
-				d_scrollbarMarker.add_with_id(mid, d.location.range, color);
-
-				if (diagnostic_is_at_end(d.location))
-				{
-					add_diagnostic_at_end(d.location, mix);
-				}
 			}
-		});
+
+			d_scrollbarMarker.add_with_id(mid, d.location.range, color);
+
+			if (diagnostic_is_at_end(d.location))
+			{
+				add_diagnostic_at_end(d.location, mix);
+			}
+		}
 
 		update_diagnostic_message();
 		elapsed = timer.elapsed();
@@ -705,7 +705,7 @@ class View : Object
 	private void update_diagnostic_message()
 	{
 		// Check if we moved in or out of a diagnostic
-		DiagnosticSupport? diag = d_document as DiagnosticSupport;
+		var diag = d_document.services.diagnostics;
 
 		if (diag == null)
 		{
@@ -818,7 +818,7 @@ class View : Object
 
 	private SemanticValue? semantic_value_at_cursor()
 	{
-		SemanticValueSupport sem = d_document as SemanticValueSupport;
+		var sem = d_document.services.semantic_value;
 
 		if (sem == null)
 		{
@@ -886,7 +886,7 @@ class View : Object
 
 	private void update_references()
 	{
-		SemanticValueSupport sem = d_document as SemanticValueSupport;
+		var sem = d_document.services.semantic_value;
 
 		if (sem == null)
 		{
