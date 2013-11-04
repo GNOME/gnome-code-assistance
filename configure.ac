@@ -200,6 +200,41 @@ fi
 
 AM_CONDITIONAL(BACKENDS_PYTHON_ENABLE, test "x$enable_python" = "xyes")
 
+
+
+dnl ================================================================
+dnl xml backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([xml],
+              AS_HELP_STRING([--enable-xml],[enable xml backend]),
+              [enable_xml=$enableval],
+              [enable_xml=auto])
+
+AC_MSG_CHECKING([xml backend])
+
+if test "x$enable_xml" = "xauto"; then
+	if test "x$PYTHON" = "x"; then
+		AC_MSG_RESULT([no])
+		enable_xml=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_xml=yes
+	fi
+elif test "x$enable_xml" != "xno"; then
+	if test "x$PYTHON" = "x"; then
+		AC_MSG_ERROR([python not found])
+	else
+		AC_MSG_RESULT([yes])
+		enable_xml=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+AM_CONDITIONAL(BACKENDS_XML_ENABLE, test "x$enable_xml" = "xyes")
+
+
+
 backendexecdir_unex="$libexecdir/gnome-code-assistance"
 adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
 AC_SUBST(backendexecdir)
@@ -218,6 +253,8 @@ Makefile
 clients/gedit/data/codeassistance.plugin
 backends/python/org.gnome.CodeAssist.python.service
 backends/python/python
+backends/xml/org.gnome.CodeAssist.xml.service
+backends/xml/xml
 ])
 
 AC_OUTPUT
@@ -233,6 +270,7 @@ Configuration:
 
 	backends:
 		python:         $enable_python
+		xml:            $enable_xml
 
 	clients:
 		gedit:          $enable_gedit
