@@ -30,22 +30,28 @@ class App:
     nextid = 0
 
 class Document(dbus.service.Object):
+    interface = 'org.gnome.CodeAssist.Document'
+
     def paths(self, ids):
         return []
 
-    @dbus.service.method('org.gnome.CodeAssist.Document',
+    @dbus.service.method(interface,
                          in_signature='ax', out_signature='as')
     def Paths(self, ids):
         return self.paths(ids)
 
 class Diagnostics(dbus.service.Object):
+    interface = 'org.gnome.CodeAssist.Diagnostics'
+
     def diagnostics(self):
         return []
 
-    @dbus.service.method('org.gnome.CodeAssist.Diagnostics',
+    @dbus.service.method(interface,
                          in_signature='', out_signature='a(ua((x(xxx)(xxx))s)a(x(xxx)(xxx))s)')
     def Diagnostics(self):
         return [d.to_tuple() for d in self.diagnostics()]
+
+DocumentInterfaces = [Document, Diagnostics]
 
 class Service(dbus.service.Object):
     apps = {}
@@ -67,6 +73,19 @@ class Service(dbus.service.Object):
             return app
         else:
             return self.apps[appid]
+
+    @dbus.service.method('org.gnome.CodeAssist.Service',
+                         in_signature='', out_signature='as')
+    def SupportedServices(self):
+        doc = self.service.document()
+        ret = []
+
+        for i in DocumentInterfaces:
+            if isinstance(doc, i):
+                ret.append(i.interface)
+
+        print(ret)
+        return ret
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
                          in_signature='ssta(ssh)a{sv}', out_signature='o')

@@ -25,6 +25,9 @@ class Service:
     def __init__(self, documentcls):
         self.documentcls = documentcls
 
+    def document(self):
+        return self.documentcls()
+
     def parse(self, appid, path, cursor, unsaved, options, doc):
         for u in unsaved:
             if u.path == path:
@@ -43,7 +46,7 @@ class Service:
             errors = [e]
 
         if doc is None:
-            doc = self.documentcls()
+            doc = self.document()
 
         doc.ast = ret
         doc.errors = errors
