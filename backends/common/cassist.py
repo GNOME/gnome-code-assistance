@@ -15,6 +15,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+class Service:
+    def __init__(self, documentcls):
+        self._documentcls = documentcls
+
+    def document(self):
+        return self._documentcls()
+
 class UnsavedDocument:
     def __init__(self, path='', data_path=''):
         self.path = path

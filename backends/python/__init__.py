@@ -19,14 +19,8 @@ import ast
 
 from codeassist.common import cassist
 
-class Service:
+class Service(cassist.Service):
     language = 'python'
-
-    def __init__(self, documentcls):
-        self.documentcls = documentcls
-
-    def document(self):
-        return self.documentcls()
 
     def parse(self, appid, path, cursor, unsaved, options, doc):
         for u in unsaved:

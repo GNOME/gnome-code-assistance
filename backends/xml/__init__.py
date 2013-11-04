@@ -20,14 +20,8 @@ from codeassist.common import cassist
 from lxml import etree
 import os
 
-class Service:
+class Service(cassist.Service):
     language = 'xml'
-
-    def __init__(self, documentcls):
-        self.documentcls = documentcls
-
-    def document(self):
-        return self.documentcls()
 
     def get_schema(self, path, location, schema_text=None):
         schema_type = None
