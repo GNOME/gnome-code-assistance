@@ -47,7 +47,7 @@ class Diagnostics(dbus.service.Object):
         return []
 
     @dbus.service.method(interface,
-                         in_signature='', out_signature='a(ua((x(xxx)(xxx))s)a(x(xxx)(xxx))s)')
+                         in_signature='', out_signature='a(ua((x(xx)(xx))s)a(x(xx)(xx))s)')
     def Diagnostics(self):
         return [d.to_tuple() for d in self.diagnostics()]
 

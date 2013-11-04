@@ -15,24 +15,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-class SourceLocation:
-    line = 0
-    column = 0
-    offset = 0
+class UnsavedDocument:
+    def __init__(self, path='', data_path=''):
+        self.path = path
+        self.data_path = data_path
 
-    def __init__(self, line=0, column=0, offset=0):
+class SourceLocation:
+    def __init__(self, line=0, column=0):
         self.line = line
         self.column = column
-        self.offset = offset
 
     def to_tuple(self):
-        return (self.line, self.column, self.offset)
+        return (self.line, self.column)
 
 class SourceRange:
-    file = 0
-    start = SourceLocation()
-    end = SourceLocation()
-
     def __init__(self, file=0, start=SourceLocation(), end=None):
         self.file = file
         self.start = start
