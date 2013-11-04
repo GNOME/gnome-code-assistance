@@ -84,7 +84,6 @@ class Service(dbus.service.Object):
             if isinstance(doc, i):
                 ret.append(i.interface)
 
-        print(ret)
         return ret
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
