@@ -87,7 +87,7 @@ class Service(dbus.service.Object):
         return ret
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
-                         in_signature='ssta(ssh)a{sv}', out_signature='o')
+                         in_signature='ssta(ss)a{sv}', out_signature='o')
     def Parse(self, appid, path, cursor, unsaved, options):
         app = self.app(appid)
         doc = None
