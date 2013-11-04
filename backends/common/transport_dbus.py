@@ -21,6 +21,8 @@ import dbus
 import dbus.service
 import dbus.mainloop.glib
 
+from common import cassist
+
 class App:
     id = 0
     name = ''
@@ -94,6 +96,8 @@ class Service(dbus.service.Object):
 
         if path in app.ids:
             doc = app.docs[app.ids[path]]
+
+        unsaved = [cassist.UnsavedDocument(u[0], u[1]) for u in unsaved]
 
         doc = self.service.parse(appid, path, cursor, unsaved, options, doc)
 

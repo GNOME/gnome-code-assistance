@@ -31,7 +31,7 @@ class Service:
     def parse(self, appid, path, cursor, unsaved, options, doc):
         for u in unsaved:
             if u.path == path:
-                path = u.datapath
+                path = u.data_path
                 break
 
         errors = []
