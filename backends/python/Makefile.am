@@ -1,4 +1,4 @@
-pythonbackenddir = $(GCA_BACKENDS_DIR)/python
+pythonbackenddir = $(GCA_BACKENDS_DIR)/codeassist/python
 pythonbackend_PYTHON = 				\
 	backends/python/__init__.py
 

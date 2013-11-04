@@ -1,4 +1,8 @@
-commonbackenddir = $(GCA_BACKENDS_DIR)/common
+codeassistdir = $(GCA_BACKENDS_DIR)/codeassist
+codeassist_PYTHON = \
+	backends/common/codeassist/__init__.py
+
+commonbackenddir = $(GCA_BACKENDS_DIR)/codeassist/common
 commonbackend_PYTHON = 					\
 	backends/common/transport_dbus.py		\
 	backends/common/cassist.py			\

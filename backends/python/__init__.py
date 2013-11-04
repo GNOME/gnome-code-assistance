@@ -17,7 +17,7 @@
 
 import ast
 
-from common import cassist
+from codeassist.common import cassist
 
 class Service:
     language = 'python'
@@ -57,7 +57,7 @@ class Service:
         pass
 
 def run():
-    from common import app
+    from codeassist.common import app
 
     transport = app.transport(Service)
 

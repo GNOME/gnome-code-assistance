@@ -21,7 +21,7 @@ import dbus
 import dbus.service
 import dbus.mainloop.glib
 
-from common import cassist
+from codeassist.common import cassist
 
 class App:
     id = 0

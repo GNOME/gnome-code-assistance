@@ -28,6 +28,6 @@ def transport(service):
 
     args = parser.parse_args()
 
-    return importlib.import_module('common.transport_' + args.transport)
+    return importlib.import_module('codeassist.common.transport_' + args.transport)
 
 # ex:ts=4:et:
