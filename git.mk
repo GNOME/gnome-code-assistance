@@ -81,7 +81,7 @@ git-mk-install:
 
 ### .gitignore generation
 
-$(srcdir)/.gitignore: Makefile.am $(top_srcdir)/git.mk
+$(srcdir)/.gitignore: Makefile.am $(top_srcdir)/git.mk $(GITIGNOREDEPS)
 	$(AM_V_GEN) \
 	{ \
 		if test "x$(DOC_MODULE)" = x -o "x$(DOC_MAIN_SGML_FILE)" = x; then :; else \

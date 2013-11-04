@@ -37,22 +37,19 @@ class BackendManager
 			return d_backends[language];
 		}
 
-		var name = "org.gnome.CodeAssist." + language;
-		var path = "/org/gnome/CodeAssist/" + language;
+		Backend? backend;
 
 		try
 		{
-			var service = yield Bus.get_proxy<DBus.Service>(BusType.SESSION, name, path);
-			var backend = new Backend(service);
-
-			d_backends[language] = backend;
-			return backend;
+			backend = yield Backend.create(language);
 		}
 		catch
 		{
-			d_backends[language] = null;
-			return null;
+			backend = null;
 		}
+
+		d_backends[language] = backend;
+		return backend;
 	}
 
 	public static BackendManager instance

@@ -1,18 +1,16 @@
 geditcodeassistanceplugin_LTLIBRARIES = clients/gedit/src/libcodeassistance.la
 
 clients_gedit_vala_sources =					\
-	clients/gedit/src/gca.vala				\
 	clients/gedit/src/gca-plugin.vala			\
 	clients/gedit/src/gca-app-activatable.vala		\
 	clients/gedit/src/gca-view-activatable.vala		\
 	clients/gedit/src/gca-source-location.vala		\
 	clients/gedit/src/gca-source-range.vala			\
-	clients/gedit/src/gca-expand-range.vala			\
 	clients/gedit/src/gca-source-range-support.vala		\
+	clients/gedit/src/gca-expand-range.vala			\
 	clients/gedit/src/gca-source-index.vala			\
 	clients/gedit/src/gca-view.vala				\
 	clients/gedit/src/gca-document.vala			\
-	clients/gedit/src/gca-document-services.vala		\
 	clients/gedit/src/gca-scrollbar-marker.vala		\
 	clients/gedit/src/gca-backend.vala			\
 	clients/gedit/src/gca-backend-manager.vala		\
@@ -22,11 +20,12 @@ clients_gedit_vala_sources =					\
 	clients/gedit/src/gca-symbol-browser.vala		\
 	clients/gedit/src/gca-symbol-browser-support.vala	\
 	clients/gedit/src/gca-diagnostic.vala			\
+	clients/gedit/src/gca-diagnostics.vala			\
 	clients/gedit/src/gca-diagnostic-colors.vala		\
 	clients/gedit/src/gca-diagnostic-tags.vala		\
-	clients/gedit/src/gca-diagnostic-support.vala		\
 	clients/gedit/src/gca-diagnostic-message.vala		\
 	clients/gedit/src/gca-dbus.vala				\
+	clients/gedit/src/gca-remote-service.vala		\
 	clients/gedit/src/gca-log.vala
 
 clients_gedit_libcodeassistance_NOINSTHFILES =			\
@@ -47,13 +46,16 @@ clients_gedit_src_libcodeassistance_la_VALAFLAGS =		\
 	--vapi clients/gedit/src/libcodeassistance.vapi		\
 	--library libcodeassistance				\
 	--pkg gio-unix-2.0					\
-	--pkg gee-1.0						\
+	--pkg gee-0.8						\
 	--pkg gca-utils						\
 	--pkg gedit						\
 	--pkg libpeas-1.0					\
-	--pkg posix						\
 	--target-glib=2.32					\
 	--thread
+
+if ENABLE_DEBUG
+clients_gedit_src_libcodeassistance_la_VALAFLAGS += --debug
+endif
 
 clients_gedit_src_libcodeassistance_la_CFLAGS = $(GEDIT_CFLAGS) -I$(top_srcdir) -w
 clients_gedit_src_libcodeassistance_la_LDFLAGS = -module -shared -avoid-version $(GEDIT_LIBS)
@@ -69,3 +71,5 @@ GITIGNOREFILES +=						\
 	clients/gedit/src/*.o					\
 	clients/gedit/src/.libs					\
 	clients/gedit/src/.dirstamp
+
+GITIGNOREDEPS += clients/gedit/src/Makefile.am

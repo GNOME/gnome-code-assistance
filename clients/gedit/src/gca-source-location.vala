@@ -22,59 +22,26 @@ using Gtk;
 namespace Gca
 {
 
-public class SourceLocation : Object, SourceRangeSupport
+struct SourceLocation
 {
-	private File? d_file;
-	private int d_line;
-	private int d_column;
+//	public File? file;
+	public int line;
+	public int column;
 
-	public SourceLocation(File? file, int line, int column)
+	public static SourceLocation from_iter(TextIter iter)
 	{
-		d_file = file;
-		d_line = line;
-		d_column = column;
+		return SourceLocation() {
+			line = iter.get_line() + 1,
+			column = iter.get_line_offset() + 1
+		};
 	}
 
-	public SourceLocation.iter(TextIter iter)
+	public SourceRange to_range()
 	{
-		this(null, iter.get_line() + 1, iter.get_line_offset() + 1);
-	}
-
-	public SourceLocation copy()
-	{
-		return new SourceLocation(d_file.dup(), d_line, d_column);
-	}
-
-	public File? file
-	{
-		get { return d_file; }
-	}
-
-	public int line
-	{
-		get { return d_line; }
-		set { d_line = value; }
-	}
-
-	public int column
-	{
-		get { return d_column; }
-	}
-
-	public SourceRange? range
-	{
-		owned get
-		{
-			SourceRange r = new SourceRange(new SourceLocation(d_file, d_line, d_column),
-			                                new SourceLocation(d_file, d_line, d_column));
-
-			return (owned)r;
-		}
-	}
-
-	public SourceRange[] ranges
-	{
-		owned get { return new SourceRange[] {range}; }
+		return SourceRange() {
+			start = this,
+			end = this
+		};
 	}
 
 	private int compare_int(int a, int b)
@@ -84,21 +51,21 @@ public class SourceLocation : Object, SourceRangeSupport
 
 	public int compare_to(SourceLocation other)
 	{
-		if (d_line == other.d_line)
+		if (line == other.line)
 		{
-			return compare_int(d_column, other.d_column);
+			return compare_int(column, other.column);
 		}
 		else
 		{
-			return d_line < other.d_line ? -1 : 1;
+			return compare_int(line, other.line);
 		}
 	}
 
 	public bool get_iter(TextBuffer buffer, out TextIter iter)
 	{
-		buffer.get_iter_at_line(out iter, d_line - 1);
+		buffer.get_iter_at_line(out iter, line - 1);
 
-		if (iter.get_line() != d_line - 1)
+		if (iter.get_line() != line - 1)
 		{
 			if (iter.is_end())
 			{
@@ -108,12 +75,12 @@ public class SourceLocation : Object, SourceRangeSupport
 			return false;
 		}
 
-		if (d_column <= 1)
+		if (column <= 1)
 		{
 			return true;
 		}
 
-		bool ret = iter.forward_chars(d_column - 1);
+		bool ret = iter.forward_chars(column - 1);
 
 		if (!ret && iter.is_end())
 		{

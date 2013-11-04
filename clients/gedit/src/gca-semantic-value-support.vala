@@ -1,9 +1,9 @@
 namespace Gca
 {
 
-public delegate void WithSemanticValueCallback(SourceIndex diagnostics);
+delegate void WithSemanticValueCallback(SourceIndex diagnostics);
 
-public interface SemanticValueSupport : Gca.Document
+interface SemanticValueSupport : Gca.Document
 {
 	public void with_semantics(WithSemanticValueCallback callback)
 	{

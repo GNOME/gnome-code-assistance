@@ -4,7 +4,7 @@ using Gee;
 namespace Gca
 {
 
-public class DiagnosticMessage : EventBox
+class DiagnosticMessage : EventBox
 {
 	private Diagnostic[] d_diagnostics;
 	private Box? d_vbox;
@@ -195,6 +195,8 @@ public class DiagnosticMessage : EventBox
 		{
 			d_diagnostics = value;
 
+			stderr.printf("set diagnostics\n");
+
 			update();
 		}
 	}
@@ -268,8 +270,6 @@ public class DiagnosticMessage : EventBox
 				expand_range(topx, bottomx, y, r.start);
 				expand_range(topx, bottomx, y, r.end);
 			}
-
-			expand_range(topx, bottomx, y, d.location);
 		}
 
 		// Position the message depending on where we can find the largest
@@ -331,7 +331,6 @@ public class DiagnosticMessage : EventBox
 			d_view.add_child_in_window(this, TextWindowType.TEXT, 0, 0);
 		}
 
-
 		int minwidth;
 		base.get_preferred_width(null, out minwidth);
 
@@ -355,6 +354,15 @@ public class DiagnosticMessage : EventBox
 	protected override SizeRequestMode get_request_mode()
 	{
 		return SizeRequestMode.HEIGHT_FOR_WIDTH;
+	}
+
+	protected override void get_preferred_height(out int minimum_height,
+	                                             out int natural_height)
+	{
+		int minwidth;
+
+		get_preferred_width(out minwidth, null);
+		get_preferred_height_for_width(minwidth, out minimum_height, out natural_height);
 	}
 
 	protected override void get_preferred_width(out int minimum_width,

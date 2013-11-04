@@ -23,9 +23,9 @@ using Gee;
 namespace Gca
 {
 
-public class ScrollbarMarker
+class ScrollbarMarker
 {
-	public class Marker
+	class Marker
 	{
 		private Gdk.RGBA d_color;
 		private SourceRange d_range;
@@ -135,14 +135,6 @@ public class ScrollbarMarker
 		d_scrollbar.queue_draw();
 	}
 
-	public uint add(SourceRange range, Gdk.RGBA color)
-	{
-		uint id = new_merge_id();
-
-		add_with_id(id, range, color);
-		return id;
-	}
-
 	public void remove(uint id)
 	{
 		if (!d_markers.has_key(id))
@@ -151,14 +143,6 @@ public class ScrollbarMarker
 		}
 
 		d_markers.unset(id);
-		d_scrollbar.queue_draw();
-	}
-
-	public void clear()
-	{
-		d_markers.clear();
-		d_mergeId = 0;
-
 		d_scrollbar.queue_draw();
 	}
 

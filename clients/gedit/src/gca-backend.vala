@@ -17,71 +17,116 @@
  * along with gedit-code-assistant.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Gee;
-
 namespace Gca
 {
 
-public class Backend : Object
+class Backend : Object
 {
-	private ArrayList<Document> d_documents;
+	private Gee.ArrayList<View> d_views;
+	private string d_name;
 	private DBus.Service d_service;
+	private RemoteServices d_supported_services;
 
-	public int size
+	public static async Backend create(string language) throws IOError
 	{
-		get { return d_documents.size; }
+		var name = "org.gnome.CodeAssist." + language;
+		var path = "/org/gnome/CodeAssist/" + language;
+
+		var service = yield Bus.get_proxy<DBus.Service>(BusType.SESSION, name, path);
+		var services = yield service.supported_services();
+
+		return new Backend(name, service, services);
 	}
 
-	public new Document get(int idx)
+	private Backend(string name, DBus.Service service, string[] services)
 	{
-		return d_documents[idx];
-	}
-
-	public Backend(DBus.Service service)
-	{
+		d_name = name;
 		d_service = service;
-		d_documents = new ArrayList<Document>();
+
+		d_views = new Gee.ArrayList<View>();
+		d_supported_services = 0;
+
+		foreach (var s in services)
+		{
+			d_supported_services = RemoteServices.parse(s);
+		}
 	}
 
-	public Document ?register_document(Gedit.Document ?document)
+	public bool supports(RemoteServices services)
 	{
-		if (document == null)
+		return (d_supported_services & services) != 0;
+	}
+
+	public void register(View view)
+	{
+		d_views.add(view);
+
+		view.changed.connect(on_view_changed);
+	}
+
+	public void unregister(View view)
+	{
+		view.changed.disconnect(on_view_changed);
+		d_views.remove(view);
+	}
+
+	private async DBus.UnsavedDocument[] unsaved_documents()
+	{
+		var unsaved = new DBus.UnsavedDocument[d_views.size];
+		unsaved.length = 0;
+
+		foreach (var v in d_views)
 		{
-			return null;
+			var doc = v.document;
+
+			if (doc.is_modified)
+			{
+				try
+				{
+					var dp = yield doc.unsaved_data_path();
+
+					unsaved += DBus.UnsavedDocument() {
+						path = doc.path,
+						data_path = dp
+					};
+				} catch {}
+			}
 		}
 
-		Document ret = new Document(document, DocumentServices());
-		d_documents.add(ret);
-
-		ret.changed.connect(on_document_changed);
-
-		return ret;
+		return unsaved;
 	}
 
-	public void unregister_document(Document ?document)
+	private void parse(View view)
 	{
-		if (document == null)
-		{
-			return;
-		}
+		unsaved_documents.begin((obj, res) => {
+			var unsaved = unsaved_documents.end(res);
 
-		destroy_document(document);
-		d_documents.remove(document);
+			var path = view.document.path;
+			var cursor = view.document.cursor;
+
+			var options = new HashTable<string, Variant>(str_hash, str_equal);
+
+			d_service.parse.begin("org.gnome.Gedit", path, cursor, unsaved, options, (obj, res) => {
+				ObjectPath ret;
+
+				try
+				{
+					ret = d_service.parse.end(res);
+				}
+				catch (Error e)
+				{
+					Log.debug("Failed to parse: %s", e.message);
+					return;
+				}
+
+				view.update(new RemoteDocument(d_name, ret));
+			});
+		});
 	}
 
-	protected virtual void destroy_document(Document document)
+	private void on_view_changed(View view)
 	{
-		document.changed.disconnect(on_document_changed);
-	}
-
-	protected virtual void on_document_changed(Document doc)
-	{
-		SymbolBrowserSupport? s = doc as SymbolBrowserSupport;
-
-		if (s != null)
-		{
-			s.symbol_browser.tainted = true;
-		}
+		parse(view);
 	}
 }
 

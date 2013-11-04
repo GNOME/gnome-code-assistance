@@ -1,7 +1,7 @@
 namespace Gca
 {
 
-public abstract class SemanticValue : Object, SourceRangeSupport
+abstract class SemanticValue : Object, SourceRangeSupport
 {
 	public enum Kind
 	{

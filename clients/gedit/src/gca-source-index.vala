@@ -22,16 +22,16 @@ using Gee;
 namespace Gca
 {
 
-public class SourceIndex : Object
+class SourceIndex<T> : Object
 {
 	public class Wrapper : Object
 	{
-		public SourceRangeSupport obj;
+		public SourceRangeSupport? obj;
 		public SourceRange range;
 		public int idx;
 		public bool encapsulated;
 
-		public Wrapper(SourceRangeSupport obj, SourceRange range, int idx)
+		public Wrapper(SourceRangeSupport? obj, SourceRange range, int idx)
 		{
 			this.obj = obj;
 			this.range = range;
@@ -41,7 +41,7 @@ public class SourceIndex : Object
 		}
 	}
 
-	public class Iterator : Object
+	public class Iterator<T> : Object
 	{
 		private SequenceIter<Wrapper> d_iter;
 		private bool d_first;
@@ -66,9 +66,9 @@ public class SourceIndex : Object
 			return !d_iter.is_end();
 		}
 
-		public new Object get()
+		public new T get()
 		{
-			return d_iter.get().obj;
+			return (T)d_iter.get().obj;
 		}
 	}
 
@@ -124,56 +124,9 @@ public class SourceIndex : Object
 		});
 	}
 
-	public new Object? get(int idx)
-	{
-		SequenceIter<Wrapper>? iter = d_index.get_iter_at_pos(idx);
-
-		if (iter == null)
-		{
-			return null;
-		}
-
-		return iter.get().obj;
-	}
-
 	public int length
 	{
 		get { return d_index.get_length(); }
-	}
-
-	private SequenceIter<Wrapper>? find_iter(Wrapper wrapper)
-	{
-		SequenceIter<Wrapper>? iter;
-
-		iter = d_index.search(wrapper, compare_func);
-
-		if (iter == null)
-		{
-			return null;
-		}
-
-		// Move back on same
-		while (!iter.is_begin())
-		{
-			SequenceIter<Wrapper> prev = iter.prev();
-
-			if (prev.get().range.compare_to(wrapper.range) != 0)
-			{
-				break;
-			}
-
-			iter = prev;
-		}
-
-		// Move forward until find, or end, or not same
-		while (!iter.is_end() &&
-		       iter.get().range.compare_to(wrapper.range) == 0 &&
-		       iter.get().obj != wrapper.obj)
-		{
-			iter = iter.next();
-		}
-
-		return iter.get().obj == wrapper.obj ? iter : null;
 	}
 
 	private delegate void WrapEachFunc(Wrapper wrapper);
@@ -188,63 +141,47 @@ public class SourceIndex : Object
 		}
 	}
 
-	public void remove(SourceRangeSupport range)
+	public T[] find_at_line(int line)
 	{
-		wrap_each(range, (wrapper) => {
-			SequenceIter<Wrapper>? iter;
+		var loc = SourceLocation() {
+			line = line,
+			column = 0
+		};
 
-			iter = find_iter(wrapper);
-
-			if (iter != null)
-			{
-				Sequence<Wrapper>.remove(iter);
-			}
-		});
+		return find_at_priv(loc.to_range(), FindFlags.LINE_ONLY);
 	}
 
-	public Object[] find_at_line(int line)
+	public T[] find_at(SourceRange range)
 	{
-		return find_at_priv(new SourceLocation(null, line, 0), FindFlags.LINE_ONLY);
+		return find_at_priv(range, FindFlags.NONE);
 	}
 
-	public Object[] find_at(SourceLocation location)
-	{
-		return find_at_priv(location, FindFlags.NONE);
-	}
-
-	public Object? find_inner_at(SourceLocation location)
-	{
-		Object[] ret = find_at_priv(location, FindFlags.INNER_MOST);
-
-		if (ret.length == 0)
-		{
-			return null;
-		}
-		else
-		{
-			return (owned)ret[0];
-		}
-	}
-
-	private bool find_at_condition(Wrapper wrapper,
-	                               SourceLocation location,
-	                               FindFlags flags)
+	private bool find_at_condition(Wrapper     wrapper,
+	                               SourceRange range,
+	                               FindFlags   flags)
 	{
 		bool lineonly = (flags & FindFlags.LINE_ONLY) != 0;
 
-		return (lineonly && wrapper.range.contains_line(location.line)) ||
-		       (!lineonly && wrapper.range.contains_location(location));
+		if (lineonly)
+		{
+			return wrapper.range.contains_line(range.start.line) &&
+			       wrapper.range.contains_line(range.end.line);
+		}
+		else
+		{
+			return wrapper.range.contains_range(range);
+		}
 	}
 
-	private Object[] find_at_priv(SourceLocation location,
-	                         FindFlags flags)
+	private T[] find_at_priv(SourceRange range,
+	                         FindFlags   flags)
 	{
-		LinkedList<Object> ret = new LinkedList<Object>();
+		LinkedList<T> ret = new LinkedList<Object>();
 
 		SequenceIter<Wrapper> iter;
-		HashMap<Object, bool> uniq = new HashMap<Object, bool>(direct_hash, direct_equal);
+		var uniq = new HashMap<Object, bool>();
 
-		iter = d_index.search(new Wrapper(location, location.range, 0), compare_func);
+		iter = d_index.search(new Wrapper(null, range, 0), compare_func);
 
 		if ((flags & FindFlags.INNER_MOST) != 0)
 		{
@@ -252,9 +189,9 @@ public class SourceIndex : Object
 			{
 				iter = iter.prev();
 
-				if (find_at_condition(iter.get(), location, flags))
+				if (find_at_condition(iter.get(), range, flags))
 				{
-					return new Object[] {iter.get().obj};
+					return new T[] {(T)iter.get().obj};
 				}
 				else if (!iter.get().encapsulated)
 				{
@@ -262,7 +199,7 @@ public class SourceIndex : Object
 				}
 			}
 
-			return new Object[] {};
+			return new T[] {};
 		}
 
 		// Go back to find ranges that encapsulate the location
@@ -270,15 +207,15 @@ public class SourceIndex : Object
 		{
 			SequenceIter<Wrapper> prev = iter.prev();
 
-			while (find_at_condition(prev.get(), location, flags) ||
+			while (find_at_condition(prev.get(), range, flags) ||
 			       prev.get().encapsulated)
 			{
-				Object val = (Object)prev.get().obj;
+				var val = prev.get().obj;
 
-				if (find_at_condition(prev.get(), location, flags) &&
+				if (find_at_condition(prev.get(), range, flags) &&
 				    !uniq.has_key(val))
 				{
-					ret.insert(0, val);
+					ret.insert(0, (T)val);
 					uniq[val] = true;
 				}
 
@@ -293,14 +230,14 @@ public class SourceIndex : Object
 
 		// Then move with iter forward
 		while (!iter.is_end() &&
-		       (find_at_condition(iter.get(), location, flags) ||
+		       (find_at_condition(iter.get(), range, flags) ||
 		        iter.get().encapsulated))
 		{
-			Object val = (Object)iter.get().obj;
+			var val = iter.get().obj;
 
-			if (find_at_condition(iter.get(), location, flags) && !uniq.has_key(val))
+			if (find_at_condition(iter.get(), range, flags) && !uniq.has_key(val))
 			{
-				ret.add(val);
+				ret.add((T)val);
 				uniq[val] = true;
 			}
 
@@ -323,9 +260,9 @@ public class SourceIndex : Object
 		return ra.compare_to(rb);
 	}
 
-	public Iterator iterator()
+	public Iterator<T> iterator()
 	{
-		return new Iterator(d_index.get_begin_iter());
+		return new Iterator<T>(d_index.get_begin_iter());
 	}
 }
 

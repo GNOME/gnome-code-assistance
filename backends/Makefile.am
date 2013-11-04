@@ -5,3 +5,5 @@ endif
 if BACKENDS_PYTHON_ENABLE
 include backends/python/Makefile.am
 endif
+
+GITIGNOREDEPS += backends/Makefile.am

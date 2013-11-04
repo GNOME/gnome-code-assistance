@@ -88,6 +88,13 @@ $2=`(test "x$prefix" = xNONE && prefix="$ac_default_prefix"
 
 #AM_CONDITIONAL(CLANG_ENABLED, test "x$clang_enabled" = "xyes")
 
+AC_ARG_ENABLE([debug],
+              AS_HELP_STRING([--enable-debug],[enable debug build]),
+              [enable_debug=$enableval],
+              [enable_debug=no])
+
+AM_CONDITIONAL(ENABLE_DEBUG, test "x$enable_debug" = "xyes")
+
 AC_ARG_ENABLE([local],
               AS_HELP_STRING([--enable-local],[enable local install (in user directory)]),
               [enable_local=$enableval],
@@ -101,7 +108,7 @@ AC_ARG_ENABLE([gedit],
               [enable_gedit=$enableval],
               [enable_gedit=auto])
 
-GEDIT_MODULES="gedit >= 3.8 gee-1.0"
+GEDIT_MODULES="gedit >= 3.8 gee-0.8"
 
 if test "x$enable_gedit" != "xno"; then
 	AM_PROG_VALAC
@@ -220,11 +227,12 @@ echo "
 Configuration:
 
 	prefix:                 ${prefix}
-	source code location:	${srcdir}
-	compiler:		${CC}
+	source code location:   ${srcdir}
+	compiler:               ${CC}
+	debug:                  $enable_debug
 
 	backends:
-		python:		$enable_python
+		python:         $enable_python
 
 	clients:
 		gedit:          $enable_gedit

@@ -4,3 +4,5 @@ commonbackend_PYTHON = 					\
 	backends/common/cassist.py			\
 	backends/common/app.py				\
 	backends/common/__init__.py
+
+GITIGNOREDEPS += backends/common/Makefile.am

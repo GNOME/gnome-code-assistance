@@ -22,16 +22,16 @@ using Gee;
 namespace Gca
 {
 
-public class Diagnostic : Object, SourceRangeSupport
+class Diagnostic : Object, SourceRangeSupport
 {
 	public enum Severity
 	{
 		NONE,
 		INFO,
 		WARNING,
+		DEPRECATED,
 		ERROR,
-		FATAL,
-		NUM;
+		FATAL;
 
 		public string to_string()
 		{
@@ -43,8 +43,12 @@ public class Diagnostic : Object, SourceRangeSupport
 					return "Info";
 				case WARNING:
 					return "Warning";
+				case DEPRECATED:
+					return "Deprecated";
 				case ERROR:
 					return "Error";
+				case FATAL:
+					return "Fatal";
 				default:
 					return "Unknown";
 			}
@@ -57,52 +61,27 @@ public class Diagnostic : Object, SourceRangeSupport
 		public string replacement;
 	}
 
-	private SourceLocation d_location;
-	private SourceRange[] d_ranges;
-	private SourceRange[]? d_rangesAndLocation;
+	private SourceRange[] d_location;
 	private Fixit[] d_fixits;
 	private Severity d_severity;
 	private string d_message;
 
 	public Diagnostic(Severity       severity,
-	                  SourceLocation location,
-	                  SourceRange[]  ranges,
+	                  SourceRange[]  location,
 	                  Fixit[]        fixits,
 	                  string         message)
 	{
 		d_severity = severity;
 		d_location = location;
-		d_ranges = ranges;
 		d_fixits = fixits;
 		d_message = message;
-	}
-
-	public SourceLocation location
-	{
-		get { return d_location; }
-	}
-
-	public SourceRange? range
-	{
-		owned get { return d_location.range; }
 	}
 
 	public SourceRange[] ranges
 	{
 		owned get
 		{
-			if (d_rangesAndLocation == null)
-			{
-				d_rangesAndLocation = new SourceRange[d_ranges.length + 1];
-				d_rangesAndLocation[0] = d_location.range;
-
-				for (int i = 0; i < d_ranges.length; ++i)
-				{
-					d_rangesAndLocation[i + 1] = d_ranges[i];
-				}
-			}
-
-			return d_rangesAndLocation;
+			return d_location;
 		}
 	}
 
@@ -121,28 +100,21 @@ public class Diagnostic : Object, SourceRangeSupport
 		get { return d_message; }
 	}
 
-	private string loc_string()
+	public SourceRange[] location
 	{
-		string[] r = new string[d_ranges.length];
-
-		for (int i = 0; i < d_ranges.length; ++i)
-		{
-			r[i] = d_ranges[i].to_string();
-		}
-
-		string loc = "%s".printf(d_location.to_string());
-
-		if (r.length > 0)
-		{
-			loc = "%s at %s".printf(string.joinv(", ", r), loc);
-		}
-
-		return loc;
+		get { return d_location; }
 	}
 
-	public string to_string()
+	private string loc_string()
 	{
-		return "%s %s: %s".printf(d_severity.to_string(), loc_string(), d_message);
+		string[] r = new string[d_location.length];
+
+		for (int i = 0; i < d_location.length; ++i)
+		{
+			r[i] = d_location[i].to_string();
+		}
+
+		return string.joinv(", ", r);
 	}
 
 	public string to_markup(bool include_severity = true)

@@ -17,7 +17,7 @@
  * along with gedit-code-assistant.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-[ModuleInit]
+//[ModuleInit]
 public static void peas_register_types(TypeModule module)
 {
 	Peas.ObjectModule mod = module as Peas.ObjectModule;

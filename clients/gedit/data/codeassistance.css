@@ -1,10 +1,10 @@
-GcpDiagnosticMessage
+GcaDiagnosticMessage
 {
   border-width: 0px;
   border-radius: 10px;
 }
 
-GcpDiagnosticMessage.warning
+GcaDiagnosticMessage.warning
 {
   background-image: -gtk-gradient(linear,
                                   left top,
@@ -13,7 +13,7 @@ GcpDiagnosticMessage.warning
                                   to(shade(@warning_bg_color, 0.75)));
 }
 
-GcpDiagnosticMessage.error
+GcaDiagnosticMessage.error
 {
   background-image: -gtk-gradient(linear,
                                   left top,
@@ -22,20 +22,13 @@ GcpDiagnosticMessage.error
                                   to(shade(@error_bg_color, 0.75)));
 }
 
-GcpDiagnosticMessage.info
+GcaDiagnosticMessage.info
 {
   background-image: -gtk-gradient(linear,
                                   left top,
                                   left bottom,
                                   from(@info_bg_color),
                                   to(shade(@info_bg_color, 0.75)));
-}
-
-@binding-set GcpViewBindings
-{
-  bind "<Control>Up" { "find-reference" (-1) };
-  bind "<Control>Down" { "find-reference" (1) };
-  bind "<Control>Home" { "find-definition" () };
 }
 
 /* vi:ex:ts=2:et */

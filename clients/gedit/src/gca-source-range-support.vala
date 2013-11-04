@@ -19,13 +19,8 @@
 namespace Gca
 {
 
-public interface SourceRangeSupport : Object
+interface SourceRangeSupport : Object
 {
-	public abstract SourceRange? range
-	{
-		owned get;
-	}
-
 	public abstract SourceRange[] ranges
 	{
 		owned get;

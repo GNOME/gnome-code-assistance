@@ -20,58 +20,110 @@
 namespace Gca.DBus
 {
 
-public struct UnsavedDocument
+struct UnsavedDocument
 {
 	public string path;
 	public string data_path;
 }
 
-public struct SourceLocation
+struct SourceLocation
 {
 	public int64 line;
 	public int64 column;
-	public int64 offset;
+
+	public Gca.SourceLocation to_native()
+	{
+		return Gca.SourceLocation() {
+			line = (int)line,
+			column = (int)column
+		};
+	}
 }
 
-public struct SourceRange
+struct SourceRange
 {
 	public int64 file;
+
 	public SourceLocation start;
 	public SourceLocation end;
+
+	public Gca.SourceRange to_native()
+	{
+		return Gca.SourceRange() {
+			start = start.to_native(),
+			end = end.to_native()
+		};
+	}
 }
 
-public struct Fixit
+struct Fixit
 {
 	public SourceRange location;
 	public string replacement;
+
+	public Gca.Diagnostic.Fixit to_native()
+	{
+		return Gca.Diagnostic.Fixit() {
+			range = location.to_native(),
+			replacement = replacement
+		};
+	}
 }
 
-public struct Diagnostic
+struct Diagnostic
 {
 	public uint32 severity;
 	public Fixit[] fixits;
 	public SourceRange[] locations;
 	public string message;
+
+	public Gca.Diagnostic to_native()
+	{
+		var f = new Gca.Diagnostic.Fixit[fixits.length];
+
+		for (var i = 0; i < fixits.length; ++i)
+		{
+			f[i] = fixits[i].to_native();
+		}
+
+		var l = new Gca.SourceRange[locations.length];
+
+		for (var i = 0; i < locations.length; ++i)
+		{
+			l[i] = locations[i].to_native();
+		}
+
+		return new Gca.Diagnostic((Gca.Diagnostic.Severity)severity, l, f, message);
+	}
 }
 
 [DBus(name = "org.gnome.CodeAssist.Service")]
-public interface Service : Object
+interface Service : Object
 {
-	public abstract ObjectPath parse(string appid, string path, int64 cursor, UnsavedDocument[]? unsaved, HashTable<string, Variant>? options) throws IOError;
-	public abstract void dispose(string appid, string path) throws IOError;
-	public abstract string[] supported_services() throws IOError;
+	public abstract async ObjectPath parse(string                     appid,
+	                                       string                     path,
+	                                       int64                      cursor,
+	                                       UnsavedDocument[]          unsaved,
+	                                       HashTable<string, Variant> options) throws IOError;
+
+	public abstract async void dispose(string appid,
+	                                   string path) throws IOError;
+
+	public abstract async string[] supported_services() throws IOError;
 }
 
 [DBus(name = "org.gnome.CodeAssist.Document")]
-public interface Document : Object
+interface Document : Object
 {
-	public abstract string[] paths(int64[] ids) throws IOError;
+	public abstract async string[] paths(int64[] ids) throws IOError;
 }
 
 [DBus(name = "org.gnome.CodeAssist.Diagnostics")]
-public interface Diagnostics : Object
+interface Diagnostics : Object
 {
-	public abstract Diagnostic[] diagnostics() throws IOError;
+	public abstract async Diagnostic[] diagnostics() throws IOError;
 }
 
 }
+
+/* vi:ex:ts=4 */

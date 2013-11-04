@@ -20,58 +20,42 @@
 namespace Gca
 {
 
-public class SourceRange : Object, SourceRangeSupport
+struct SourceRange
 {
-	private SourceLocation d_start;
-	private SourceLocation d_end;
+	public SourceLocation start;
+	public SourceLocation end;
 
-	public SourceRange(SourceLocation start, SourceLocation end)
+	public static SourceRange from_iter(Gtk.TextIter iter)
 	{
-		d_start = start;
-		d_end = end;
-	}
+		var loc = SourceLocation.from_iter(iter);
 
-	public SourceRange? range
-	{
-		owned get { return this; }
-	}
-
-	public SourceRange[] ranges
-	{
-		owned get { return new SourceRange[] {this}; }
-	}
-
-	public SourceLocation start
-	{
-		get { return d_start; }
-	}
-
-	public SourceLocation end
-	{
-		get { return d_end; }
+		return SourceRange() {
+			start = loc,
+			end = loc
+		};
 	}
 
 	public int compare_to(SourceRange other)
 	{
-		int st = d_start.compare_to(other.d_start);
+		int st = start.compare_to(other.start);
 
-		if (st != 0)
+		if (st == 0)
 		{
-			return st;
+			st = other.end.compare_to(end);
 		}
 
-		return other.d_end.compare_to(d_end);
+		return st;
 	}
 
-	public bool get_iters(Gtk.TextBuffer buffer,
+	public bool get_iters(Gtk.TextBuffer   buffer,
 	                      out Gtk.TextIter start,
 	                      out Gtk.TextIter end)
 	{
 		bool rets;
 		bool rete;
 
-		rets = d_start.get_iter(buffer, out start);
-		rete = d_end.get_iter(buffer, out end);
+		rets = this.start.get_iter(buffer, out start);
+		rete = this.end.get_iter(buffer, out end);
 
 		return rets && rete;
 	}
@@ -88,23 +72,23 @@ public class SourceRange : Object, SourceRangeSupport
 
 	public bool contains(int line, int column)
 	{
-		return (d_start.line < line || (d_start.line == line && d_start.column <= column)) &&
-		       (d_end.line > line || (d_end.line == line && d_end.column >= column));
+		return (start.line < line || (start.line == line && start.column <= column)) &&
+		       (end.line > line || (end.line == line && end.column >= column));
 	}
 
 	public bool contains_line(int line)
 	{
-		return d_start.line <= line && d_end.line >= line;
+		return start.line <= line && end.line >= line;
 	}
 
 	public string to_string()
 	{
-		if (d_start.line == d_end.line && d_end.column - d_start.column <= 1)
+		if (start.line == end.line && end.column - start.column <= 1)
 		{
-			return d_start.to_string();
+			return start.to_string();
 		}
 
-		return "%s-%s".printf(d_start.to_string(), d_end.to_string());
+		return "%s-%s".printf(start.to_string(), end.to_string());
 	}
 }
 
