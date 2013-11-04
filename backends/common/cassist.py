@@ -57,11 +57,6 @@ class Severity:
     FATAL = 5
 
 class Diagnostic:
-    severity = Severity.NONE
-    fixits = []
-    locations = []
-    message = ''
-
     def __init__(self, severity=Severity.NONE, fixits=[], locations=[], message=''):
         self.severity = severity
         self.fixits = fixits
