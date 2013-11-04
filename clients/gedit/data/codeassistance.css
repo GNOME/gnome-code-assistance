@@ -4,6 +4,10 @@ GcaDiagnosticMessage
   border-radius: 10px;
 }
 
+GcaDiagnosticMessage GtkLabel {
+  color: @infobar_fg_color;
+}
+
 GcaDiagnosticMessage.warning
 {
   background-image: -gtk-gradient(linear,
