@@ -1,7 +1,8 @@
 /*
  * This file is part of gnome-code-assistance.
  *
- * Copyright (C) 2013 - Jesse van den Kieboom
+ * Copyright (C) 2013 - Melissa Wen <melissa.srw@gmail.com>
+ * Copyright (C) 2013 - Jesse van den Kieboom <jessevdk@gnome.org>
  *
  * gnome-code-assistance is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
