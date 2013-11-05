@@ -294,6 +294,44 @@ color_enable_var("$enable_vala", [enable_vala_msg])
 AM_CONDITIONAL(BACKENDS_VALA_ENABLE, test "x$enable_vala" = "xyes")
 
 
+
+dnl ================================================================
+dnl go backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([go],
+              AS_HELP_STRING([--enable-go],[enable go backend]),
+              [enable_go=$enableval],
+              [enable_go=auto])
+
+AC_MSG_CHECKING([go backend])
+
+if test "x$enable_go" = "xauto"; then
+	AC_PATH_PROG([GO], [go])
+
+	if test "x$GO" = "x"; then
+		enable_go=no
+	else
+		enable_go=yes
+	fi
+
+	AC_MSG_RESULT([$enable_go])
+elif test "x$enable_go" != "xno"; then
+	AC_PATH_PROG([GO], [go])
+
+	if test "x$GO" = "x"; then
+		AC_MSG_ERROR([could not find go compiler])
+	fi
+
+	AC_MSG_RESULT([yes])
+	enable_go=yes
+else
+	AC_MSG_RESULT([no])
+fi
+
+color_enable_var("$enable_go", [enable_go_msg])
+
+AM_CONDITIONAL(BACKENDS_GO_ENABLE, test "x$enable_go" = "xyes")
+
 backendexecdir_unex="$libexecdir/gnome-code-assistance"
 adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
 AC_SUBST(backendexecdir)
@@ -321,6 +359,7 @@ backends/python/python
 backends/xml/org.gnome.CodeAssist.xml.service
 backends/xml/xml
 backends/vala/org.gnome.CodeAssist.vala.service
+backends/go/org.gnome.CodeAssist.go.service
 ])
 
 AC_OUTPUT
@@ -338,6 +377,7 @@ Configuration:
 		python:         $enable_python_msg
 		xml:            $enable_xml_msg
 		vala:           $enable_vala_msg
+		go:             $enable_go_msg
 
 	clients:
 		gedit:          $enable_gedit_msg

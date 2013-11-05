@@ -14,4 +14,8 @@ if BACKENDS_VALA_ENABLE
 include backends/vala/Makefile.am
 endif
 
+if BACKENDS_GO_ENABLE
+include backends/go/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am
