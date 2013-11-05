@@ -17,19 +17,10 @@
 
 from gi.repository import GObject
 
-import dbus
-import dbus.service
-import dbus.mainloop.glib
+import dbus, dbus.service, dbus.mainloop.glib
+import inspect
 
-from codeassist.common import cassist
-
-class App:
-    id = 0
-    name = ''
-
-    docs = {}
-    ids = {}
-    nextid = 0
+from gnome.codeassistance import types
 
 class Document(dbus.service.Object):
     interface = 'org.gnome.CodeAssist.Document'
@@ -55,19 +46,52 @@ class Diagnostics(dbus.service.Object):
 
 DocumentInterfaces = [Document, Diagnostics]
 
-class Service(dbus.service.Object):
+class Service:
+    def __init__(self, id, name, document):
+        self.id = id
+        self.document = document
+
+    def data_path(self, path, unsaved):
+        for u in unsaved:
+            if u.path == path:
+                return u.data_path
+
+        return path
+
+class Server(dbus.service.Object):
     apps = {}
     nextid = 0
 
-    def __init__(self, service, bus, path):
+    class App:
+        id = 0
+        name = ''
+
+        docs = {}
+        ids = {}
+        nextid = 0
+
+    def __init__(self, bus, path, service, document):
         dbus.service.Object.__init__(self, bus, path)
         self.service = service
+        self.document = document
+
+        bus.add_signal_receiver(self.on_name_lost,
+                                signal_name='NameOwnerChanged',
+                                dbus_interface='org.freedesktop.DBus',
+                                path='/org/freedesktop/DBus')
+
+    def on_name_lost(self, name, oldowner, newowner):
+        if newowner == '' and oldowner in self.apps:
+            app = self.apps[oldowner]
+            self.dispose(app)
 
     def app(self, appid):
         if not appid in self.apps:
-            app = App()
+            app = Server.App()
+
             app.id = self.nextid
             app.name = appid
+            app.service = self.service(id, appid, self.document)
 
             self.apps[appid] = app
             self.nextid += 1
@@ -79,27 +103,29 @@ class Service(dbus.service.Object):
     @dbus.service.method('org.gnome.CodeAssist.Service',
                          in_signature='', out_signature='as')
     def SupportedServices(self):
-        doc = self.service.document()
         ret = []
 
+        bases = inspect.getmro(self.document)
+
         for i in DocumentInterfaces:
-            if isinstance(doc, i):
+            if i in bases:
                 ret.append(i.interface)
 
         return ret
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
-                         in_signature='ssta(ss)a{sv}', out_signature='o')
-    def Parse(self, appid, path, cursor, unsaved, options):
-        app = self.app(appid)
+                         in_signature='sta(ss)a{sv}', out_signature='o',
+                         sender_keyword='sender')
+    def Parse(self, path, cursor, unsaved, options, sender=None):
+        app = self.app(sender)
         doc = None
 
         if path in app.ids:
             doc = app.docs[app.ids[path]]
 
-        unsaved = [cassist.UnsavedDocument(u[0], u[1]) for u in unsaved]
+        unsaved = [types.UnsavedDocument(u[0], u[1]) for u in unsaved]
 
-        doc = self.service.parse(appid, path, cursor, unsaved, options, doc)
+        doc = app.service.parse(path, cursor, unsaved, options, doc)
 
         if not path in app.ids:
             doc.add_to_connection(self._connection, self._object_path + '/' + str(app.id) + '/documents/' + str(app.nextid))
@@ -111,40 +137,51 @@ class Service(dbus.service.Object):
 
         return doc._object_path
 
-    @dbus.service.method('org.gnome.CodeAssist.Service',
-                         in_signature='ss', out_signature='')
-    def Dispose(self, appid, path):
-        self.service.dispose(appid, path)
-
-        if appid in self.apps:
-            app = self.apps[appid]
-
+    def dispose(self, app, path=None):
+        if path is None:
+            path = list(app.ids)
+        else:
             if path in app.ids:
-                id = app.ids[path]
-                doc = app.docs[id]
+                path = [path]
+            else:
+                return
 
-                doc.remove_from_connection()
+        for p in path:
+            app.service.dispose(path)
 
-                del app.docs[id]
-                del app.ids[path]
+            id = app.ids[p]
+            doc = app.docs[id]
 
-                if len(app.ids) == 0:
-                    del self.apps[appid]
+            doc.remove_from_connection()
+
+            del app.docs[id]
+            del app.ids[p]
+
+            if len(app.ids) == 0:
+                del self.apps[app.name]
+
+    @dbus.service.method('org.gnome.CodeAssist.Service',
+                         in_signature='s', out_signature='',
+                         sender_keyword='sender')
+    def Dispose(self, path, sender=None):
+        if sender in self.apps:
+            app = self.apps[sender]
+            self.dispose(app, path)
 
 class Transport():
-    def __init__(self, service):
+    def __init__(self, service, document):
+        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
         name = 'org.gnome.CodeAssist.' + service.language
         path = '/org/gnome/CodeAssist/' + service.language
 
         bus = dbus.SessionBus()
 
         self.name = dbus.service.BusName(name, bus)
-        self.service = Service(service, bus, path)
+        self.server = Server(bus, path, service, document)
 
     def run(self):
         ml = GObject.MainLoop()
         ml.run()
-
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 # ex:ts=4:et:

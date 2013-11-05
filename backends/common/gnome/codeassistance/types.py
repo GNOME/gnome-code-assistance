@@ -15,13 +15,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-class Service:
-    def __init__(self, documentcls):
-        self._documentcls = documentcls
-
-    def document(self):
-        return self._documentcls()
-
 class UnsavedDocument:
     def __init__(self, path='', data_path=''):
         self.path = path
@@ -31,6 +24,9 @@ class SourceLocation:
     def __init__(self, line=0, column=0):
         self.line = line
         self.column = column
+
+    def to_range(self, file=0):
+        return SourceRange(file, self)
 
     def to_tuple(self):
         return (self.line, self.column)
@@ -45,6 +41,9 @@ class SourceRange:
 
         self.end = end
 
+    def to_range(self):
+        return self
+
     def to_tuple(self):
         return (self.file, self.start.to_tuple(), self.end.to_tuple())
 
@@ -55,15 +54,15 @@ class Fixit:
     def to_tuple(self):
         return (self.location.to_tuple(), self.replacement)
 
-class Severity:
-    NONE = 0
-    INFO = 1
-    WARNING = 2
-    DEPRECATED = 3
-    ERROR = 4
-    FATAL = 5
-
 class Diagnostic:
+    class Severity:
+        NONE = 0
+        INFO = 1
+        WARNING = 2
+        DEPRECATED = 3
+        ERROR = 4
+        FATAL = 5
+
     def __init__(self, severity=Severity.NONE, fixits=[], locations=[], message=''):
         self.severity = severity
         self.fixits = fixits

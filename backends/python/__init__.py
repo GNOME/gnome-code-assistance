@@ -17,16 +17,13 @@
 
 import ast
 
-from codeassist.common import cassist
+from gnome.codeassistance import transport, types
 
-class Service(cassist.Service):
+class Service(transport.Service):
     language = 'python'
 
-    def parse(self, appid, path, cursor, unsaved, options, doc):
-        for u in unsaved:
-            if u.path == path:
-                path = u.data_path
-                break
+    def parse(self, path, cursor, unsaved, options, doc):
+        path = self.data_path(path, unsaved)
 
         errors = []
         ret = None
@@ -37,7 +34,10 @@ class Service(cassist.Service):
 
             ret = ast.parse(source, path)
         except SyntaxError as e:
-            errors = [e]
+            loc = types.SourceLocation(line=e.lineno, column=e.offset)
+            severity = types.Diagnostic.Severity.ERROR
+
+            errors = [types.Diagnostic(severity=severity, locations=[loc.to_range()], message=e.msg)]
 
         if doc is None:
             doc = self.document()
@@ -47,33 +47,23 @@ class Service(cassist.Service):
 
         return doc
 
-    def dispose(self, appid, path):
+    def dispose(self, path):
         pass
 
+class Document(transport.Document, transport.Diagnostics):
+    ast = None
+    errors = None
+    path = None
+
+    def paths(self, ids):
+        myids = {0: self.path}
+        return [myids[id] for id in ids]
+
+    def diagnostics(self):
+        return self.errors
+
 def run():
-    from codeassist.common import app
-
-    transport = app.transport(Service)
-
-    class Document(transport.Document, transport.Diagnostics):
-        ast = None
-        errors = None
-        path = None
-
-        def paths(self, ids):
-            myids = {0: self.path}
-            return [myids[id] for id in ids]
-
-        def diagnostics(self):
-            ret = []
-
-            for e in self.errors:
-                locations = [cassist.SourceRange(start=cassist.SourceLocation(line=e.lineno, column=e.offset))]
-                ret.append(cassist.Diagnostic(severity=cassist.Severity.ERROR, message=e.msg, locations=locations))
-
-            return ret
-
-    transport.Transport(Service(Document)).run()
+    transport.Transport(Service, Document).run()
 
 if __name__ == '__main__':
     run()

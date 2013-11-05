@@ -15,12 +15,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-from codeassist.common import cassist
-
 from lxml import etree
 import os
 
-class Service(cassist.Service):
+from gnome.codeassistance import transport, types
+
+class Service(transport.Service):
     language = 'xml'
 
     def get_schema(self, path, location, schema_text=None):
@@ -70,14 +70,23 @@ class Service(cassist.Service):
             if error.column != 0:
                 column = error.column
 
-            return (line, column, prefix + ": " + error.message)
+            msg = error.message
         else:
             # it is probably a string or an Exception
-            return (line, column, prefix + ": " + str(error))
+            msg = str(error)
+
+        msg = prefix + ': ' + msg
+        loc = types.SourceLocation(line=line, column=column)
+        severity = types.Diagnostic.Severity.ERROR
+
+        return types.Diagnostic(severity=severity, message=msg, locations=[loc.to_range()])
 
     def look_for_schema(self, path, xml):
         """ This function looks through the comment tags for a schema reference
             it returns on the first reference it finds in no particular order """
+
+        if not os.path.isabs(path):
+            return (None, None, None)
 
         for pre in (True, False):
             for comment in xml.itersiblings(tag=etree.Comment, preceding=pre):
@@ -92,23 +101,19 @@ class Service(cassist.Service):
 
         return (None, None, None)
 
-    def parse(self, appid, path, cursor, unsaved, options, doc):
-        for u in unsaved:
-            if u.path == path:
-                path = u.data_path
-                break
-
+    def parse(self, path, cursor, unsaved, options, doc):
+        filename = self.data_path(path, unsaved)
         errors = []
 
         doc_type = 'XML'
         etree.clear_error_log()
 
-        with open(path) as f:
+        with open(filename) as f:
             source = f.read()
 
         try:
             # parse the XML for errors
-            if path != '<unknown>':
+            if os.path.isabs(path):
                 doc_schema = self.get_schema(path, path, source)
                 xml = doc_schema['xml']
 
@@ -178,30 +183,19 @@ class Service(cassist.Service):
     def dispose(self, appid, path):
         pass
 
+class Document(transport.Document, transport.Diagnostics):
+    errors = None
+    path = None
+
+    def paths(self, ids):
+        myids = {0: self.path}
+        return [myids[id] for id in ids]
+
+    def diagnostics(self):
+        return self.errors
+
 def run():
-    from codeassist.common import app
-
-    transport = app.transport(Service)
-
-    class Document(transport.Document, transport.Diagnostics):
-        errors = None
-        path = None
-
-        def paths(self, ids):
-            myids = {0: self.path}
-            return [myids[id] for id in ids]
-
-        def diagnostics(self):
-            ret = []
-
-            for error in self.errors:
-                locations = [cassist.SourceRange(start=cassist.SourceLocation(line=error[0], column=error[1]))]
-
-                ret.append(cassist.Diagnostic(severity=cassist.Severity.ERROR, message=error[2], locations=locations))
-
-            return ret
-
-    transport.Transport(Service(Document)).run()
+    transport.Transport(Service, Document).run()
 
 if __name__ == '__main__':
     run()

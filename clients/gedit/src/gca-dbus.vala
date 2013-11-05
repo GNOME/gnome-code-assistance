@@ -100,14 +100,12 @@ struct Diagnostic
 [DBus(name = "org.gnome.CodeAssist.Service")]
 interface Service : Object
 {
-	public abstract async ObjectPath parse(string                     appid,
-	                                       string                     path,
+	public abstract async ObjectPath parse(string                     path,
 	                                       int64                      cursor,
 	                                       UnsavedDocument[]          unsaved,
 	                                       HashTable<string, Variant> options) throws IOError;
 
-	public abstract async void dispose(string appid,
-	                                   string path) throws IOError;
+	public abstract async void dispose(string path) throws IOError;
 
 	public abstract async string[] supported_services() throws IOError;
 }

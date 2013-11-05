@@ -1,4 +1,4 @@
-xmlbackenddir = $(GCA_BACKENDS_DIR)/codeassist/xml
+xmlbackenddir = $(GCA_PYBACKENDS_DIR)/xml
 xmlbackend_PYTHON = 				\
 	backends/xml/__init__.py
 

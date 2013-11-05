@@ -106,7 +106,7 @@ class Backend : Object
 
 			var options = new HashTable<string, Variant>(str_hash, str_equal);
 
-			d_service.parse.begin("org.gnome.Gedit", path, cursor, unsaved, options, (obj, res) => {
+			d_service.parse.begin(path, cursor, unsaved, options, (obj, res) => {
 				ObjectPath ret;
 
 				try

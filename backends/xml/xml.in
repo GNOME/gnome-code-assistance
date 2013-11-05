@@ -3,5 +3,5 @@
 import sys
 sys.path.insert(0, '@GCA_BACKENDS_DIR_EX@')
 
-import codeassist.xml
-codeassist.xml.run()
+from gnome.codeassistance import xml
+xml.run()
