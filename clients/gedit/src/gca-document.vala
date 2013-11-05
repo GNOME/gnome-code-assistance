@@ -231,7 +231,7 @@ public class Document : Object
 
 		try
 		{
-			yield ostream.write_async((uint8[])d_text);
+			yield ostream.write_async(d_text.data);
 		}
 		catch (IOError e)
 		{
