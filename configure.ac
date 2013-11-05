@@ -119,10 +119,8 @@ AC_ARG_ENABLE([gedit],
 
 GEDIT_MODULES="gedit >= 3.8 gee-0.8"
 
-if test "x$enable_gedit" != "xno"; then
-	AM_PROG_VALAC
-	PKG_PROG_PKG_CONFIG
-fi
+AM_PROG_VALAC
+PKG_PROG_PKG_CONFIG
 
 if test "x$enable_gedit" = "xauto"; then
 	PKG_CHECK_EXISTS([$GEDIT_MODULES],
@@ -250,6 +248,52 @@ AM_CONDITIONAL(BACKENDS_XML_ENABLE, test "x$enable_xml" = "xyes")
 
 
 
+dnl ================================================================
+dnl vala backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([vala],
+              AS_HELP_STRING([--enable-vala],[enable vala backend]),
+              [enable_vala=$enableval],
+              [enable_vala=auto])
+
+AC_MSG_CHECKING([vala backend])
+
+BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 libvala-0.20"
+
+if test "x$enable_vala" = "xauto"; then
+	if test "x$VALAC" = "x"; then
+		AC_MSG_RESULT([no])
+		enable_vala=no
+	else
+		PKG_CHECK_EXISTS([$BACKEND_VALA_MODULES],
+		                 [enable_vala=yes],
+		                 [enable_vala=no])
+
+		AC_MSG_RESULT([$enable_vala])
+	fi
+fi
+
+if test "x$enable_vala" != "xno"; then
+	if test "x$VALAC" = "x"; then
+		AC_MSG_ERROR([Cannot find the "valac" compiler])
+	else
+		PKG_CHECK_MODULES([BACKEND_VALA], $BACKEND_VALA_MODULES)
+
+		AC_SUBST(BACKEND_VALA_CFLAGS)
+		AC_SUBST(BACKEND_VALA_LIBS)
+
+		AC_MSG_RESULT([yes])
+		enable_vala=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+color_enable_var("$enable_vala", [enable_vala_msg])
+
+AM_CONDITIONAL(BACKENDS_VALA_ENABLE, test "x$enable_vala" = "xyes")
+
+
 backendexecdir_unex="$libexecdir/gnome-code-assistance"
 adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
 AC_SUBST(backendexecdir)
@@ -276,6 +320,7 @@ backends/python/org.gnome.CodeAssist.python.service
 backends/python/python
 backends/xml/org.gnome.CodeAssist.xml.service
 backends/xml/xml
+backends/vala/org.gnome.CodeAssist.vala.service
 ])
 
 AC_OUTPUT
@@ -292,6 +337,7 @@ Configuration:
 	backends:
 		python:         $enable_python_msg
 		xml:            $enable_xml_msg
+		vala:           $enable_vala_msg
 
 	clients:
 		gedit:          $enable_gedit_msg

@@ -10,4 +10,8 @@ if BACKENDS_XML_ENABLE
 include backends/xml/Makefile.am
 endif
 
+if BACKENDS_VALA_ENABLE
+include backends/vala/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am
