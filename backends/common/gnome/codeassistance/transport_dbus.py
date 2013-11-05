@@ -15,10 +15,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-from gi.repository import GObject
+from gi.repository import GObject, GLib
 
 import dbus, dbus.service, dbus.mainloop.glib
-import inspect
+import inspect, sys
 
 from gnome.codeassistance import types
 
@@ -85,6 +85,12 @@ class Server(dbus.service.Object):
             app = self.apps[oldowner]
             self.dispose(app)
 
+            if len(self.apps) == 0:
+                GLib.idle_add(self.do_exit)
+
+    def do_exit(self):
+        sys.exit(0)
+
     def app(self, appid):
         if not appid in self.apps:
             app = Server.App()
@@ -101,8 +107,10 @@ class Server(dbus.service.Object):
             return self.apps[appid]
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
-                         in_signature='', out_signature='as')
-    def SupportedServices(self):
+                         in_signature='', out_signature='as',
+                         sender_keyword='sender')
+    def SupportedServices(self, sender=None):
+        app = self.app(sender)
         ret = []
 
         bases = inspect.getmro(self.document)
@@ -147,7 +155,7 @@ class Server(dbus.service.Object):
                 return
 
         for p in path:
-            app.service.dispose(path)
+            app.service.dispose(p)
 
             id = app.ids[p]
             doc = app.docs[id]
@@ -157,8 +165,8 @@ class Server(dbus.service.Object):
             del app.docs[id]
             del app.ids[p]
 
-            if len(app.ids) == 0:
-                del self.apps[app.name]
+        if len(app.ids) == 0:
+            del self.apps[app.name]
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
                          in_signature='s', out_signature='',
