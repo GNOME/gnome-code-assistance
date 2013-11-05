@@ -27,7 +27,8 @@ valabackendservice_DATA = \
 	backends/vala/org.gnome.CodeAssist.vala.service
 
 CLEANFILES +=					\
-	$(backends_vala_vala_SOURCES:.vala=.c)
+	$(backends_vala_vala_SOURCES:.vala=.c)	\
+	backends_vala_vala_vala.stamp
 
 GITIGNOREFILES +=				\
 	backends/vala/$(DEPDIR)			\
