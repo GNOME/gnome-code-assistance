@@ -331,7 +331,7 @@ class Diagnostics : Object
 		{
 			case Diagnostic.Severity.WARNING:
 			case Diagnostic.Severity.DEPRECATED:
-				return "";
+				return warning_mark_category;
 			case Diagnostic.Severity.ERROR:
 			case Diagnostic.Severity.FATAL:
 				return error_mark_category;
