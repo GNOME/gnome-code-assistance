@@ -37,6 +37,13 @@ $2=`(test "x$prefix" = xNONE && prefix="$ac_default_prefix"
      done
      echo "[$]_lcl_receval")`])
 
+AC_DEFUN([color_enable_var],
+[if test "x$1" != "xyes"; then
+	$2="\033@<:@31m$1\033@<:@0m"
+else
+	$2="\033@<:@32m$1\033@<:@0m"
+fi])
+
 #AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [])
 
 #if test "x$LLVM_CONFIG" = "x"; then
@@ -92,6 +99,8 @@ AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--enable-debug],[enable debug build]),
               [enable_debug=$enableval],
               [enable_debug=no])
+
+color_enable_var("$enable_debug", [enable_debug_msg])
 
 AM_CONDITIONAL(ENABLE_DEBUG, test "x$enable_debug" = "xyes")
 
@@ -158,6 +167,8 @@ if test "x$enable_gedit" = "xyes"; then
 	AC_SUBST(GEDIT_LIBS)
 fi
 
+color_enable_var("$enable_gedit", [enable_gedit_msg])
+
 AM_CONDITIONAL(GEDIT_ENABLE, test "x$enable_gedit" = "xyes")
 
 
@@ -198,6 +209,8 @@ else
 	AC_MSG_RESULT([no])
 fi
 
+color_enable_var("$enable_python", [enable_python_msg])
+
 AM_CONDITIONAL(BACKENDS_PYTHON_ENABLE, test "x$enable_python" = "xyes")
 
 
@@ -230,6 +243,8 @@ elif test "x$enable_xml" != "xno"; then
 else
 	AC_MSG_RESULT([no])
 fi
+
+color_enable_var("$enable_xml", [enable_xml_msg])
 
 AM_CONDITIONAL(BACKENDS_XML_ENABLE, test "x$enable_xml" = "xyes")
 
@@ -265,20 +280,20 @@ backends/xml/xml
 
 AC_OUTPUT
 
-echo "
+echo -e "
 
 Configuration:
 
 	prefix:                 ${prefix}
 	source code location:   ${srcdir}
 	compiler:               ${CC}
-	debug:                  $enable_debug
+	debug:                  $enable_debug_msg
 
 	backends:
-		python:         $enable_python
-		xml:            $enable_xml
+		python:         $enable_python_msg
+		xml:            $enable_xml_msg
 
 	clients:
-		gedit:          $enable_gedit
+		gedit:          $enable_gedit_msg
 "
 
