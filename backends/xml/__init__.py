@@ -180,7 +180,7 @@ class Service(transport.Service):
         doc.errors = errors
         return doc
 
-    def dispose(self, appid, path):
+    def dispose(self, path):
         pass
 
 class Document(transport.Document, transport.Diagnostics):
