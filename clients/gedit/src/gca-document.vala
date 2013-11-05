@@ -223,10 +223,23 @@ public class Document : Object
 			return d_unsaved_file.get_path();
 		}
 
+		var orig = path;
+		var idx = orig.last_index_of(".");
+		string filename;
+
+		if (idx != -1)
+		{
+			filename = "gca-unsaved-XXXXXX.%s".printf(orig[idx+1:orig.length]);
+		}
+		else
+		{
+			filename = "gca-unsaved-XXXXXX";
+		}
+
 		FileIOStream stream;
 		File f;
 
-		f = File.new_tmp("gca-unsaved.XXXXXX", out stream);
+		f = File.new_tmp(filename, out stream);
 		var ostream = stream.output_stream;
 
 		try
