@@ -50,7 +50,7 @@ clients_gedit_src_libcodeassistance_la_VALAFLAGS =		\
 	--pkg gca-utils						\
 	--pkg gedit						\
 	--pkg libpeas-1.0					\
-	--target-glib=2.32					\
+	--target-glib=2.36					\
 	--thread
 
 if ENABLE_DEBUG
