@@ -58,12 +58,6 @@ public class Diagnostics : Report
 			column = source.end.column
 		};
 
-		var range = SourceRange() {
-			file = 0,
-			start = start,
-			end = end
-		};
-
 		if (start.compare_to(end) > 0)
 		{
 			var tmp = end;
@@ -71,6 +65,12 @@ public class Diagnostics : Report
 			end = start;
 			start = tmp;
 		}
+
+		var range = SourceRange() {
+			file = 0,
+			start = start,
+			end = end
+		};
 
 		d_diagnostics += Diagnostic() {
 			severity = severity,
