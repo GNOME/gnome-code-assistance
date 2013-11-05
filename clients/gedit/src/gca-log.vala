@@ -2,7 +2,7 @@ namespace Gca
 {
 	public class Log
 	{
-		private static string Domain = "Gca";
+		const string Domain = "Gca";
 
 		[Diagnostics]
 		[PrintfFormat]
