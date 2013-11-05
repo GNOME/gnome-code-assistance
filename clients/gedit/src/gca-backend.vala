@@ -89,7 +89,11 @@ class Backend : Object
 						path = doc.path,
 						data_path = dp
 					};
-				} catch {}
+				}
+				catch (Error e)
+				{
+					Log.debug("Failed to get unsaved document: %s", e.message);
+				}
 			}
 		}
 
