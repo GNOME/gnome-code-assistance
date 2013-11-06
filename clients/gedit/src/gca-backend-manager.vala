@@ -25,6 +25,18 @@ class BackendManager
 	private static BackendManager s_instance;
 	private Gee.HashMap<string, Backend?> d_backends;
 
+	private static Gee.HashMap<string, string> s_languageMapping;
+
+	static construct
+	{
+		// TODO: use gsettings to make this user configurable
+		s_languageMapping = new Gee.HashMap<string, string>();
+
+		s_languageMapping["cpp"] = "c";
+		s_languageMapping["objc"] = "c";
+		s_languageMapping["chdr"] = "c";
+	}
+
 	private BackendManager()
 	{
 		d_backends = new Gee.HashMap<string, Backend?>();
@@ -32,16 +44,23 @@ class BackendManager
 
 	public async Backend? backend(string language)
 	{
-		if (d_backends.has_key(language))
+		var lang = language;
+
+		if (s_languageMapping.has_key(language))
 		{
-			return d_backends[language];
+			lang = s_languageMapping[language];
+		}
+
+		if (d_backends.has_key(lang))
+		{
+			return d_backends[lang];
 		}
 
 		Backend? backend;
 
 		try
 		{
-			backend = yield Backend.create(language);
+			backend = yield Backend.create(lang);
 		}
 		catch (IOError e)
 		{
@@ -49,7 +68,7 @@ class BackendManager
 			backend = null;
 		}
 
-		d_backends[language] = backend;
+		d_backends[lang] = backend;
 		return backend;
 	}
 
