@@ -1,4 +1,5 @@
-# gnome code assistance python backend
+# gnome code assistance xml backend
+# Copyright (C) 2012  Jono Finger <jono@foodnotblogs.com>
 # Copyright (C) 2013  Jesse van den Kieboom <jessevdk@gnome.org>
 #
 # This program is free software; you can redistribute it and/or modify
