@@ -20,10 +20,16 @@ class UnsavedDocument:
         self.path = path
         self.data_path = data_path
 
+    def __repr__(self):
+        return '<UnsavedDocument: {0}, {1}>'.format(self.path, self.data_path)
+
 class SourceLocation:
     def __init__(self, line=0, column=0):
         self.line = line
         self.column = column
+
+    def __repr__(self):
+        return '{0}.{1}'.format(self.line, self.column)
 
     def to_range(self, file=0):
         return SourceRange(file, self)
@@ -41,6 +47,9 @@ class SourceRange:
 
         self.end = end
 
+    def __repr__(self):
+        return '{0}-{1}'.format(self.start, self.end)
+
     def to_range(self):
         return self
 
@@ -51,6 +60,9 @@ class Fixit:
     def __init__(self, location=SourceRange(), replacement=''):
         self.location = location
         self.replacement = replacement
+
+    def __repr__(self):
+        return '<Fixit: {0}: {1}>'.format(self.location, self.replacement)
 
     def to_tuple(self):
         return (self.location.to_tuple(), self.replacement)
@@ -69,6 +81,9 @@ class Diagnostic:
         self.fixits = fixits
         self.locations = locations
         self.message = message
+
+    def __repr__(self):
+        return '<Diagnostic: {0}, {1}, {2}, {3}>'.format(self.severity, self.fixits, self.locations, self.message)
 
     def to_tuple(self):
         return (self.severity, [f.to_tuple() for f in self.fixits], [l.to_tuple() for l in self.locations], self.message)
