@@ -46,7 +46,7 @@ class Service(transport.Service):
 
         return doc
 
-    def dispose(self, path):
+    def dispose(self, doc):
         pass
 
 class Document(transport.Document, transport.Diagnostics):

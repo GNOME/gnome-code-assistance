@@ -149,10 +149,10 @@ class Server(dbus.service.Object):
                 return
 
         for p in path:
-            app.service.dispose(p)
-
             id = app.ids[p]
             doc = app.docs[id]
+
+            app.service.dispose(doc)
 
             doc.remove_from_connection()
 
