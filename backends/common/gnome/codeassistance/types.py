@@ -32,7 +32,9 @@ class SourceLocation:
         return '{0}.{1}'.format(self.line, self.column)
 
     def to_range(self, file=0):
-        return SourceRange(file, self)
+        start = SourceLocation(line=self.line, column=self.column)
+        end = SourceLocation(line=self.line, column=self.column + 1)
+        return SourceRange(file=file, start=start, end=end)
 
     def to_tuple(self):
         return (self.line, self.column)
