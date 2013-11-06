@@ -18,7 +18,7 @@
 from gi.repository import GObject, GLib
 
 import dbus, dbus.service, dbus.mainloop.glib
-import inspect, sys
+import inspect, sys, os
 
 from gnome.codeassistance import types
 
@@ -117,13 +117,15 @@ class Server(dbus.service.Object):
                          in_signature='sta(ss)a{sv}', out_signature='o',
                          sender_keyword='sender')
     def Parse(self, path, cursor, unsaved, options, sender=None):
+        path = os.path.normpath(path)
+
         app = self.app(sender)
         doc = None
 
         if path in app.ids:
             doc = app.docs[app.ids[path]]
 
-        unsaved = [types.UnsavedDocument(u[0], u[1]) for u in unsaved]
+        unsaved = [types.UnsavedDocument(os.path.normpath(u[0]), os.path.normpath(u[1])) for u in unsaved]
 
         doc = app.service.parse(path, cursor, unsaved, options, doc)
 
@@ -164,6 +166,8 @@ class Server(dbus.service.Object):
                          in_signature='s', out_signature='',
                          sender_keyword='sender')
     def Dispose(self, path, sender=None):
+        path = os.path.normpath(path)
+
         if sender in self.apps:
             app = self.apps[sender]
             self.dispose(app, path)
