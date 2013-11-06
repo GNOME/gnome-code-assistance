@@ -42,7 +42,6 @@ class Service(transport.Service):
         if doc is None:
             doc = self.document()
 
-        doc.ast = ret
         doc.errors = errors
 
         return doc
@@ -51,7 +50,6 @@ class Service(transport.Service):
         pass
 
 class Document(transport.Document, transport.Diagnostics):
-    ast = None
     errors = None
 
     def diagnostics(self):
