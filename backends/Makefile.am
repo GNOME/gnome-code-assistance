@@ -18,4 +18,8 @@ if BACKENDS_GO_ENABLE
 include backends/go/Makefile.am
 endif
 
+if BACKENDS_C_ENABLE
+include backends/c/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am

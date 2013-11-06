@@ -44,57 +44,6 @@ else
 	$2="\033@<:@32m$1\033@<:@0m"
 fi])
 
-#AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [])
-
-#if test "x$LLVM_CONFIG" = "x"; then
-#	clang_enabled=no
-#	AC_MSG_WARN([could not find llvm-config])
-#else
-#	dnl find out the libdir of llvm
-#	LLVM_LIBS=$($LLVM_CONFIG --ldflags)
-#	LLVM_CFLAGS=$($LLVM_CONFIG --cflags)
-
-#	dnl ================================================================
-#	dnl Find clang headers and lib
-#	dnl ================================================================
-#	OLDCFLAGS="$CFLAGS"
-#	OLDLDFLAGS="$LDFLAGS"
-
-#	CFLAGS="$OLDCFLAGS $LLVM_CFLAGS"
-#	LDFLAGS="$OLDLDFLAGS $LLVM_LIBS"
-
-#	AC_CHECK_LIB([clang],
-#	             [clang_createIndex],
-#	             [LLVM_LIBS="$LLVM_LIBS -lclang"
-#	              clang_enabled="yes"],
-#	             [AC_MSG_WARN([could not find clang library])
-#	              clang_enabled="no"])
-
-#	if test "x$clang_enabled" = "xyes"; then
-#		AC_CHECK_HEADER([clang-c/Index.h],
-#		                [],
-#		                [AC_MSG_WARN([could not find clang header Index.h])
-#		                 clang_enabled="no"])
-#	fi
-
-#	if test "x$clang_enabled" = "xyes"; then
-#		LLVM_LIBS="$LLVM_LIBS -lclang"
-#	fi
-
-#	AC_SUBST(LLVM_CFLAGS)
-#	AC_SUBST(LLVM_LIBS)
-
-#	CFLAGS="$OLDCFLAGS"
-#	LDFLAGS="$OLDLDFLAGS"
-
-#	LLVM_VERSION=$($LLVM_CONFIG --version)
-#	AC_DEFINE_UNQUOTED([LLVM_VERSION], "$LLVM_VERSION", [LLVM version])
-
-#	AC_SUBST(LLVM_VERSION)
-#fi
-
-#AM_CONDITIONAL(CLANG_ENABLED, test "x$clang_enabled" = "xyes")
-
 AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--enable-debug],[enable debug build]),
               [enable_debug=$enableval],
@@ -176,6 +125,51 @@ dnl python support
 dnl ================================================================
 AM_CONDITIONAL(PYTHON_ENABLE, test "x$PYTHON" != "x")
 
+
+
+dnl ================================================================
+dnl c backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([c],
+              AS_HELP_STRING([--enable-c],[enable c backend]),
+              [enable_c=$enableval],
+              [enable_c=auto])
+
+AC_MSG_CHECKING([c backend])
+
+if test "x$enable_c" = "xauto"; then
+	AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+
+	if test "x$PYTHON" = "x" || test "x$LLVM_CONFIG" = "x"; then
+		AC_MSG_RESULT([no])
+		enable_c=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_c=yes
+	fi
+elif test "x$enable_c" != "xno"; then
+	AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+
+	if test "x$LLVM_CONFIG" = "x"; then
+		AC_MSG_ERROR([llvm-config not found])
+	elif test "x$PYTHON" = "x"; then
+		AC_MSG_ERROR([python not found])
+	else
+		AC_MSG_RESULT([yes])
+		enable_c=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+if test "x$enable_c" = "xyes"; then
+llvm_libdir=`$LLVM_CONFIG --libdir`
+AC_SUBST(llvm_libdir)
+fi
+
+color_enable_var("$enable_c", [enable_c_msg])
+
+AM_CONDITIONAL(BACKENDS_C_ENABLE, test "x$enable_c" = "xyes")
 
 
 dnl ================================================================
@@ -354,6 +348,9 @@ AC_SUBST(GCA_PYBACKENDS_DIR_EX)
 AC_CONFIG_FILES([
 Makefile
 clients/gedit/data/codeassistance.plugin
+backends/c/org.gnome.CodeAssist.c.service
+backends/c/config.py
+backends/c/c
 backends/python/org.gnome.CodeAssist.python.service
 backends/python/python
 backends/xml/org.gnome.CodeAssist.xml.service
@@ -374,6 +371,7 @@ Configuration:
 	debug:                  $enable_debug_msg
 
 	backends:
+		c:              $enable_c_msg
 		python:         $enable_python_msg
 		xml:            $enable_xml_msg
 		vala:           $enable_vala_msg
