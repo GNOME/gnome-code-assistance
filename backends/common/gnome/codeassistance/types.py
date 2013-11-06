@@ -48,8 +48,9 @@ class SourceRange:
         return (self.file, self.start.to_tuple(), self.end.to_tuple())
 
 class Fixit:
-    location = SourceRange()
-    replacement = ''
+    def __init__(self, location=SourceRange(), replacement=''):
+        self.location = location
+        self.replacement = replacement
 
     def to_tuple(self):
         return (self.location.to_tuple(), self.replacement)
