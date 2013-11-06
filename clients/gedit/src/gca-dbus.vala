@@ -113,7 +113,6 @@ interface Service : Object
 [DBus(name = "org.gnome.CodeAssist.Document")]
 interface Document : Object
 {
-	public abstract async string[] paths(int64[] ids) throws IOError;
 }
 
 [DBus(name = "org.gnome.CodeAssist.Diagnostics")]

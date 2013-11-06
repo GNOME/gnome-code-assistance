@@ -29,11 +29,6 @@ public class Document : Object
 	{
 		d_document = document;
 	}
-
-	public string[] paths(int64[] ids)
-	{
-		return d_document.paths(ids);
-	}
 }
 
 [DBus (name = "org.gnome.CodeAssist.Diagnostics")]

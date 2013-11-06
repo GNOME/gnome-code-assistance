@@ -53,11 +53,6 @@ class Service(transport.Service):
 class Document(transport.Document, transport.Diagnostics):
     ast = None
     errors = None
-    path = None
-
-    def paths(self, ids):
-        myids = {0: self.path}
-        return [myids[id] for id in ids]
 
     def diagnostics(self):
         return self.errors

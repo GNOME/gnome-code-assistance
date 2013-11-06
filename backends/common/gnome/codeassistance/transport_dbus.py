@@ -25,14 +25,6 @@ from gnome.codeassistance import types
 class Document(dbus.service.Object):
     interface = 'org.gnome.CodeAssist.Document'
 
-    def paths(self, ids):
-        return []
-
-    @dbus.service.method(interface,
-                         in_signature='ax', out_signature='as')
-    def Paths(self, ids):
-        return self.paths(ids)
-
 class Diagnostics(dbus.service.Object):
     interface = 'org.gnome.CodeAssist.Diagnostics'
 
