@@ -39,6 +39,9 @@ class Diagnostics(dbus.service.Object):
 DocumentInterfaces = [Document, Diagnostics]
 
 class Service:
+    language = None
+    services = []
+
     def __init__(self, id, name, document):
         self.id = id
         self.document = document
@@ -111,6 +114,7 @@ class Server(dbus.service.Object):
             if i in bases:
                 ret.append(i.interface)
 
+        ret += self.service.services
         return ret
 
     @dbus.service.method('org.gnome.CodeAssist.Service',

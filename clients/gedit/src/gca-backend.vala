@@ -70,30 +70,54 @@ class Backend : Object
 		d_views.remove(view);
 	}
 
-	private async DBus.UnsavedDocument[] unsaved_documents()
+	private async DBus.UnsavedDocument? unsaved_document(View v)
 	{
+		var doc = v.document;
+
+		if (doc.is_modified)
+		{
+			try
+			{
+				var dp = yield doc.unsaved_data_path();
+
+				return DBus.UnsavedDocument() {
+					path = doc.path,
+					data_path = dp
+				};
+			}
+			catch (Error e)
+			{
+				Log.debug("Failed to get unsaved document: %s", e.message);
+			}
+		}
+
+		return null;
+	}
+
+	private async DBus.UnsavedDocument[] unsaved_documents(View primary)
+	{
+		if ((d_supported_services & RemoteServices.MULTI_DOC) == 0)
+		{
+			var unsaved = yield unsaved_document(primary);
+
+			if (unsaved == null)
+			{
+				return new DBus.UnsavedDocument[0];
+			}
+
+			return new DBus.UnsavedDocument[] {unsaved};
+		}
+
 		var unsaved = new DBus.UnsavedDocument[d_views.size];
 		unsaved.length = 0;
 
 		foreach (var v in d_views)
 		{
-			var doc = v.document;
+			var u = yield unsaved_document(v);
 
-			if (doc.is_modified)
+			if (u != null)
 			{
-				try
-				{
-					var dp = yield doc.unsaved_data_path();
-
-					unsaved += DBus.UnsavedDocument() {
-						path = doc.path,
-						data_path = dp
-					};
-				}
-				catch (Error e)
-				{
-					Log.debug("Failed to get unsaved document: %s", e.message);
-				}
+				unsaved += u;
 			}
 		}
 
@@ -102,7 +126,7 @@ class Backend : Object
 
 	private void parse(View view)
 	{
-		unsaved_documents.begin((obj, res) => {
+		unsaved_documents.begin(view, (obj, res) => {
 			var unsaved = unsaved_documents.end(res);
 
 			var path = view.document.path;

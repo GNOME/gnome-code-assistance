@@ -33,6 +33,9 @@ def config_libclang():
 
 class Service(transport.Service):
     language = 'c'
+    services = [
+        'org.gnome.CodeAssist.MultiDoc'
+    ]
 
     def __init__(self, *args):
         transport.Service.__init__(self, *args)
