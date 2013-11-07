@@ -24,28 +24,47 @@ class BackendManager
 {
 	private static BackendManager s_instance;
 	private Gee.HashMap<string, Backend?> d_backends;
-
 	private Gee.HashMap<string, string> d_language_mapping;
+	private Settings? d_settings;
 
 	private BackendManager()
 	{
 		d_backends = new Gee.HashMap<string, Backend?>();
 
+		d_settings = null;
+
+		var source = SettingsSchemaSource.get_default();
+		var schema = "org.gnome.gedit.plugins.codeassistance";
+
+		if (source.lookup(schema, true) != null)
+		{
+			d_settings = new Settings(schema);
+		}
+
 		update_language_mapping();
 
-		var settings = new Settings("org.gnome.gedit.plugins.codeassistance");
-
-		settings.changed["language-mapping"].connect(() => {
-			update_language_mapping();
-		});
+		if (d_settings != null)
+		{
+			d_settings.changed["language-mapping"].connect(() => {
+				update_language_mapping();
+			});
+		}
 	}
 
 	private void update_language_mapping()
 	{
 		d_language_mapping = new Gee.HashMap<string, string>();
 
-		var settings = new Settings("org.gnome.gedit.plugins.codeassistance");
-		var mapping = settings.get_value("language-mapping");
+		if (d_settings == null)
+		{
+			d_language_mapping["cpp"] = "c";
+			d_language_mapping["chdr"] = "c";
+			d_language_mapping["objc"] = "c";
+
+			return;
+		}
+
+		var mapping = d_settings.get_value("language-mapping");
 
 		if (mapping == null)
 		{
