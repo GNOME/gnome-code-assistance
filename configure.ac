@@ -153,10 +153,10 @@ AC_ARG_ENABLE([c],
               [enable_c=$enableval],
               [enable_c=auto])
 
-AC_MSG_CHECKING([c backend])
-
 if test "x$enable_c" = "xauto"; then
 	AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+
+	AC_MSG_CHECKING([c backend])
 
 	if test "x$PYTHON" = "x" || test "x$LLVM_CONFIG" = "x"; then
 		AC_MSG_RESULT([no])
@@ -168,6 +168,8 @@ if test "x$enable_c" = "xauto"; then
 elif test "x$enable_c" != "xno"; then
 	AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 
+	AC_MSG_CHECKING([c backend])
+
 	if test "x$LLVM_CONFIG" = "x"; then
 		AC_MSG_ERROR([llvm-config not found])
 	elif test "x$PYTHON" = "x"; then
@@ -176,8 +178,6 @@ elif test "x$enable_c" != "xno"; then
 		AC_MSG_RESULT([yes])
 		enable_c=yes
 	fi
-else
-	AC_MSG_RESULT([no])
 fi
 
 if test "x$enable_c" = "xyes"; then
@@ -268,11 +268,11 @@ AC_ARG_ENABLE([vala],
               [enable_vala=$enableval],
               [enable_vala=auto])
 
-AC_MSG_CHECKING([vala backend])
-
 BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 libvala-0.20"
 
 if test "x$enable_vala" = "xauto"; then
+	AC_MSG_CHECKING([vala backend])
+
 	if test "x$VALAC" = "x"; then
 		AC_MSG_RESULT([no])
 		enable_vala=no
@@ -294,11 +294,8 @@ if test "x$enable_vala" != "xno"; then
 		AC_SUBST(BACKEND_VALA_CFLAGS)
 		AC_SUBST(BACKEND_VALA_LIBS)
 
-		AC_MSG_RESULT([yes])
 		enable_vala=yes
 	fi
-else
-	AC_MSG_RESULT([no])
 fi
 
 color_enable_var("$enable_vala", [enable_vala_msg])
@@ -315,8 +312,6 @@ AC_ARG_ENABLE([go],
               [enable_go=$enableval],
               [enable_go=auto])
 
-AC_MSG_CHECKING([go backend])
-
 if test "x$enable_go" = "xauto"; then
 	AC_PATH_PROG([GO], [go])
 
@@ -325,8 +320,6 @@ if test "x$enable_go" = "xauto"; then
 	else
 		enable_go=yes
 	fi
-
-	AC_MSG_RESULT([$enable_go])
 elif test "x$enable_go" != "xno"; then
 	AC_PATH_PROG([GO], [go])
 
@@ -334,10 +327,7 @@ elif test "x$enable_go" != "xno"; then
 		AC_MSG_ERROR([could not find go compiler])
 	fi
 
-	AC_MSG_RESULT([yes])
 	enable_go=yes
-else
-	AC_MSG_RESULT([no])
 fi
 
 color_enable_var("$enable_go", [enable_go_msg])
