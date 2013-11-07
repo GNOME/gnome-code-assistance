@@ -35,6 +35,14 @@ struct SourceRange
 		};
 	}
 
+	public static SourceRange from_dbus(DBus.SourceRange range)
+	{
+		return Gca.SourceRange() {
+			start = SourceLocation.from_dbus(range.start),
+			end = SourceLocation.from_dbus(range.end)
+		};
+	}
+
 	public int compare_to(SourceRange other)
 	{
 		int st = start.compare_to(other.start);

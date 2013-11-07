@@ -59,12 +59,40 @@ class Diagnostic : Object, SourceRangeSupport
 	{
 		public SourceRange range;
 		public string replacement;
+
+		public static Fixit from_dbus(DBus.Fixit fixit)
+		{
+			return Fixit() {
+				range = SourceRange.from_dbus(fixit.location),
+				replacement = fixit.replacement
+			};
+		}
+
 	}
 
 	private SourceRange[] d_location;
 	private Fixit[] d_fixits;
 	private Severity d_severity;
 	private string d_message;
+
+	public Diagnostic.from_dbus(DBus.Diagnostic diagnostic)
+	{
+		var f = new Fixit[fixits.length];
+
+		for (var i = 0; i < diagnostic.fixits.length; ++i)
+		{
+			f[i] = Fixit.from_dbus(diagnostic.fixits[i]);
+		}
+
+		var l = new SourceRange[diagnostic.locations.length];
+
+		for (var i = 0; i < diagnostic.locations.length; ++i)
+		{
+			l[i] = SourceRange.from_dbus(diagnostic.locations[i]);
+		}
+
+		this((Severity)diagnostic.severity, l, f, diagnostic.message);
+	}
 
 	public Diagnostic(Severity       severity,
 	                  SourceRange[]  location,

@@ -36,6 +36,14 @@ struct SourceLocation
 		};
 	}
 
+	public static SourceLocation from_dbus(DBus.SourceLocation location)
+	{
+		return Gca.SourceLocation() {
+			line = (int)location.line,
+			column = (int)location.column
+		};
+	}
+
 	public SourceRange to_range()
 	{
 		return SourceRange() {

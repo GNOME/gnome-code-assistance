@@ -20,81 +20,38 @@
 namespace Gca.DBus
 {
 
-struct UnsavedDocument
+public struct UnsavedDocument
 {
 	public string path;
 	public string data_path;
 }
 
-struct SourceLocation
+public struct SourceLocation
 {
 	public int64 line;
 	public int64 column;
-
-	public Gca.SourceLocation to_native()
-	{
-		return Gca.SourceLocation() {
-			line = (int)line,
-			column = (int)column
-		};
-	}
 }
 
-struct SourceRange
+public struct SourceRange
 {
 	public int64 file;
 
 	public SourceLocation start;
 	public SourceLocation end;
-
-	public Gca.SourceRange to_native()
-	{
-		return Gca.SourceRange() {
-			start = start.to_native(),
-			end = end.to_native()
-		};
-	}
 }
 
-struct Fixit
+public struct Fixit
 {
 	public SourceRange location;
 	public string replacement;
-
-	public Gca.Diagnostic.Fixit to_native()
-	{
-		return Gca.Diagnostic.Fixit() {
-			range = location.to_native(),
-			replacement = replacement
-		};
-	}
 }
 
-struct Diagnostic
+public struct Diagnostic
 {
 	public uint32 severity;
 	public Fixit[] fixits;
 	public SourceRange[] locations;
 	public string message;
-
-	public Gca.Diagnostic to_native()
-	{
-		var f = new Gca.Diagnostic.Fixit[fixits.length];
-
-		for (var i = 0; i < fixits.length; ++i)
-		{
-			f[i] = fixits[i].to_native();
-		}
-
-		var l = new Gca.SourceRange[locations.length];
-
-		for (var i = 0; i < locations.length; ++i)
-		{
-			l[i] = locations[i].to_native();
-		}
-
-		return new Gca.Diagnostic((Gca.Diagnostic.Severity)severity, l, f, message);
-	}
 }
 
 [DBus(name = "org.gnome.CodeAssist.Service")]

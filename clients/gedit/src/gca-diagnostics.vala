@@ -85,7 +85,7 @@ class DiagnosticService : RemoteService, Object
 
 		for (var i = 0; i < ret.length; ++i)
 		{
-			ret[i] = diagnostics[i].to_native();
+			ret[i] = new Diagnostic.from_dbus(diagnostics[i]);
 		}
 
 		return ret;
