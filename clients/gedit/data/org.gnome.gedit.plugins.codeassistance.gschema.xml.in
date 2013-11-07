@@ -1,0 +1,9 @@
+<schemalist>
+  <schema id="org.gnome.gedit.plugins.codeassistance" path="/org/gnome/gedit/plugins/codeassistance/">
+    <key name="language-mapping" type="a{ss}">
+      <default>{'cpp': 'c', 'objc': 'c', 'chdr': 'c'}</default>
+      <summary>Language Mapping</summary>
+      <description>A mapping from language id to backend id</description>
+    </key>
+  </schema>
+</schemalist>

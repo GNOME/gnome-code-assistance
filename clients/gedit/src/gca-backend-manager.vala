@@ -25,30 +25,51 @@ class BackendManager
 	private static BackendManager s_instance;
 	private Gee.HashMap<string, Backend?> d_backends;
 
-	private static Gee.HashMap<string, string> s_languageMapping;
-
-	static construct
-	{
-		// TODO: use gsettings to make this user configurable
-		s_languageMapping = new Gee.HashMap<string, string>();
-
-		s_languageMapping["cpp"] = "c";
-		s_languageMapping["objc"] = "c";
-		s_languageMapping["chdr"] = "c";
-	}
+	private Gee.HashMap<string, string> d_language_mapping;
 
 	private BackendManager()
 	{
 		d_backends = new Gee.HashMap<string, Backend?>();
+
+		update_language_mapping();
+
+		var settings = new Settings("org.gnome.gedit.plugins.codeassistance");
+
+		settings.changed["language-mapping"].connect(() => {
+			update_language_mapping();
+		});
+	}
+
+	private void update_language_mapping()
+	{
+		d_language_mapping = new Gee.HashMap<string, string>();
+
+		var settings = new Settings("org.gnome.gedit.plugins.codeassistance");
+		var mapping = settings.get_value("language-mapping");
+
+		if (mapping == null)
+		{
+			return;
+		}
+
+		var iter = mapping.iterator();
+
+		string key = null;
+		string val = null;
+
+		while (iter.next("{ss}", &key, &val))
+		{
+			d_language_mapping[key] = val;
+		}
 	}
 
 	public async Backend? backend(string language)
 	{
 		var lang = language;
 
-		if (s_languageMapping.has_key(language))
+		if (d_language_mapping.has_key(language))
 		{
-			lang = s_languageMapping[language];
+			lang = d_language_mapping[language];
 		}
 
 		if (d_backends.has_key(lang))

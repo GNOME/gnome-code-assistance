@@ -27,12 +27,16 @@ EXTRA_DIST =
 GITIGNOREFILES =
 GITIGNOREDEPS =
 BUILT_SOURCES =
+DISTCLEANFILES =
+gsettings_SCHEMAS =
 
 if GEDIT_ENABLE
 include clients/gedit/Makefile.am
 endif
 
 include backends/Makefile.am
+
+@GSETTINGS_RULES@
 
 dist-hook-changelog:
 	@if test -d "$(srcdir)/.git"; \

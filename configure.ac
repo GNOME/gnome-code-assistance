@@ -112,6 +112,8 @@ if test "x$enable_gedit" = "xyes"; then
 
 	AC_SUBST(GEDIT_CFLAGS)
 	AC_SUBST(GEDIT_LIBS)
+
+	GLIB_GSETTINGS
 fi
 
 color_enable_var("$enable_gedit", [enable_gedit_msg])
@@ -348,6 +350,7 @@ AC_SUBST(GCA_PYBACKENDS_DIR_EX)
 AC_CONFIG_FILES([
 Makefile
 clients/gedit/data/codeassistance.plugin
+clients/gedit/data/org.gnome.gedit.plugins.codeassistance.gschema.xml
 backends/c/org.gnome.CodeAssist.c.service
 backends/c/config.py
 backends/c/c
