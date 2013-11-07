@@ -121,10 +121,26 @@ color_enable_var("$enable_gedit", [enable_gedit_msg])
 AM_CONDITIONAL(GEDIT_ENABLE, test "x$enable_gedit" = "xyes")
 
 
-
 dnl ================================================================
 dnl python support
 dnl ================================================================
+if test "x$PYTHON" != "x"; then
+	AC_MSG_CHECKING([python dbus])
+	$PYTHON -c 'import dbus' 2>/dev/null
+	if test $? -ne 0 ; then
+		AC_MSG_RESULT([no])
+		PYTHON=
+	else
+		AC_MSG_RESULT([yes])
+	fi
+fi
+
+if test "x$PYTHON" != "x"; then
+	PKG_CHECK_EXISTS([pygobject-3.0],
+	                 [],
+	                 [PYTHON=])
+fi
+
 AM_CONDITIONAL(PYTHON_ENABLE, test "x$PYTHON" != "x")
 
 
