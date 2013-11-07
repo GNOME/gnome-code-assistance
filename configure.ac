@@ -224,6 +224,71 @@ color_enable_var("$enable_python", [enable_python_msg])
 AM_CONDITIONAL(BACKENDS_PYTHON_ENABLE, test "x$enable_python" = "xyes")
 
 
+dnl ================================================================
+dnl ruby support
+dnl ================================================================
+AC_PATH_PROGS([RUBY],[ruby2.0 ruby1.9.3 ruby1.9.2 ruby1.9.1 ruby])
+
+if test "x$RUBY" != "x"; then
+	AC_MSG_CHECKING([ruby dbus])
+	$RUBY -rdbus -e '' 2>/dev/null
+	if test $? -ne 0 ; then
+		AC_MSG_RESULT([no])
+		RUBY=
+	else
+		AC_MSG_RESULT([yes])
+	fi
+fi
+
+AM_CONDITIONAL(RUBY_ENABLE, test "x$RUBY" != "x")
+
+
+
+dnl ================================================================
+dnl ruby backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([ruby],
+              AS_HELP_STRING([--enable-ruby],[enable ruby backend]),
+              [enable_ruby=$enableval],
+              [enable_ruby=auto])
+
+AC_MSG_CHECKING([ruby backend])
+
+ruby_ripper=no
+
+if test "x$RUBY" != "x"; then
+	$RUBY -rripper -e '' 2>/dev/null
+	if test $? -eq 0 ; then
+		ruby_ripper=yes
+	fi
+fi
+
+RUBY_BASE=`basename "$RUBY"`
+AC_SUBST(RUBY_BASE)
+
+if test "x$enable_ruby" = "xauto"; then
+	if test "x$RUBY" = "x" || test "x$ruby_ripper" = "x"; then
+		AC_MSG_RESULT([no (requires ruby 2.0)])
+		enable_ruby=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_ruby=yes
+	fi
+elif test "x$enable_ruby" != "xno"; then
+	if test "x$RUBY" = "x" || test "x$ruby_ripper" = "x"; then
+		AC_MSG_ERROR([no (requires ruby 2.0)])
+	else
+		AC_MSG_RESULT([yes])
+		enable_ruby=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+color_enable_var("$enable_ruby", [enable_ruby_msg])
+
+AM_CONDITIONAL(BACKENDS_RUBY_ENABLE, test "x$enable_ruby" = "xyes")
+
 
 dnl ================================================================
 dnl xml backend configuration
@@ -347,6 +412,8 @@ AC_SUBST(GCA_BACKENDS_DIR)
 adl_RECURSIVE_EVAL("$GCA_BACKENDS_DIR", [GCA_BACKENDS_DIR_EX])
 AC_SUBST(GCA_BACKENDS_DIR_EX)
 
+
+dnl python backends
 GCA_PYBACKENDS_ROOT="$GCA_BACKENDS_DIR/py"
 AC_SUBST(GCA_PYBACKENDS_ROOT)
 
@@ -360,6 +427,20 @@ adl_RECURSIVE_EVAL("$GCA_PYBACKENDS_DIR", [GCA_PYBACKENDS_DIR_EX])
 AC_SUBST(GCA_PYBACKENDS_DIR_EX)
 
 
+dnl ruby backends
+GCA_RBBACKENDS_ROOT="$GCA_BACKENDS_DIR/rb"
+AC_SUBST(GCA_RBBACKENDS_ROOT)
+
+adl_RECURSIVE_EVAL("$GCA_RBBACKENDS_ROOT", [GCA_RBBACKENDS_ROOT_EX])
+AC_SUBST(GCA_RBBACKENDS_ROOT_EX)
+
+GCA_RBBACKENDS_DIR="$GCA_RBBACKENDS_ROOT/gnome/codeassistance"
+AC_SUBST(GCA_RBBACKENDS_DIR)
+
+adl_RECURSIVE_EVAL("$GCA_RBBACKENDS_DIR", [GCA_RBBACKENDS_DIR_EX])
+AC_SUBST(GCA_RBBACKENDS_DIR_EX)
+
+
 AC_CONFIG_FILES([
 Makefile
 clients/gedit/data/codeassistance.plugin
@@ -369,6 +450,8 @@ backends/c/config.py
 backends/c/c
 backends/python/org.gnome.CodeAssist.python.service
 backends/python/python
+backends/ruby/org.gnome.CodeAssist.ruby.service
+backends/ruby/ruby
 backends/xml/org.gnome.CodeAssist.xml.service
 backends/xml/xml
 backends/vala/org.gnome.CodeAssist.vala.service
@@ -392,6 +475,7 @@ Configuration:
 		xml:            $enable_xml_msg
 		vala:           $enable_vala_msg
 		go:             $enable_go_msg
+		ruby:           $enable_ruby_msg
 
 	clients:
 		gedit:          $enable_gedit_msg

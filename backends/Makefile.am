@@ -2,8 +2,16 @@ if PYTHON_ENABLE
 include backends/pycommon/Makefile.am
 endif
 
+if RUBY_ENABLE
+include backends/rbcommon/Makefile.am
+endif
+
 if BACKENDS_PYTHON_ENABLE
 include backends/python/Makefile.am
+endif
+
+if BACKENDS_RUBY_ENABLE
+include backends/ruby/Makefile.am
 endif
 
 if BACKENDS_XML_ENABLE
