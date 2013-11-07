@@ -77,7 +77,7 @@ class Diagnostic : Object, SourceRangeSupport
 
 	public Diagnostic.from_dbus(DBus.Diagnostic diagnostic)
 	{
-		var f = new Fixit[fixits.length];
+		var f = new Fixit[diagnostic.fixits.length];
 
 		for (var i = 0; i < diagnostic.fixits.length; ++i)
 		{
