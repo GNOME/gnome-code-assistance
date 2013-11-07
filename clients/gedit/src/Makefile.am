@@ -42,7 +42,7 @@ clients_gedit_src_libcodeassistance_la_SOURCES =		\
 	clients/gedit/src/gca-utils-c.c
 
 clients_gedit_src_libcodeassistance_la_VALAFLAGS =		\
-	--vapidir $(top_srcdir)/clients/gedit/vapi		\
+	--vapidir $(builddir)/clients/gedit/vapi			\
 	--vapi clients/gedit/src/libcodeassistance.vapi		\
 	--library libcodeassistance				\
 	--pkg gio-unix-2.0					\
