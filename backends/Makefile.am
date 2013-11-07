@@ -1,5 +1,5 @@
 if PYTHON_ENABLE
-include backends/common/Makefile.am
+include backends/pycommon/Makefile.am
 endif
 
 if BACKENDS_PYTHON_ENABLE
