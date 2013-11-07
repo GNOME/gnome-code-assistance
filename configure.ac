@@ -191,39 +191,6 @@ AM_CONDITIONAL(BACKENDS_C_ENABLE, test "x$enable_c" = "xyes")
 
 
 dnl ================================================================
-dnl css backend configuration
-dnl ================================================================
-AC_ARG_ENABLE([css],
-              AS_HELP_STRING([--enable-css],[enable css backend]),
-              [enable_css=$enableval],
-              [enable_css=auto])
-
-AC_MSG_CHECKING([css backend])
-
-if test "x$enable_css" = "xauto"; then
-	if test "x$PYTHON" = "x"; then
-		AC_MSG_RESULT([no])
-		enable_css=no
-	else
-		AC_MSG_RESULT([yes])
-		enable_css=yes
-	fi
-elif test "x$enable_css" != "xno"; then
-	if test "x$PYTHON" = "x"; then
-		AC_MSG_ERROR([python not found])
-	else
-		AC_MSG_RESULT([yes])
-		enable_css=yes
-	fi
-else
-	AC_MSG_RESULT([no])
-fi
-
-color_enable_var("$enable_css", [enable_css_msg])
-
-AM_CONDITIONAL(BACKENDS_CSS_ENABLE, test "x$enable_css" = "xyes")
-
-dnl ================================================================
 dnl python backend configuration
 dnl ================================================================
 AC_ARG_ENABLE([python],
@@ -400,8 +367,6 @@ clients/gedit/data/org.gnome.gedit.plugins.codeassistance.gschema.xml
 backends/c/org.gnome.CodeAssist.c.service
 backends/c/config.py
 backends/c/c
-backends/css/org.gnome.CodeAssist.css.service
-backends/css/css
 backends/python/org.gnome.CodeAssist.python.service
 backends/python/python
 backends/xml/org.gnome.CodeAssist.xml.service
@@ -427,7 +392,6 @@ Configuration:
 		xml:            $enable_xml_msg
 		vala:           $enable_vala_msg
 		go:             $enable_go_msg
-		css:            $enable_css_msg
 
 	clients:
 		gedit:          $enable_gedit_msg

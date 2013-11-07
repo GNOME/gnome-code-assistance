@@ -22,8 +22,4 @@ if BACKENDS_C_ENABLE
 include backends/c/Makefile.am
 endif
 
-if BACKENDS_CSS_ENABLE
-include backends/css/Makefile.am
-endif
-
 GITIGNOREDEPS += backends/Makefile.am
