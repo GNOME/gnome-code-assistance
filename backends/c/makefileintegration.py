@@ -90,7 +90,29 @@ class MakefileIntegration:
         m.add(path, flags)
         return flags
 
-    def _makefile_for(self, path):
+    def _find_subdir_with_path(self, parent, path):
+        dname = os.path.dirname(path)
+        bname = os.path.basename(path)
+
+        for dirname, dirnames, filenames in os.walk(parent):
+            for s in dirnames:
+                tpath = os.path.join(dirname, s, dname)
+
+                if os.path.isdir(tpath):
+                    mf = self._makefile_for(os.path.join(tpath, bname))
+
+                    if not mf is None:
+                        return mf
+
+        return None
+
+    def _subdir_makefile_for(self, path, parent):
+        relpath = os.path.relpath(path, parent)
+
+        # Find subdirectory of parent which contains relpath
+        return self._find_subdir_with_path(parent, relpath)
+
+    def _makefile_for(self, path, tryac=True):
         parent = os.path.dirname(path)
 
         while True:
@@ -98,6 +120,15 @@ class MakefileIntegration:
 
             if os.path.isfile(makefile):
                 return makefile
+
+            if tryac:
+                configureac = os.path.join(parent, 'configure.ac')
+
+                if os.path.isfile(configureac):
+                    ret = self._subdir_makefile_for(path, parent)
+
+                    if not ret is None:
+                        return ret
 
             parent = os.path.dirname(parent)
 
