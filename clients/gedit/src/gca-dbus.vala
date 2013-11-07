@@ -60,11 +60,11 @@ interface Service : Object
 	public abstract async ObjectPath parse(string                     path,
 	                                       int64                      cursor,
 	                                       UnsavedDocument[]          unsaved,
-	                                       HashTable<string, Variant> options) throws IOError;
+	                                       HashTable<string, Variant> options) throws DBusError;
 
-	public abstract async void dispose(string path) throws IOError;
+	public abstract async void dispose(string path) throws DBusError;
 
-	public abstract async string[] supported_services() throws IOError;
+	public abstract async string[] supported_services() throws DBusError;
 }
 
 [DBus(name = "org.gnome.CodeAssist.Document")]
@@ -75,7 +75,7 @@ interface Document : Object
 [DBus(name = "org.gnome.CodeAssist.Diagnostics")]
 interface Diagnostics : Object
 {
-	public abstract async Diagnostic[] diagnostics() throws IOError;
+	public abstract async Diagnostic[] diagnostics() throws DBusError;
 }
 
 }

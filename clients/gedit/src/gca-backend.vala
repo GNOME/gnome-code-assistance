@@ -27,7 +27,7 @@ class Backend : Object
 	private DBus.Service d_service;
 	private RemoteServices d_supported_services;
 
-	public static async Backend create(string language) throws IOError
+	public static async Backend create(string language) throws IOError, DBusError
 	{
 		var name = "org.gnome.CodeAssist." + language;
 		var path = "/org/gnome/CodeAssist/" + language;

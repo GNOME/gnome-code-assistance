@@ -102,7 +102,7 @@ class BackendManager
 		{
 			backend = yield Backend.create(lang);
 		}
-		catch (IOError e)
+		catch (Error e)
 		{
 			Log.debug("Failed to obtain backend: %s\n", e.message);
 			backend = null;

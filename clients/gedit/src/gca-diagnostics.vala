@@ -72,7 +72,7 @@ class DiagnosticService : RemoteService, Object
 				var ret = d_proxy.diagnostics.end(res);
 				d_diagnostics.update(transform(ret));
 			}
-			catch (IOError e)
+			catch (Error e)
 			{
 				Log.debug("Failed to call diagnostics: %s", e.message);
 			}
