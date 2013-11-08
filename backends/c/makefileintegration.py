@@ -232,7 +232,7 @@ class MakefileIntegration:
             return []
 
         try:
-            epos = outstr.index(os.linesep, pos) - 1
+            epos = outstr.index(os.linesep, pos)
         except ValueError:
             epos = len(outstr)
 
