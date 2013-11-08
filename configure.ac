@@ -11,7 +11,6 @@ AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_PROG_LIBTOOL
-
 AM_PATH_PYTHON
 
 AM_INIT_AUTOMAKE([1.11 tar-ustar dist-xz no-dist-gzip -Wno-portability subdir-objects])
@@ -52,74 +51,6 @@ AC_ARG_ENABLE([debug],
 color_enable_var("$enable_debug", [enable_debug_msg])
 
 AM_CONDITIONAL(ENABLE_DEBUG, test "x$enable_debug" = "xyes")
-
-AC_ARG_ENABLE([local],
-              AS_HELP_STRING([--enable-local],[enable local install (in user directory)]),
-              [enable_local=$enableval],
-              [enable_local=no])
-
-dnl ================================================================
-dnl gedit client configuration
-dnl ================================================================
-AC_ARG_ENABLE([gedit],
-              AS_HELP_STRING([--enable-gedit],[enable gedit client]),
-              [enable_gedit=$enableval],
-              [enable_gedit=auto])
-
-GEDIT_MODULES="gedit >= 3.8 gee-0.8"
-
-AM_PROG_VALAC
-PKG_PROG_PKG_CONFIG
-
-if test "x$enable_gedit" = "xauto"; then
-	PKG_CHECK_EXISTS([$GEDIT_MODULES],
-	                 [enable_gedit=yes],
-	                 [enable_gedit=no])
-
-	if test "x$VALAC" = "x"; then
-		enable_gedit=no
-	fi
-fi
-
-if test "x$enable_gedit" = "xyes"; then
-	PKG_CHECK_MODULES([GEDIT], $GEDIT_MODULES)
-
-	if test "x$VALAC" = "x"; then
-		AC_MSG_ERROR([Cannot find the "valac" compiler])
-	fi
-
-	gedit_prefix=`$PKG_CONFIG --variable=prefix gedit`
-
-	GEDIT_GIR_DIR="$gedit_prefix/share/gedit/gir-1.0"
-	AC_SUBST(GEDIT_GIR_DIR)
-
-	GEDIT_API_VERSION=3.0
-	AC_SUBST(GEDIT_API_VERSION)
-
-	if test "x$enable_local" = "xyes"; then
-		geditlibdir="$HOME/.local/share"
-		geditdatadir="$HOME/.local/share"
-	else
-		geditlibdir="${libdir}"
-		geditdatadir="${datadir}"
-	fi
-
-	GEDIT_PLUGIN_DIR="$geditlibdir/gedit/plugins"
-	GEDIT_DATA_DIR="$geditdatadir/gedit/plugins"
-
-	AC_SUBST(GEDIT_PLUGIN_DIR)
-	AC_SUBST(GEDIT_DATA_DIR)
-
-	AC_SUBST(GEDIT_CFLAGS)
-	AC_SUBST(GEDIT_LIBS)
-
-	GLIB_GSETTINGS
-fi
-
-color_enable_var("$enable_gedit", [enable_gedit_msg])
-
-AM_CONDITIONAL(GEDIT_ENABLE, test "x$enable_gedit" = "xyes")
-
 
 dnl ================================================================
 dnl python support
@@ -335,6 +266,10 @@ AC_ARG_ENABLE([vala],
 
 BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 libvala-0.20"
 
+if test "x$enable_vala" != "xno"; then
+	AM_PROG_VALAC
+fi
+
 if test "x$enable_vala" = "xauto"; then
 	AC_MSG_CHECKING([vala backend])
 
@@ -351,6 +286,7 @@ if test "x$enable_vala" = "xauto"; then
 fi
 
 if test "x$enable_vala" != "xno"; then
+	
 	if test "x$VALAC" = "x"; then
 		AC_MSG_ERROR([Cannot find the "valac" compiler])
 	else
@@ -443,8 +379,6 @@ AC_SUBST(GCA_RBBACKENDS_DIR_EX)
 
 AC_CONFIG_FILES([
 Makefile
-clients/gedit/data/codeassistance.plugin
-clients/gedit/data/org.gnome.gedit.plugins.codeassistance.gschema.xml
 backends/c/org.gnome.CodeAssist.c.service
 backends/c/config.py
 backends/c/c
@@ -476,8 +410,5 @@ Configuration:
 		vala:           $enable_vala_msg
 		go:             $enable_go_msg
 		ruby:           $enable_ruby_msg
-
-	clients:
-		gedit:          $enable_gedit_msg
 "
 
