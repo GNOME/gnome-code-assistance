@@ -99,7 +99,7 @@ class MakefileIntegration:
                 tpath = os.path.join(dirname, s, dname)
 
                 if os.path.isdir(tpath):
-                    mf = self._makefile_for(os.path.join(tpath, bname))
+                    mf = self._makefile_for(os.path.join(tpath, bname), False)
 
                     if not mf is None:
                         return mf
