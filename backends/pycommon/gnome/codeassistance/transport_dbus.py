@@ -92,7 +92,7 @@ class Server(dbus.service.Object):
 
             app.id = self.nextid
             app.name = appid
-            app.service = self.service(id, appid, self.document)
+            app.service = self.service(app.id, app.name, self.document)
 
             self.apps[appid] = app
             self.nextid += 1
