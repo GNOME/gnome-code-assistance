@@ -232,5 +232,6 @@ func (s *ServiceDbus) SupportedServices(sender dbus.Sender) ([]string, *dbus.Err
 	return []string{
 		"org.gnome.CodeAssist.Document",
 		"org.gnome.CodeAssist.Diagnostics",
+		"org.gnome.CodeAssist.MultiDoc",
 	}, nil
 }
