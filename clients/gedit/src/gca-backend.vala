@@ -48,7 +48,7 @@ class Backend : Object
 
 		foreach (var s in services)
 		{
-			d_supported_services = RemoteServices.parse(s);
+			d_supported_services |= RemoteServices.parse(s);
 		}
 	}
 
