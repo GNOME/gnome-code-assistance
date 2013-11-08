@@ -272,6 +272,7 @@ class MakefileIntegration:
                     ipath = flag[2:]
                 elif i < len(flags):
                     ipath = flags[i]
+                    i += 1
                 else:
                     continue
 
