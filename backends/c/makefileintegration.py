@@ -286,7 +286,7 @@ class MakefileIntegration:
                 ret.append(flag)
 
                 # Also add the argument if its not embedded
-                if len(flag) == 2 and i < len(flags):
+                if v == 'D' and len(flag) == 2 and i < len(flags):
                     ret.append(flags[i])
                     i += 1
 
