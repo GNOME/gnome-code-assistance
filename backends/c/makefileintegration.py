@@ -201,7 +201,6 @@ class MakefileIntegration:
         if len(targets) == 0:
             return []
 
-        print(targets)
         fakecc = '__GCA_C_COMPILE_FLAGS__'
 
         wd = os.path.dirname(makefile)
