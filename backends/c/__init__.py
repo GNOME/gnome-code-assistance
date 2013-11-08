@@ -98,6 +98,9 @@ class Document(transport.Document, transport.Diagnostics):
         return s.NONE
 
     def _map_csource_location(self, location):
+        if location.file is None:
+            return None
+
         if not os.path.samefile(self.path, location.file.name):
             return None
 
