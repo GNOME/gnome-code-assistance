@@ -34,7 +34,7 @@ enum RemoteServices
 		{
 		case "org.gnome.CodeAssist.Diagnostics":
 			return RemoteServices.DIAGNOSTICS;
-		case "org.gnome.CodeAssist.SEMANTIC_VALUES":
+		case "org.gnome.CodeAssist.SemanticValues":
 			return RemoteServices.SEMANTIC_VALUES;
 		case "org.gnome.CodeAssist.Symbols":
 			return RemoteServices.SYMBOLS;
