@@ -38,4 +38,8 @@ if BACKENDS_JS_ENABLE
 include backends/js/Makefile.am
 endif
 
+if BACKENDS_SH_ENABLE
+include backends/sh/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am

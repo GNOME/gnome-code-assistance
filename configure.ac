@@ -300,7 +300,7 @@ AC_ARG_ENABLE([vala],
               [enable_vala=$enableval],
               [enable_vala=auto])
 
-BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 libvala-0.20"
+BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 libvala-0.22"
 
 if test "x$enable_vala" != "xno"; then
 	AM_PROG_VALAC
@@ -370,6 +370,26 @@ fi
 color_enable_var("$enable_go", [enable_go_msg])
 
 AM_CONDITIONAL(BACKENDS_GO_ENABLE, test "x$enable_go" = "xyes")
+
+
+dnl ================================================================
+dnl shell backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([sh],
+              AS_HELP_STRING([--enable-sh],[enable shell backend]),
+              [enable_sh=$enableval],
+              [enable_sh=yes])
+
+if test "x$enable_sh" != "xno"; then
+	# we assume /bin/sh is always there or we would not be
+	# running this scrip
+	enable_sh=yes
+fi
+
+color_enable_var("$enable_sh", [enable_sh_msg])
+
+AM_CONDITIONAL(BACKENDS_SH_ENABLE, test "x$enable_sh" = "xyes")
+
 
 backendexecdir_unex="$libexecdir/gnome-code-assistance"
 adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
@@ -449,6 +469,8 @@ backends/vala/org.gnome.CodeAssist.vala.service
 backends/go/org.gnome.CodeAssist.go.service
 backends/js/org.gnome.CodeAssist.js.service
 backends/js/js
+backends/sh/org.gnome.CodeAssist.sh.service
+backends/sh/sh
 ])
 
 AC_OUTPUT
@@ -470,5 +492,6 @@ Configuration:
 		go:             $enable_go_msg
 		ruby:           $enable_ruby_msg
 		javascript:     $enable_js_msg
+		shell:          $enable_sh_msg
 "
 
