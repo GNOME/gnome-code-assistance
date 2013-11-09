@@ -225,8 +225,18 @@ Server.prototype = {
         }
     },
 
+    _clean_path: function(path) {
+        if (path.length == 0) {
+            return path;
+        }
+
+        return Gio.file_new_for_path(path).get_path();
+    },
+
     parse: function(app, path, cursor, unsaved, options) {
         var doc = null;
+
+        path = this._clean_path(path);
 
         if (path in app.ids) {
             doc = app.docs[app.ids[path]];
@@ -236,8 +246,8 @@ Server.prototype = {
 
         for (var i = 0; i < unsaved.length; i++) {
             uns.push({
-                path: unsaved[i][0],
-                data_path: unsaved[i][1]
+                path: this._clean_path(unsaved[i][0]),
+                data_path: this._clean_path(unsaved[i][1])
             });
         }
 
@@ -285,6 +295,8 @@ Server.prototype = {
     },
 
     dispose_real: function(app, path) {
+        path = this._clean_path(path);
+
         if (path in app.ids) {
             var id = app.ids[path];
             var doc = app.docs[id];
