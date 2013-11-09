@@ -158,7 +158,7 @@ class MakefileIntegration:
 
         try:
             with open(os.devnull, 'w') as stderr:
-                outstr = subprocess.check_output(args, cwd=wd, stderr=stderr)
+                outstr = str(subprocess.check_output(args, cwd=wd, stderr=stderr), 'utf-8')
         except:
             return []
 
@@ -192,7 +192,7 @@ class MakefileIntegration:
 
                     break
 
-        ret = targets.keys()
+        ret = list(targets.keys())
         ret.sort(key=lambda x: targets[x])
 
         return ret
@@ -222,7 +222,7 @@ class MakefileIntegration:
 
         try:
             with open(os.devnull, 'w') as stderr:
-                outstr = subprocess.check_output(args, cwd=wd, stderr=stderr)
+                outstr = str(subprocess.check_output(args, cwd=wd, stderr=stderr), 'utf-8')
         except:
             return []
 
