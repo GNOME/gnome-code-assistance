@@ -146,21 +146,38 @@ public class Service : Object
 		return d_services[name];
 	}
 
+	private string clean_path(string path)
+	{
+		if (path.length == 0)
+		{
+			return path;
+		}
+
+		return File.new_for_path(path).get_path();
+	}
+
 	public ObjectPath parse(string path, int64 cursor, UnsavedDocument[] unsaved, HashTable<string, Variant> options, GLib.BusName sender)
 	{
 		var a = app(sender);
 		Gca.Backends.Vala.Document? doc = null;
 		Document? ddoc = null;
 
-		if (a.ids.has_key(path))
+		var cpath = clean_path(path);
+
+		for (var i = 0; i < unsaved.length; i++) {
+			unsaved[i].path = clean_path(unsaved[i].path);
+			unsaved[i].data_path = clean_path(unsaved[i].data_path);
+		}
+
+		if (a.ids.has_key(cpath))
 		{
-			ddoc = a.docs[a.ids[path]];
+			ddoc = a.docs[a.ids[cpath]];
 			doc = ddoc.document;
 		}
 
-		doc = a.service.parse(path, cursor, unsaved, options, doc);
+		doc = a.service.parse(cpath, cursor, unsaved, options, doc);
 
-		if (!a.ids.has_key(path))
+		if (!a.ids.has_key(cpath))
 		{
 			ddoc = new Document(doc, a.nextid);
 			ddoc.path = new ObjectPath("/org/gnome/CodeAssist/vala/%u/documents/%u".printf(a.id, ddoc.id));
@@ -175,7 +192,7 @@ public class Service : Object
 				stderr.printf("Failed to register document: %s\n", e.message);
 			}
 
-			a.ids[path] = a.nextid;
+			a.ids[cpath] = a.nextid;
 			a.docs[a.nextid] = ddoc;
 
 			a.nextid++;
@@ -219,15 +236,17 @@ public class Service : Object
 
 	private void dispose_real(App app, string path)
 	{
-		if (app.ids.has_key(path))
+		var cpath = clean_path(path);
+
+		if (app.ids.has_key(cpath))
 		{
-			var id = app.ids[path];
+			var id = app.ids[cpath];
 			var ddoc = app.docs[id];
 
 			dispose_document(app, ddoc);
 
 			app.docs.unset(id);
-			app.ids.unset(path);
+			app.ids.unset(cpath);
 		}
 
 		if (app.ids.size == 0)
