@@ -11,7 +11,11 @@ AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_PROG_LIBTOOL
-AM_PATH_PYTHON
+AM_PATH_PYTHON(3, [python_found=3], [python_found=no])
+
+if test "x$python_found" = "xno"; then
+	AM_PATH_PYTHON(2, [python_found=2])
+fi
 
 AM_INIT_AUTOMAKE([1.11 tar-ustar dist-xz no-dist-gzip -Wno-portability subdir-objects])
 AM_MAINTAINER_MODE([enable])
@@ -55,21 +59,21 @@ AM_CONDITIONAL(ENABLE_DEBUG, test "x$enable_debug" = "xyes")
 dnl ================================================================
 dnl python support
 dnl ================================================================
-if test "x$PYTHON" != "x"; then
+if test "x$python_found" != "xno"; then
 	AC_MSG_CHECKING([python dbus])
 	$PYTHON -c 'import dbus' 2>/dev/null
 	if test $? -ne 0 ; then
 		AC_MSG_RESULT([no])
-		PYTHON=
+		python_found=no
 	else
 		AC_MSG_RESULT([yes])
 	fi
 fi
 
-if test "x$PYTHON" != "x"; then
+if test "x$python_found" != "xno"; then
 	PKG_CHECK_EXISTS([pygobject-3.0],
 	                 [],
-	                 [PYTHON=])
+	                 [python_found=no])
 fi
 
 AM_CONDITIONAL(PYTHON_ENABLE, test "x$PYTHON" != "x")
@@ -89,7 +93,7 @@ if test "x$enable_c" = "xauto"; then
 
 	AC_MSG_CHECKING([c backend])
 
-	if test "x$PYTHON" = "x" || test "x$LLVM_CONFIG" = "x"; then
+	if test "x$python_found" = "xno" || test "x$LLVM_CONFIG" = "x"; then
 		AC_MSG_RESULT([no])
 		enable_c=no
 	else
@@ -103,7 +107,7 @@ elif test "x$enable_c" != "xno"; then
 
 	if test "x$LLVM_CONFIG" = "x"; then
 		AC_MSG_ERROR([llvm-config not found])
-	elif test "x$PYTHON" = "x"; then
+	elif test "x$python_found" = "xno"; then
 		AC_MSG_ERROR([python not found])
 	else
 		AC_MSG_RESULT([yes])
@@ -132,7 +136,7 @@ AC_ARG_ENABLE([python],
 AC_MSG_CHECKING([python backend])
 
 if test "x$enable_python" = "xauto"; then
-	if test "x$PYTHON" = "x"; then
+	if test "x$python_found" = "xno"; then
 		AC_MSG_RESULT([no])
 		enable_python=no
 	else
@@ -140,7 +144,7 @@ if test "x$enable_python" = "xauto"; then
 		enable_python=yes
 	fi
 elif test "x$enable_python" != "xno"; then
-	if test "x$PYTHON" = "x"; then
+	if test "x$python_found" = "xno"; then
 		AC_MSG_ERROR([python not found])
 	else
 		AC_MSG_RESULT([yes])
@@ -264,7 +268,7 @@ AC_ARG_ENABLE([xml],
 AC_MSG_CHECKING([xml backend])
 
 if test "x$enable_xml" = "xauto"; then
-	if test "x$PYTHON" = "x"; then
+	if test "x$python_found" = "xno"; then
 		AC_MSG_RESULT([no])
 		enable_xml=no
 	else
@@ -272,7 +276,7 @@ if test "x$enable_xml" = "xauto"; then
 		enable_xml=yes
 	fi
 elif test "x$enable_xml" != "xno"; then
-	if test "x$PYTHON" = "x"; then
+	if test "x$python_found" = "xno"; then
 		AC_MSG_ERROR([python not found])
 	else
 		AC_MSG_RESULT([yes])
@@ -422,6 +426,13 @@ AC_SUBST(GCA_JSBACKENDS_DIR)
 adl_RECURSIVE_EVAL("$GCA_JSBACKENDS_DIR", [GCA_JSBACKENDS_DIR_EX])
 AC_SUBST(GCA_JSBACKENDS_DIR_EX)
 
+if test "x$python_found" != "xno"; then
+	PYTHON_VERSION_MAJOR=$python_found
+else
+	PYTHON_VERSION_MAJOR=
+fi
+
+AC_SUBST(PYTHON_VERSION_MAJOR)
 
 AC_CONFIG_FILES([
 Makefile
