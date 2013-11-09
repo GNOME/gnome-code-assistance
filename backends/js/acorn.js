@@ -270,7 +270,7 @@
   var _if = {keyword: "if"}, _return = {keyword: "return", beforeExpr: true}, _switch = {keyword: "switch"};
   var _throw = {keyword: "throw", beforeExpr: true}, _try = {keyword: "try"}, _var = {keyword: "var"};
   var _while = {keyword: "while", isLoop: true}, _with = {keyword: "with"}, _new = {keyword: "new", beforeExpr: true};
-  var _this = {keyword: "this"};
+  var _this = {keyword: "this"}, _let = {keyword: "let"}, _const = {keyword: "const"};
 
   // The keywords that denote values.
 
@@ -294,7 +294,8 @@
                       "instanceof": {keyword: "instanceof", binop: 7, beforeExpr: true}, "this": _this,
                       "typeof": {keyword: "typeof", prefix: true, beforeExpr: true},
                       "void": {keyword: "void", prefix: true, beforeExpr: true},
-                      "delete": {keyword: "delete", prefix: true, beforeExpr: true}};
+                      "delete": {keyword: "delete", prefix: true, beforeExpr: true},
+                      "let": _let, "const": _const};
 
   // Punctuation token types. Again, the `type` property is purely for debugging.
 
@@ -408,7 +409,7 @@
 
   // And the keywords.
 
-  var isKeyword = makePredicate("break case catch continue debugger default do else finally for function if return switch throw try var while with null true false instanceof typeof void delete new in this");
+  var isKeyword = makePredicate("break case catch continue debugger default do else finally for function if return switch throw try var while with null true false instanceof typeof void delete new in this let const");
 
   // ## Character categories
 
@@ -1191,10 +1192,10 @@
       labels.push(loopLabel);
       expect(_parenL);
       if (tokType === _semi) return parseFor(node, null);
-      if (tokType === _var) {
+      if (tokType === _var || tokType === _let) {
         var init = startNode();
         next();
-        parseVar(init, true);
+        parseVar(init, true, tokType === _var ? 'var' : 'let');
         finishNode(init, "VariableDeclaration");
         if (init.declarations.length === 1 && eat(_in))
           return parseForIn(node, init);
@@ -1293,7 +1294,26 @@
 
     case _var:
       next();
-      parseVar(node);
+      parseVar(node, false, 'var');
+      semicolon();
+      return finishNode(node, "VariableDeclaration");
+
+    case _let:
+      next();
+      if (eat(_parenL)) {
+        parseLetStatementOrExpression(node);
+        expect(_paranR);
+        semicolon();
+        return finishNode(node, node.type);
+      } else {
+        parseVar(node, false, 'let');
+        semicolon();
+        return finishNode(node, "VariableDeclaration");
+      }
+
+    case _const:
+      next();
+      parseVar(node, false, 'const');
       semicolon();
       return finishNode(node, "VariableDeclaration");
 
@@ -1404,18 +1424,37 @@
 
   // Parse a list of variable declarations.
 
-  function parseVar(node, noIn) {
-    node.declarations = [];
-    node.kind = "var";
+  function parseVarDecl(decls, noIn) {
     for (;;) {
       var decl = startNode();
       decl.id = parseIdent();
       if (strict && isStrictBadIdWord(decl.id.name))
         raise(decl.id.start, "Binding " + decl.id.name + " in strict mode");
       decl.init = eat(_eq) ? parseExpression(true, noIn) : null;
-      node.declarations.push(finishNode(decl, "VariableDeclarator"));
+      decls.push(finishNode(decl, "VariableDeclarator"));
       if (!eat(_comma)) break;
     }
+  }
+
+  function parseVar(node, noIn, varkind) {
+    node.declarations = [];
+    node.kind = varkind;
+    parseVarDecl(node.declarations, noIn);
+    return node;
+  }
+
+  // Parse a list of variable declarations declared using let.
+
+  function parseLetStatementOrExpression(node, noIn) {
+    node.head = [];
+    parseVarDecl(node.head, noIn);
+    var stmt = parseStatement();
+    if ("Expression" in stmt.type) {
+      node.type = "LetExpression";
+    } else {
+      node.type = "LetStatement";
+    }
+    node.body = stmt;
     return node;
   }
 
