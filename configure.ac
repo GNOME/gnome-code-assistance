@@ -221,6 +221,38 @@ color_enable_var("$enable_ruby", [enable_ruby_msg])
 AM_CONDITIONAL(BACKENDS_RUBY_ENABLE, test "x$enable_ruby" = "xyes")
 
 
+
+dnl ================================================================
+dnl js support
+dnl ================================================================
+AC_PATH_PROG([GJS],[gjs])
+AM_CONDITIONAL(GJS_ENABLE, test "x$GJS" != "x")
+
+
+dnl ================================================================
+dnl js backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([js],
+              AS_HELP_STRING([--enable-js],[enable js backend]),
+              [enable_js=$enableval],
+              [enable_js=auto])
+
+if test "x$enable_js" = "xauto"; then
+	if test "x$GJS" != "x"; then
+		enable_js=yes
+	else
+		enable_js=no
+	fi
+fi
+
+if test "x$enable_js" = "xyes" && test "x$GJS" = "x"; then
+	AC_MSG_CHECKING([js backend])
+	AC_MSG_ERROR([could not find gjs])
+fi
+
+AM_CONDITIONAL(BACKENDS_JS_ENABLE, test "x$enable_js" = "xyes")
+color_enable_var("$enable_js", [enable_js_msg])
+
 dnl ================================================================
 dnl xml backend configuration
 dnl ================================================================
@@ -377,6 +409,20 @@ adl_RECURSIVE_EVAL("$GCA_RBBACKENDS_DIR", [GCA_RBBACKENDS_DIR_EX])
 AC_SUBST(GCA_RBBACKENDS_DIR_EX)
 
 
+dnl js backends
+GCA_JSBACKENDS_ROOT="$GCA_BACKENDS_DIR/js"
+AC_SUBST(GCA_JSBACKENDS_ROOT)
+
+adl_RECURSIVE_EVAL("$GCA_JSBACKENDS_ROOT", [GCA_JSBACKENDS_ROOT_EX])
+AC_SUBST(GCA_JSBACKENDS_ROOT_EX)
+
+GCA_JSBACKENDS_DIR="$GCA_JSBACKENDS_ROOT/gnome/codeassistance"
+AC_SUBST(GCA_JSBACKENDS_DIR)
+
+adl_RECURSIVE_EVAL("$GCA_JSBACKENDS_DIR", [GCA_JSBACKENDS_DIR_EX])
+AC_SUBST(GCA_JSBACKENDS_DIR_EX)
+
+
 AC_CONFIG_FILES([
 Makefile
 backends/c/org.gnome.CodeAssist.c.service
@@ -390,6 +436,8 @@ backends/xml/org.gnome.CodeAssist.xml.service
 backends/xml/xml
 backends/vala/org.gnome.CodeAssist.vala.service
 backends/go/org.gnome.CodeAssist.go.service
+backends/js/org.gnome.CodeAssist.js.service
+backends/js/js
 ])
 
 AC_OUTPUT
@@ -410,5 +458,6 @@ Configuration:
 		vala:           $enable_vala_msg
 		go:             $enable_go_msg
 		ruby:           $enable_ruby_msg
+		javascript:     $enable_js_msg
 "
 

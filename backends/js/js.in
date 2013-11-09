@@ -1,0 +1,6 @@
+#!/usr/bin/env gjs
+
+imports.searchPath.unshift('@GCA_JSBACKENDS_ROOT_EX@');
+const Main = imports.gnome.codeassistance.js.main;
+
+Main.run();

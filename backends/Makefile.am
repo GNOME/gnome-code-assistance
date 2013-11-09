@@ -6,6 +6,10 @@ if RUBY_ENABLE
 include backends/rbcommon/Makefile.am
 endif
 
+if GJS_ENABLE
+include backends/jscommon/Makefile.am
+endif
+
 if BACKENDS_PYTHON_ENABLE
 include backends/python/Makefile.am
 endif
@@ -28,6 +32,10 @@ endif
 
 if BACKENDS_C_ENABLE
 include backends/c/Makefile.am
+endif
+
+if BACKENDS_JS_ENABLE
+include backends/js/Makefile.am
 endif
 
 GITIGNOREDEPS += backends/Makefile.am
