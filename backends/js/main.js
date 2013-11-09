@@ -50,9 +50,10 @@ Service.prototype = {
             var p = this._data_path(path, unsaved);
             var c = GLib.file_get_contents(p);
 
+            doc.errors = [];
+
             try {
-                Acorn.parse(c);
-                doc.errors = [];
+                Acorn.parse(c[1]);
             } catch (e) {
                 let loc = new Types.SourceLocation({
                     line: e.loc.line,
