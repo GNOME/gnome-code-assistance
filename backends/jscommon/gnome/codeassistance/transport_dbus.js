@@ -3,30 +3,30 @@ const Gio = imports.gi.Gio;
 const System = imports.system;
 const Lang = imports.lang;
 
-var ServiceIface = <interface name="org.gnome.CodeAssist.Service">
-  <method name="Parse">
-    <arg direction="in"  type="s" name="path" />
-    <arg direction="in"  type="x" name="cursor" />
-    <arg direction="in"  type="a(ss)" name="unsaved" />
-    <arg direction="in"  type="a{sv}" name="options" />
-    <arg direction="out" type="o" />
-  </method>
-  <method name="Dispose">
-    <arg direction="in"  type="s" name="path" />
-  </method>
-  <method name="SupportedServices">
-    <arg direction="out" type="as" />
-  </method>
-</interface>
+var ServiceIface = '<interface name="org.gnome.CodeAssist.Service">             \
+  <method name="Parse">                                                         \
+    <arg direction="in"  type="s" name="path" />                                \
+    <arg direction="in"  type="x" name="cursor" />                              \
+    <arg direction="in"  type="a(ss)" name="unsaved" />                         \
+    <arg direction="in"  type="a{sv}" name="options" />                         \
+    <arg direction="out" type="o" />                                            \
+  </method>                                                                     \
+  <method name="Dispose">                                                       \
+    <arg direction="in"  type="s" name="path" />                                \
+  </method>                                                                     \
+  <method name="SupportedServices">                                             \
+    <arg direction="out" type="as" />                                           \
+  </method>                                                                     \
+</interface>';
 
-var DocumentIface = <interface name="org.gnome.CodeAssist.Document">
-</interface>
+var DocumentIface = '<interface name="org.gnome.CodeAssist.Document">           \
+</interface>';
 
-var DiagnosticsIface = <interface name="org.gnome.CodeAssist.Diagnostics">
-  <method name="Diagnostics">
-    <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)"/>
-  </method>
-</interface>
+var DiagnosticsIface = '<interface name="org.gnome.CodeAssist.Diagnostics">     \
+  <method name="Diagnostics">                                                   \
+    <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)"/>              \
+  </method>                                                                     \
+</interface>';
 
 var Document = function(doc) {
     this._init(doc);
