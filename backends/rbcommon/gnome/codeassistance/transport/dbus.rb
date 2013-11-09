@@ -17,6 +17,7 @@
 
 require 'dbus'
 require 'gnome/codeassistance/types'
+require 'pathname'
 
 module Gnome; end
 
@@ -119,6 +120,10 @@ module Gnome::CodeAssistance
             dbus_method :Dispose, "in path:s" do |path|
                 a = app(@sender)
 
+                if path.length != 0
+                    path = Pathname.new(path).cleanpath.to_s
+                end
+
                 if a.ids.include?(path)
                     id = a.ids[path]
                     dispose_document(a.docs[id])
@@ -163,6 +168,10 @@ module Gnome::CodeAssistance
         def parse(path, cursor, unsaved, options)
             a = app(@sender)
             doc = nil
+
+            if path.length != 0
+                path = Pathname.new(path).cleanpath.to_s
+            end
 
             if a.ids.include?(path)
                 docid = a.ids[path]

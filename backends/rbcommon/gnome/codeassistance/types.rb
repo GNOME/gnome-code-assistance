@@ -15,6 +15,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+require 'pathname'
+
 module Gnome; end
 
 module Gnome::CodeAssistance
@@ -22,8 +24,17 @@ module Gnome::CodeAssistance
         attr_accessor :path, :data_path
 
         def initialize(path='', data_path='')
-            @path = path
-            @data_path = data_path
+            if path.length != 0
+                @path = Pathname.new(path).cleanpath.to_s
+            else
+                @path = path
+            end
+
+            if data_path.length != 0
+                @data_path = Pathname.new(data_path).cleanpath.to_s
+            else
+                @data_path = data_path
+            end
         end
 
         def to_s
