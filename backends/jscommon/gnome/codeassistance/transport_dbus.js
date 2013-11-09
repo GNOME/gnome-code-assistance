@@ -28,6 +28,14 @@ var DiagnosticsIface = '<interface name="org.gnome.CodeAssist.Diagnostics">     
   </method>                                                                     \
 </interface>';
 
+var FreedesktopDBusIface = '<interface name="org.freedesktop.DBus">             \
+  <signal name="NameOwnerChanged">                                              \
+    <arg direction="out" type="s"/>                                             \
+    <arg direction="out" type="s"/>                                             \
+    <arg direction="out" type="s"/>                                             \
+  </signal>                                                                     \
+</interface>';
+
 var Document = function(doc) {
     this._init(doc);
 };
@@ -70,6 +78,8 @@ function Server(conn, service, document) {
     this._init(conn, service, document);
 }
 
+const FreedesktopDBusProxy = Gio.DBusProxy.makeProxyWrapper(FreedesktopDBusIface);
+
 Server.prototype = {
     _init: function(conn, service, document) {
         this.conn = conn;
@@ -90,6 +100,20 @@ Server.prototype = {
             if (s in proto) {
                 this.services.push(s);
             }
+        }
+
+        var proxy = new FreedesktopDBusProxy(Gio.DBus.session,
+                                             'org.freedesktop.DBus',
+                                             '/org/freedesktop/DBus');
+
+        proxy.connectSignal('NameOwnerChanged', Lang.bind(this, this.on_name_owner_changed));
+    },
+
+    on_name_owner_changed: function(emitter, senderName, parameters) {
+        [owner, oldname, newname] = parameters;
+
+        if (newname == '' && oldname in this.apps) {
+            this.dispose_app(this.apps[oldname]);
         }
     },
 
