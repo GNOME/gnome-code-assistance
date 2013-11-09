@@ -110,7 +110,8 @@ Server.prototype = {
     },
 
     on_name_owner_changed: function(emitter, senderName, parameters) {
-        [owner, oldname, newname] = parameters;
+        var oldname = parameters[1];
+        var newname = parameters[2];
 
         if (newname == '' && oldname in this.apps) {
             this.dispose_app(this.apps[oldname]);
