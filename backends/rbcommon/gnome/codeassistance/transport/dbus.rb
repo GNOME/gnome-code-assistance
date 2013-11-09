@@ -107,7 +107,7 @@ module Gnome::CodeAssistance
                 [@services]
             end
 
-            dbus_method :Parse, "in path:s, in cursor:t, in unsaved:a(ss), in options:a{sv}, out document:o" do |path, cursor, unsaved, options|
+            dbus_method :Parse, "in path:s, in cursor:x, in unsaved:a(ss), in options:a{sv}, out document:o" do |path, cursor, unsaved, options|
                 begin
                     return parse(path, cursor, unsaved, options)
                 rescue Exception => e

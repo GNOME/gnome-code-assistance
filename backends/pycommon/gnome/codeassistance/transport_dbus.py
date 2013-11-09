@@ -118,7 +118,7 @@ class Server(dbus.service.Object):
         return ret
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
-                         in_signature='sta(ss)a{sv}', out_signature='o',
+                         in_signature='sxa(ss)a{sv}', out_signature='o',
                          sender_keyword='sender')
     def Parse(self, path, cursor, unsaved, options, sender=None):
         path = os.path.normpath(path)
