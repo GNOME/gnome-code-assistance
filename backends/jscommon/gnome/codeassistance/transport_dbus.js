@@ -273,7 +273,7 @@ Server.prototype = {
 
     dispose_app: function(app) {
         for (var id in app.docs) {
-            this.dispose_document(app.docs[id]);
+            this.dispose_document(app, app.docs[id]);
         }
 
         app.ids = {};
@@ -290,7 +290,7 @@ Server.prototype = {
         app.service['org.gnome.CodeAssist.Service'].dispose.call(app.service, doc);
 
         for (var name in doc._dbus_registered) {
-            doc._dbus_registered[name].unexport(this.conn);
+            doc._dbus_registered[name].dbus.unexport(this.conn);
         }
     },
 
