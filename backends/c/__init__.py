@@ -61,7 +61,7 @@ class Service(transport.Service, transport.Project):
         unsaved = []
         doc.diagnostics = []
 
-        for d in opendocs:
+        for d in docs:
             if d.data_path != d.path:
                 unsaved.append((d.path, open(d.data_path)))
 
