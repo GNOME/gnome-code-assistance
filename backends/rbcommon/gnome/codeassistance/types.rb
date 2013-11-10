@@ -20,7 +20,7 @@ require 'pathname'
 module Gnome; end
 
 module Gnome::CodeAssistance
-    class UnsavedDocument
+    class OpenDocument
         attr_accessor :path, :data_path
 
         def initialize(path='', data_path='')
@@ -33,12 +33,31 @@ module Gnome::CodeAssistance
             if data_path.length != 0
                 @data_path = Pathname.new(data_path).cleanpath.to_s
             else
-                @data_path = data_path
+                @data_path = @path
             end
         end
 
+        def self.from_tuple(tp)
+            OpenDocument.new(tp[0], tp[1])
+        end
+
         def to_s
-            "<UnsavedDocument: #{@path}, #{@data_path}>"
+            "<OpenDocument: #{@path}, #{@data_path}>"
+        end
+    end
+
+    class RemoteDocument
+        def initialize(path='', remote_path='')
+            @path = path
+            @remote_path = remote_path
+        end
+
+        def to_s
+            "<RemoteDocument: #{@path}, #{@remote_path}>"
+        end
+
+        def to_tuple
+            [@path, @remote_path]
         end
     end
 
@@ -56,7 +75,7 @@ module Gnome::CodeAssistance
 
         def to_range(file=0)
             s = SourceLocation.new(@line, @column)
-            e = SourceLocation.new(@line, @column + 1)
+            e = SourceLocation.new(@line, @column)
 
             SourceRange.new(file, s, e)
         end
@@ -69,7 +88,7 @@ module Gnome::CodeAssistance
     class SourceRange
         attr_accessor :file, :start, :end
 
-        def initialize(file=0, s=SourceLocation.new(), e=None)
+        def initialize(file=0, s=SourceLocation.new(), e=nil)
             @file = file
             @start = s
             @end = e

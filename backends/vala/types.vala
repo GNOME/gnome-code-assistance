@@ -20,12 +20,6 @@
 namespace Gca.Backends.Vala
 {
 
-public struct UnsavedDocument
-{
-	public string path;
-	public string data_path;
-}
-
 public struct SourceLocation
 {
 	public int64 line;

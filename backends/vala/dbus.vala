@@ -156,7 +156,7 @@ public class Service : Object
 		return File.new_for_path(path).get_path();
 	}
 
-	public ObjectPath parse(string path, int64 cursor, UnsavedDocument[] unsaved, HashTable<string, Variant> options, GLib.BusName sender)
+	public ObjectPath parse(string path, int64 cursor, string data_path, HashTable<string, Variant> options, GLib.BusName sender)
 	{
 		var a = app(sender);
 		Gca.Backends.Vala.Document? doc = null;
@@ -164,18 +164,24 @@ public class Service : Object
 
 		var cpath = clean_path(path);
 
-		for (var i = 0; i < unsaved.length; i++) {
-			unsaved[i].path = clean_path(unsaved[i].path);
-			unsaved[i].data_path = clean_path(unsaved[i].data_path);
-		}
-
 		if (a.ids.has_key(cpath))
 		{
 			ddoc = a.docs[a.ids[cpath]];
 			doc = ddoc.document;
 		}
 
-		doc = a.service.parse(cpath, cursor, unsaved, options, doc);
+		string dpath;
+
+		if (data_path == null || data_path == "")
+		{
+			dpath = path;
+		}
+		else
+		{
+			dpath = data_path;
+		}
+
+		doc = a.service.parse(cpath, cursor, dpath, options, doc);
 
 		if (!a.ids.has_key(cpath))
 		{
@@ -267,6 +273,7 @@ public class Service : Object
 		return new string[] {
 			"org.gnome.CodeAssist.Document",
 			"org.gnome.CodeAssist.Diagnostics",
+			"org.gnome.CodeAssist.Service",
 		};
 	}
 }

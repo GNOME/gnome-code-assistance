@@ -123,20 +123,7 @@ public class Diagnostics : Report
 
 public class Service : Object
 {
-	private string data_path(string path, UnsavedDocument[] unsaved)
-	{
-		foreach (var u in unsaved)
-		{
-			if (u.path == path)
-			{
-				return u.data_path;
-			}
-		}
-
-		return path;
-	}
-
-	public Document parse(string path, int64 cursor, UnsavedDocument[] unsaved, HashTable<string, Variant> options, Document? document)
+	public Document parse(string path, int64 cursor, string data_path, HashTable<string, Variant> options, Document? document)
 	{
 		var doc = document;
 
@@ -145,16 +132,14 @@ public class Service : Object
 			doc = new Document(path);
 		}
 
-		var dpath = data_path(path, unsaved);
-
 		CodeContext context = new CodeContext();
 
-		var diags = new Diagnostics(dpath);
+		var diags = new Diagnostics(data_path);
 		context.report = diags;
 
 		CodeContext.push(context);
 
-		var sf = new SourceFile(context, SourceFileType.SOURCE, dpath, null, true);
+		var sf = new SourceFile(context, SourceFileType.SOURCE, data_path, null, true);
 		context.add_source_file(sf);
 
 		Parser ast = new Parser();
