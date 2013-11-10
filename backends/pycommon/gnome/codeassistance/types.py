@@ -48,7 +48,7 @@ class SourceLocation:
 
     def to_range(self, file=0):
         start = SourceLocation(line=self.line, column=self.column)
-        end = SourceLocation(line=self.line, column=self.column + 1)
+        end = SourceLocation(line=self.line, column=self.column)
         return SourceRange(file=file, start=start, end=end)
 
     def to_tuple(self):
