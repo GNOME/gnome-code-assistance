@@ -22,38 +22,22 @@ from gnome.codeassistance import transport, types
 class Service(transport.Service):
     language = 'python'
 
-    def parse(self, path, cursor, unsaved, options, doc):
-        path = self.data_path(path, unsaved)
-
-        errors = []
-        ret = None
+    def parse(self, doc, options):
+        doc.diagnostics = []
 
         try:
-            with open(path) as f:
+            with open(doc.data_path) as f:
                 source = f.read()
 
-            ret = ast.parse(source, path)
+            ast.parse(source, doc.path)
         except SyntaxError as e:
             loc = types.SourceLocation(line=e.lineno, column=e.offset)
             severity = types.Diagnostic.Severity.ERROR
 
-            errors = [types.Diagnostic(severity=severity, locations=[loc.to_range()], message=e.msg)]
-
-        if doc is None:
-            doc = self.document()
-
-        doc.errors = errors
-
-        return doc
-
-    def dispose(self, doc):
-        pass
+            doc.diagnostics = [types.Diagnostic(severity=severity, locations=[loc.to_range()], message=e.msg)]
 
 class Document(transport.Document, transport.Diagnostics):
-    errors = None
-
-    def diagnostics(self):
-        return self.errors
+    pass
 
 def run():
     transport.Transport(Service, Document).run()
