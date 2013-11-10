@@ -1950,22 +1950,28 @@ class TranslationUnit(ClangObject):
                     for arg in args]
             args_array = (c_char_p * len(args))(* args)
 
-        unsaved_array = None
+        unsaved_files_array = 0
         if len(unsaved_files) > 0:
-            unsaved_array = (_CXUnsavedFile * len(unsaved_files))()
+            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
             for i, (name, contents) in enumerate(unsaved_files):
                 if hasattr(contents, "read"):
                     contents = contents.read()
 
-                unsaved_array[i].name = name
-                unsaved_array[i].contents = contents
-                unsaved_array[i].length = len(contents)
+                if isinstance(contents, str):
+                    contents = contents.encode('utf-8')
+
+                if isinstance(name, str):
+                    name = name.encode('utf-8')
+
+                unsaved_files_array[i].name = name
+                unsaved_files_array[i].contents = contents
+                unsaved_files_array[i].length = len(contents)
 
         if isinstance(filename, str):
             filename = filename.encode('utf-8')
 
         ptr = conf.lib.clang_parseTranslationUnit(index, filename, args_array,
-                                    len(args), unsaved_array,
+                                    len(args), unsaved_files_array,
                                     len(unsaved_files), options)
 
         if ptr is None:
@@ -2138,6 +2144,12 @@ class TranslationUnit(ClangObject):
                 if hasattr(contents, "read"):
                     contents = contents.read()
 
+                if isinstance(contents, str):
+                    contents = contents.encode('utf-8')
+
+                if isinstance(name, str):
+                    name = name.encode('utf-8')
+
                 unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = contents
                 unsaved_files_array[i].length = len(contents)
@@ -2198,6 +2210,12 @@ class TranslationUnit(ClangObject):
             for i, (name, contents) in enumerate(unsaved_files):
                 if hasattr(contents, "read"):
                     contents = contents.read()
+
+                if isinstance(contents, str):
+                    contents = contents.encode('utf-8')
+
+                if isinstance(name, str):
+                    name = name.encode('utf-8')
 
                 unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = contents
