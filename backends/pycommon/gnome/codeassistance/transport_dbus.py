@@ -23,52 +23,123 @@ import inspect, sys, os
 from gnome.codeassistance import types
 
 class Document(dbus.service.Object):
+    """Base Document interface.
+
+    Implementations should inherit from this base class which implements the
+    org.gnome.CodeAssist.Document interface.
+    """
+
     interface = 'org.gnome.CodeAssist.Document'
 
+    def __init__(self):
+        super(Document, self).__init__()
+
+        self.id = 0
+        self.path = ''
+        self.client_path = ''
+        self.data_path = ''
+        self.cursor = 0
+
 class Diagnostics(dbus.service.Object):
+    """Diagnostics interface.
+
+    Implementations can inherit from this class to implement the
+    org.gnome.CodeAssist.Diagnostics interface. Diagnostics are served from
+    the .diagnostics field which should be set to a list of types.Diagnostic
+    objects.
+    """
+
     interface = 'org.gnome.CodeAssist.Diagnostics'
 
-    def diagnostics(self):
-        return []
+    def __init__(self):
+        super(Diagnostics, self).__init__()
+        self.diagnostics = []
 
     @dbus.service.method(interface,
                          in_signature='', out_signature='a(ua((x(xx)(xx))s)a(x(xx)(xx))s)')
     def Diagnostics(self):
-        return [d.to_tuple() for d in self.diagnostics()]
-
-DocumentInterfaces = [Document, Diagnostics]
+        return [d.to_tuple() for d in self.diagnostics]
 
 class Service:
     language = None
-    services = []
 
-    def __init__(self, id, name, document):
-        self.id = id
-        self.document = document
+    def parse(self, doc, options):
+        """parse a single document.
 
-    def data_path(self, path, unsaved):
-        for u in unsaved:
-            if u.path == path:
-                return u.data_path
+        parse should be implemented to parse the file located at @path
+        into the provided @doc. @data_path contains the path of the actual data
+        needed to be parsed. If the document is in an unmodified state, then
+        @data_path will be equal to @path. However, if the document is being
+        edited, then @data_path will be a temporary file containing the modified
+        document. @cursor is the current location of the cursor in the document
+        being edited. The @cursor can be used to gather autocompletion
+        information. Finally @options contains backend specific options provided
+        by a client.
 
-        return path
+        @doc is an object of the register document type and should be populated
+        by the implementation.
+        """
+        pass
 
-class Server(dbus.service.Object):
-    apps = {}
-    nextid = 0
+    def dispose(self, doc):
+        pass
 
+class Project:
+    def parse_all(self, doc, docs, options):
+        """parse multiple documents.
+
+        parse_all potentially parses multiple documents at the same time.
+        This can be implemented by backends which parse multiple documents at
+        the same time to complete a parse. This is useful for example for
+        parsers that can provide semantic diagnostics based on types of a
+        complete unit instead of only providing syntactic analysis. Examples of
+        languages that should support this are C, Vala or Go (i.e. languages
+        with static typing).
+
+        doc: the primary document needing to be parsed. This is the document
+        requesting analysis and can be used as the starting point for
+        analysis.
+
+        docs: a list of documents which the client is interested in (i.e.
+        these are usually the documents open in the client). An implementation
+        can provide information for the subset of these docs that were analysed
+        in the process of analysing doc. Note that docs always includes at
+        least doc.
+
+        options: an implementation specific set of options passed by the client
+
+        Implementations should do the following steps:
+          1) Determine all the documents belonging to the project of doc
+          2) Parse and analyse these documents in the context of doc
+          3) Gather and supply information to the intersection between documents
+             in docs and the project documents that were processed.
+          4) Return the subset of documents which have newly processed information
+
+        """
+        pass
+
+class Server(object):
     class App:
-        id = 0
-        name = ''
+        def __init__(self):
+            self.id = 0
+            self.name = ''
 
-        docs = {}
-        ids = {}
-        nextid = 0
+            self.docs = {}
+            self.ids = {}
+            self.nextid = 0
 
     def __init__(self, bus, path, service, document):
-        dbus.service.Object.__init__(self, bus, path)
+        super(Server, self).__init__()
+
+        self.apps = {}
+        self.nextid = 0
+
         self.service = service
         self.document = document
+
+        # Export dummy document for introspection purposes
+        self.dummy = self.document()
+        self.dummy.add_to_connection(bus, path + '/document')
 
         bus.add_signal_receiver(self.on_name_lost,
                                 signal_name='NameOwnerChanged',
@@ -76,95 +147,96 @@ class Server(dbus.service.Object):
                                 path='/org/freedesktop/DBus')
 
     def on_name_lost(self, name, oldowner, newowner):
-        if newowner == '' and oldowner in self.apps:
+        if newowner != '':
+            return
+
+        try:
             app = self.apps[oldowner]
-            self.dispose(app)
+        except KeyError:
+            return
+
+        self.dispose_app(app)
+
+    def make_app(self, appid):
+        app = Server.App()
+
+        app.id = self.nextid
+        app.name = appid
+        app.service = self.service()
+
+        self.apps[appid] = app
+        self.nextid += 1
+
+        return app
+
+    def ensure_app(self, appid):
+        try:
+            return self.apps[appid]
+        except KeyError:
+            return self.make_app(appid)
+
+    def make_document(self, app, path, client_path):
+        doc = self.document()
+
+        doc.id = app.nextid
+        doc.client_path = client_path
+        doc.path = path
+
+        app.nextid += 1
+        app.docs[path] = doc
+
+        objpath = self._object_path + '/' + str(app.id) + '/documents/' + str(doc.id)
+        doc.add_to_connection(self._connection, objpath)
+
+        return doc
+
+    def ensure_document(self, app, path, data_path, cursor=0):
+        npath = (path and os.path.normpath(path))
+
+        try:
+            doc = app.docs[npath]
+        except KeyError:
+            doc = self.make_document(app, npath, path)
+
+        doc.data_path = (data_path or path)
+        doc.cursor = cursor
+
+        return doc
+
+    def dispose(self, app, path):
+        try:
+            doc = app.docs[path]
+        except KeyError:
+            return
+
+        self.dispose_document(app, doc)
+        del app.docs[path]
+
+    def dispose_document(self, app, doc):
+        app.service.dispose(doc)
+        doc.remove_from_connection()
+
+    def dispose_app(self, app):
+        for doc in app.docs:
+            self.dispose_document(app, app.docs[doc])
+
+        if len(app.docs) == 0:
+            del self.apps[app.name]
 
             if len(self.apps) == 0:
-                GLib.idle_add(self.do_exit)
+                GLib.idle_add(lambda: sys.exit(0))
 
-    def do_exit(self):
-        sys.exit(0)
-
-    def app(self, appid):
-        if not appid in self.apps:
-            app = Server.App()
-
-            app.id = self.nextid
-            app.name = appid
-            app.service = self.service(app.id, app.name, self.document)
-
-            self.apps[appid] = app
-            self.nextid += 1
-
-            return app
-        else:
-            return self.apps[appid]
-
-    @dbus.service.method('org.gnome.CodeAssist.Service',
-                         in_signature='', out_signature='as',
-                         sender_keyword='sender')
-    def SupportedServices(self, sender=None):
-        app = self.app(sender)
-        ret = []
-
-        bases = inspect.getmro(self.document)
-
-        for i in DocumentInterfaces:
-            if i in bases:
-                ret.append(i.interface)
-
-        ret += self.service.services
-        return ret
-
+class ServeService(dbus.service.Object):
     @dbus.service.method('org.gnome.CodeAssist.Service',
                          in_signature='sxa(ss)a{sv}', out_signature='o',
                          sender_keyword='sender')
-    def Parse(self, path, cursor, unsaved, options, sender=None):
-        path = os.path.normpath(path)
+    def Parse(self, path, cursor, data_path, options, sender=None):
+        app = self.ensure_app(sender)
+        doc = self.ensure_document(app, path, data_path, cursor)
 
-        app = self.app(sender)
-        doc = None
-
-        if path in app.ids:
-            doc = app.docs[app.ids[path]]
-
-        unsaved = [types.UnsavedDocument(os.path.normpath(u[0]), os.path.normpath(u[1])) for u in unsaved]
-
-        doc = app.service.parse(path, cursor, unsaved, options, doc)
-
-        if not path in app.ids:
-            doc.add_to_connection(self._connection, self._object_path + '/' + str(app.id) + '/documents/' + str(app.nextid))
-
-            app.ids[path] = app.nextid
-            app.docs[app.nextid] = doc
-
-            app.nextid += 1
+        app.service.parse(doc, options)
 
         return doc._object_path
-
-    def dispose(self, app, path=None):
-        if path is None:
-            path = list(app.ids)
-        else:
-            if path in app.ids:
-                path = [path]
-            else:
-                return
-
-        for p in path:
-            id = app.ids[p]
-            doc = app.docs[id]
-
-            app.service.dispose(doc)
-
-            doc.remove_from_connection()
-
-            del app.docs[id]
-            del app.ids[p]
-
-        if len(app.ids) == 0:
-            del self.apps[app.name]
 
     @dbus.service.method('org.gnome.CodeAssist.Service',
                          in_signature='s', out_signature='',
@@ -172,21 +244,69 @@ class Server(dbus.service.Object):
     def Dispose(self, path, sender=None):
         path = os.path.normpath(path)
 
-        if sender in self.apps:
+        try:
             app = self.apps[sender]
-            self.dispose(app, path)
+        except KeyError:
+            return
+
+        self.dispose(app, path)
+
+class ServeProject(dbus.service.Object):
+    @dbus.service.method('org.gnome.CodeAssist.Project',
+                         in_signature='sxa(ss)a{sv}', out_signature='a(so)',
+                         sender_keyword='sender')
+    def ParseAll(self, path, cursor, documents, options, sender=None):
+        app = self.ensure_app(sender)
+        doc = self.ensure_document(app, path, '', cursor)
+
+        opendocs = [types.OpenDocument.from_tuple(d) for d in documents]
+        docs = [self.ensure_document(app, d.path, d.data_path) for d in opendocs]
+
+        parsed = app.service.parse_all(doc, docs, options)
+
+        return [types.RemoteDocument(d.client_path, d._object_path).to_tuple() for d in parsed]
 
 class Transport():
-    def __init__(self, service, document):
+    def __init__(self, service, document, srvtype=Server):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
         name = 'org.gnome.CodeAssist.' + service.language
         path = '/org/gnome/CodeAssist/' + service.language
 
         bus = dbus.SessionBus()
+        servercls = self.make_server_cls(service)
 
         self.name = dbus.service.BusName(name, bus)
-        self.server = Server(bus, path, service, document)
+        self.server = servercls(bus, path, service, document)
+
+    def make_server_cls(self, service):
+        types = {
+            Service: ServeService,
+            Project: ServeProject
+        }
+
+        bases = inspect.getmro(service)[1:]
+        sb = []
+
+        for b in bases:
+            try:
+                sb.append(types[b])
+            except KeyError:
+                pass
+
+        if not ServeService in sb:
+            raise ValueError("service should at least inherit from transport.Service")
+
+        sb.append(Server)
+
+        def TheServerInit(self, bus, path, service, document):
+            for b in sb:
+                if b == Server:
+                    b.__init__(self, bus, path, service, document)
+                else:
+                    b.__init__(self, bus, path)
+
+        return type('TheServerType', tuple(sb), {'__init__': TheServerInit})
 
     def run(self):
         ml = GLib.MainLoop()

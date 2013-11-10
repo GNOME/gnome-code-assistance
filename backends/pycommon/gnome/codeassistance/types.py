@@ -15,13 +15,28 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-class UnsavedDocument:
+class OpenDocument:
     def __init__(self, path='', data_path=''):
         self.path = path
         self.data_path = data_path
 
+    @staticmethod
+    def from_tuple(self, tp):
+        return OpenDocument(tp[0], tp[1])
+
     def __repr__(self):
-        return '<UnsavedDocument: {0}, {1}>'.format(self.path, self.data_path)
+        return '<OpenDocument: {0}, {1}>'.format(self.path, self.data_path)
+
+class RemoteDocument:
+    def __init__(self, path='', remote_path=''):
+        self.path = path
+        self.remote_path = remote_path
+
+    def __repr__(self):
+        return '<RemoteDocument: {0}, {1}>'.format(self.path, self.remote_path)
+
+    def to_tuple(self):
+        return (self.path, self.remote_path)
 
 class SourceLocation:
     def __init__(self, line=0, column=0):
