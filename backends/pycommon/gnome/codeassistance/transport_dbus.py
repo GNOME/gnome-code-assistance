@@ -212,6 +212,9 @@ class Server(object):
         self.dispose_document(app, doc)
         del app.docs[path]
 
+        if len(app.docs) == 0:
+            self.dispose_app(app)
+
     def dispose_document(self, app, doc):
         app.service.dispose(doc)
         doc.remove_from_connection()
@@ -220,11 +223,10 @@ class Server(object):
         for doc in app.docs:
             self.dispose_document(app, app.docs[doc])
 
-        if len(app.docs) == 0:
-            del self.apps[app.name]
+        del self.apps[app.name]
 
-            if len(self.apps) == 0:
-                GLib.idle_add(lambda: sys.exit(0))
+        if len(self.apps) == 0:
+            GLib.idle_add(lambda: sys.exit(0))
 
 class ServeService(dbus.service.Object):
     @dbus.service.method('org.gnome.CodeAssist.Service',
