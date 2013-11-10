@@ -65,7 +65,7 @@ class Service(transport.Service, transport.Project):
             if d.data_path != d.path:
                 unsaved.append((d.path, open(d.data_path)))
 
-        return self._parse(doc, unsaved, options)
+        return [self._parse(doc, unsaved, options)]
 
     def parse(self, doc, options):
         if doc.data_path != doc.path:
