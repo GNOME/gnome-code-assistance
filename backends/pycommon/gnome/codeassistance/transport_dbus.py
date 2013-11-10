@@ -125,7 +125,6 @@ class Server(dbus.service.Object):
             self.name = ''
 
             self.docs = {}
-            self.ids = {}
             self.nextid = 0
 
     def __init__(self, bus, path):
