@@ -31,30 +31,22 @@ def config_libclang():
     if len(files) != 0:
         cindex.Config.set_library_file(files[0])
 
-class Service(transport.Service):
+class Service(transport.Service, transport.Project):
     language = 'c'
-    services = [
-        'org.gnome.CodeAssist.MultiDoc'
-    ]
 
-    def __init__(self, *args):
-        transport.Service.__init__(self, *args)
+    def __init__(self):
+        super(Service, self).__init__()
 
         self.index = cindex.Index.create(True)
         self.makefile = makefileintegration.MakefileIntegration()
 
-    def parse(self, path, cursor, unsaved, options, doc):
-        if doc is None:
-            doc = self.document(path)
-
-        unsaved = [(x.path, open(x.data_path)) for x in unsaved]
-
+    def _parse(self, doc, unsaved, options):
         if not doc.tu is None:
             doc.tu.reparse(unsaved)
         else:
-            args = self.makefile.flags_for_file(path)
+            args = self.makefile.flags_for_file(doc.path)
 
-            doc.tu = cindex.TranslationUnit.from_source(path,
+            doc.tu = cindex.TranslationUnit.from_source(doc.path,
                                                         args=args,
                                                         unsaved_files=unsaved,
                                                         index=self.index)
@@ -65,23 +57,34 @@ class Service(transport.Service):
         doc.process()
         return doc
 
+    def parse_all(self, doc, docs, options):
+        unsaved = []
+        doc.diagnostics = []
+
+        for d in opendocs:
+            if d.data_path != d.path:
+                unsaved.append((d.path, open(d.data_path)))
+
+        return self._parse(doc, unsaved, options)
+
+    def parse(self, doc, options):
+        if doc.data_path != doc.path:
+            unsaved = [(doc.path, open(doc.data_path))]
+        else:
+            unsaved = []
+
+        return self._parse(doc, unsaved, options)
+
     def dispose(self, doc):
         doc.tu = None
 
 class Document(transport.Document, transport.Diagnostics):
-    def __init__(self, path):
-        transport.Document.__init__(self)
-        transport.Diagnostics.__init__(self)
-
+    def __init__(self):
+        super(Document, self).__init__()
         self.tu = None
-        self.path = path
-        self._diagnostics = []
 
     def process(self):
         self._process_diagnostics()
-
-    def diagnostics(self):
-        return self._diagnostics
 
     def _map_cseverity(self, severity):
         s = types.Diagnostic.Severity
@@ -141,7 +144,7 @@ class Document(transport.Document, transport.Diagnostics):
         ranges.insert(0, loc.to_range())
 
         fixits = [self._map_cfixit(f) for f in d.fixits]
-        fixits = filter(lambda x: not x is None, fixits)
+        fixits = list(filter(lambda x: not x is None, fixits))
 
         message = d.spelling
 
@@ -151,8 +154,8 @@ class Document(transport.Document, transport.Diagnostics):
                                 message=message)
 
     def _process_diagnostics(self):
-        self._diagnostics = [self._map_cdiagnostic(d) for d in self.tu.diagnostics]
-        self._diagnostics = filter(lambda x: not x is None, self._diagnostics)
+        diag = (self._map_cdiagnostic(d) for d in self.tu.diagnostics)
+        self.diagnostics = list(filter(lambda x: not x is None, diag))
 
 def run():
     config_libclang()
