@@ -118,7 +118,7 @@ class Project:
         """
         pass
 
-class Server(object):
+class Server(dbus.service.Object):
     class App:
         def __init__(self):
             self.id = 0
@@ -128,23 +128,27 @@ class Server(object):
             self.ids = {}
             self.nextid = 0
 
-    def __init__(self, bus, path, service, document):
-        super(Server, self).__init__()
+    def __init__(self, bus, path):
+        super(Server, self).__init__(bus, path)
 
         self.apps = {}
         self.nextid = 0
-
-        self.service = service
-        self.document = document
-
-        # Export dummy document for introspection purposes
-        self.dummy = self.document()
-        self.dummy.add_to_connection(bus, path + '/document')
 
         bus.add_signal_receiver(self.on_name_lost,
                                 signal_name='NameOwnerChanged',
                                 dbus_interface='org.freedesktop.DBus',
                                 path='/org/freedesktop/DBus')
+
+    def run(self, service, document):
+        self.service = service
+        self.document = document
+
+        # Export dummy document for introspection purposes
+        self.dummy = self.document()
+        self.dummy.add_to_connection(self._connection, self._object_path + '/document')
+
+        ml = GLib.MainLoop()
+        ml.run()
 
     def on_name_lost(self, name, oldowner, newowner):
         if newowner != '':
@@ -279,7 +283,9 @@ class Transport():
         servercls = self.make_server_cls(service)
 
         self.name = dbus.service.BusName(name, bus)
-        self.server = servercls(bus, path, service, document)
+        self.server = servercls(bus, path)
+        self.service = service
+        self.document = document
 
     def make_server_cls(self, service):
         types = {
@@ -301,17 +307,9 @@ class Transport():
 
         sb.append(Server)
 
-        def TheServerInit(self, bus, path, service, document):
-            for b in sb:
-                if b == Server:
-                    b.__init__(self, bus, path, service, document)
-                else:
-                    b.__init__(self, bus, path)
-
-        return type('TheServerType', tuple(sb), {'__init__': TheServerInit})
+        return type('TheServerType', tuple(sb), {})
 
     def run(self):
-        ml = GLib.MainLoop()
-        ml.run()
+        self.server.run(self.service, self.document)
 
 # ex:ts=4:et:
