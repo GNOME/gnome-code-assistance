@@ -20,9 +20,9 @@ class OpenDocument:
         self.path = path
         self.data_path = data_path
 
-    @staticmethod
-    def from_tuple(self, tp):
-        return OpenDocument(tp[0], tp[1])
+    @classmethod
+    def from_tuple(cls, tp):
+        return cls(tp[0], tp[1])
 
     def __repr__(self):
         return '<OpenDocument: {0}, {1}>'.format(self.path, self.data_path)
