@@ -102,20 +102,19 @@ class Service(transport.Service):
 
         return (None, None, None)
 
-    def parse(self, path, cursor, unsaved, options, doc):
-        filename = self.data_path(path, unsaved)
-        errors = []
+    def parse(self, doc, options):
+        doc.diagnostics = []
 
         doc_type = 'XML'
         etree.clear_error_log()
 
-        with open(filename) as f:
+        with open(doc.data_path) as f:
             source = f.read()
 
         try:
             # parse the XML for errors
-            if os.path.isabs(path):
-                doc_schema = self.get_schema(path, path, source)
+            if os.path.isabs(doc.path):
+                doc_schema = self.get_schema(doc.path, doc.path, source)
                 xml = doc_schema['xml']
 
                 if doc_schema['type'] != None:
@@ -132,14 +131,14 @@ class Service(transport.Service):
 
             except (etree.RelaxNGError, etree.XMLSchemaParseError) as e:
                 for error in e.error_log:
-                    errors.append(self.format_error(doc_type + " parsing error", error))
+                    doc.diagnostics.append(self.format_error(doc_type + " parsing error", error))
 
             except Exception as e:
-                errors.append(self.format_error(doc_type + " parsing error", e))
+                doc.diagnostics.append(self.format_error(doc_type + " parsing error", e))
 
             # parse XML comments in document for a reference to a schema
             try:
-                (schema_ref, schema_location, comment_line) = self.look_for_schema(path, xml)
+                (schema_ref, schema_location, comment_line) = self.look_for_schema(doc.path, xml)
                 
                 if schema_ref != None:
                     try:
@@ -152,43 +151,31 @@ class Service(transport.Service):
 
                     except (etree.DocumentInvalid, etree.RelaxNGValidateError, etree.XMLSchemaValidateError):
                         for error in schema.error_log:
-                            errors.append(self.format_error(schema_ref['type'] + " validation error", error))
+                            doc.diagnostics.append(self.format_error(schema_ref['type'] + " validation error", error))
 
                     except (etree.RelaxNGError, etree.XMLSchemaParseError):
-                        errors.append(self.format_error(schema_ref['type'] + " error", "Schema is invalid " + schema_location, comment_line))
+                        doc.diagnostics.append(self.format_error(schema_ref['type'] + " error", "Schema is invalid " + schema_location, comment_line))
 
                     except Exception as e:
-                        errors.append(self.format_error(schema_ref['type'] + " error", e))
+                        doc.diagnostics.append(self.format_error(schema_ref['type'] + " error", e))
 
             except etree.XMLSyntaxError as e:
-                errors.append(self.format_error("Schema error", "Unable to parse schema XML " + schema_location, comment_line))
+                doc.diagnostics.append(self.format_error("Schema error", "Unable to parse schema XML " + schema_location, comment_line))
 
             except Exception as e:
-                errors.append(self.format_error("Schema error", e, comment_line))
+                doc.diagnostics.append(self.format_error("Schema error", e, comment_line))
 
         # handle XML parse errors
         except etree.XMLSyntaxError as e:
             for error in e.error_log:
-                errors.append(self.format_error("XML parsing error", error))
+                doc.diagnostics.append(self.format_error("XML parsing error", error))
 
         # ignore other exceptions
         except:
             pass
 
-        if doc is None:
-            doc = self.document()
-
-        doc.errors = errors
-        return doc
-
-    def dispose(self, doc):
-        pass
-
 class Document(transport.Document, transport.Diagnostics):
-    errors = None
-
-    def diagnostics(self):
-        return self.errors
+    pass
 
 def run():
     transport.Transport(Service, Document).run()
