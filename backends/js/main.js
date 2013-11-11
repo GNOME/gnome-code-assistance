@@ -9,7 +9,7 @@ function Document() {
 
 Document.prototype = {
     _init: function() {
-        this.errors = [];
+        this.diagnostics = [];
     },
 
     'org.gnome.CodeAssist.Document': {
@@ -17,10 +17,10 @@ Document.prototype = {
 
     'org.gnome.CodeAssist.Diagnostics': {
         diagnostics: function() {
-            return this.errors;
+            return this.diagnostics;
         }
     }
-}
+};
 
 function Service() {
     this._init();
@@ -31,26 +31,11 @@ Service.prototype = {
     
     },
 
-    _data_path: function(path, unsaved) {
-        for (var i = 0; i < unsaved.length; i++) {
-            if (unsaved[i].path == path) {
-                return unsaved[i].data_path;
-            }
-        }
-
-        return path;
-    },
-
     'org.gnome.CodeAssist.Service': {
-        parse: function(path, cursor, unsaved, options, doc) {
-            if (doc == null) {
-                doc = new Document();
-            }
+        parse: function(doc, options) {
+            var c = GLib.file_get_contents(doc.dataPath);
 
-            var p = this._data_path(path, unsaved);
-            var c = GLib.file_get_contents(p);
-
-            doc.errors = [];
+            doc.diagnostics = [];
 
             try {
                 Acorn.parse(c[1]);
@@ -62,14 +47,12 @@ Service.prototype = {
 
                 let diag = new Types.Diagnostic({
                     severity: Types.Severity.ERROR,
-                    locations: [loc.to_range({})],
+                    locations: [loc.toRange({})],
                     message: e.message
                 });
 
-                doc.errors = [diag];
+                doc.diagnostics = [diag];
             }
-
-            return doc;
         },
 
         dispose: function(doc) {
