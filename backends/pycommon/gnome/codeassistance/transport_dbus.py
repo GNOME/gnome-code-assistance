@@ -126,6 +126,7 @@ class Server(dbus.service.Object):
 
             self.docs = {}
             self.nextid = 0
+            self.service = None
 
     def __init__(self, bus, path):
         super(Server, self).__init__(bus, path)
