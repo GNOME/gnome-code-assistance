@@ -162,6 +162,9 @@ func (check *checker) resolveFiles(files []*ast.File) {
 					case *ast.ImportSpec:
 						// import package
 						var imp *Package
+						if s.Path == nil {
+							continue
+						}
 						path, _ := strconv.Unquote(s.Path.Value)
 						if path == "C" && check.conf.FakeImportC {
 							// TODO(gri) shouldn't create a new one each time
