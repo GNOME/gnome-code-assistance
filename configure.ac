@@ -300,7 +300,29 @@ AC_ARG_ENABLE([vala],
               [enable_vala=$enableval],
               [enable_vala=auto])
 
-BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 libvala-0.22"
+BACKEND_VALA_LIBVALA_VERSIONS="libvala-0.22 libvala-0.20"
+BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8"
+
+BACKEND_VALA_LIBVALA=
+for i in $BACKEND_VALA_LIBVALA_VERSIONS; do
+	if test "x$BACKEND_VALA_LIBVALA" = "x"; then
+		BACKEND_VALA_LIBVALA="$i"
+	fi
+
+	PKG_CHECK_EXISTS([$i], [libvala_found=yes], [libvala_found=no])
+
+	if test "x$libvala_found" = "xyes"; then
+		BACKEND_VALA_LIBVALA="$i"
+		BACKEND_VALA_MODULES="$BACKEND_VALA_MODULES $BACKEND_VALA_LIBVALA"
+		break
+	fi
+done
+
+if test "x$libvala_found" != "xyes"; then
+	BACKEND_VALA_MODULES="$BACKEND_VALA_MODULES $BACKEND_VALA_LIBVALA"
+fi
+
+AC_SUBST(BACKEND_VALA_LIBVALA)
 
 if test "x$enable_vala" != "xno"; then
 	AM_PROG_VALAC
@@ -338,7 +360,7 @@ fi
 color_enable_var("$enable_vala", [enable_vala_msg])
 
 AM_CONDITIONAL(BACKENDS_VALA_ENABLE, test "x$enable_vala" = "xyes")
-
+AC_SUBST(BACKEND_VALA_LIBVALA)
 
 
 dnl ================================================================
