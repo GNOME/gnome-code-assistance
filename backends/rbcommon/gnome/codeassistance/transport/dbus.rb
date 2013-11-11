@@ -82,9 +82,9 @@ module Gnome::CodeAssistance::DBus
 
     module Service
         dbus_interface 'org.gnome.CodeAssist.v1.Service' do
-            dbus_method :Parse, "in path:s, in cursor:x, in data_path:s, in options:a{sv}, out document:o" do |path, cursor, data_path, options|
+            dbus_method :Parse, "in path:s, in data_path:s, in cursor:(xx), in options:a{sv}, out document:o" do |path, data_path, cursor, options|
                 app = ensure_app(@sender)
-                doc = ensure_document(app, path, data_path, cursor)
+                doc = ensure_document(app, path, data_path, SourceLocation.from_tuple(cursor))
 
                 app.service.parse(doc, options)
 
@@ -101,9 +101,9 @@ module Gnome::CodeAssistance::DBus
 
     module Project
         dbus_interface 'org.gnome.CodeAssist.v1.Project' do
-            dbus_method :ParseAll, "in path:s, in cursor:x, in docs:a(ss), in options:a{sv}, out documents:a(so)" do |path, cursor, documents, options|
+            dbus_method :ParseAll, "in path:s, in docs:a(ss), in cursor:(xx), in options:a{sv}, out documents:a(so)" do |path, cursor, documents, options|
                 app = ensure_app(@sender)
-                doc = ensure_document(app, path, '', cursor)
+                doc = ensure_document(app, path, '', SourceLocation.from_tuple(cursor))
 
                 opendocs = documents.collect { |d| OpenDocument.from_tuple(d) }
                 docs = opendocs.collect { |d| ensure_document(app, d.path, d.data_path) }
@@ -258,13 +258,13 @@ module Gnome::CodeAssistance
             doc
         end
 
-        def ensure_document(app, path, data_path, cursor=0)
+        def ensure_document(app, path, data_path, cursor=nil)
             npath = normpath(path)
 
             doc = app.docs[npath] || make_document(app, npath, path)
 
             doc.data_path = data_path || path
-            doc.cursor = cursor
+            doc.cursor = cursor || SourceLocation()
 
             doc
         end

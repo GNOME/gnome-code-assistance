@@ -124,7 +124,7 @@ func (s *ServerDbus) makeDocument(app *App, path string, clientPath string) *Doc
 	return ddoc
 }
 
-func (s *ServerDbus) ensureDocument(app *App, path string, dataPath string, cursor int64) *DocumentDbus {
+func (s *ServerDbus) ensureDocument(app *App, path string, dataPath string, cursor SourceLocation) *DocumentDbus {
 	npath := filepath.Clean(path)
 
 	doc := app.docs[npath]
@@ -152,7 +152,7 @@ func (s *ServerDbus) parseOptions(options map[string]dbus.Variant) (Options, err
 	return o, err
 }
 
-func (s *ServerDbus) parse(appid string, path string, cursor int64, documents []OpenDocument, options map[string]dbus.Variant) ([]RemoteDocument, *dbus.Error) {
+func (s *ServerDbus) parse(appid string, path string, documents []OpenDocument, cursor SourceLocation, options map[string]dbus.Variant) ([]RemoteDocument, *dbus.Error) {
 	s.mutex.Lock()
 	app := s.ensureApp(appid)
 	s.mutex.Unlock()
@@ -202,12 +202,12 @@ func (s *ServerDbus) parse(appid string, path string, cursor int64, documents []
 	}, nil
 }
 
-func (s *ServerDbus) Parse(appid string, path string, cursor int64, dataPath string, options map[string]dbus.Variant) (dbus.ObjectPath, *dbus.Error) {
+func (s *ServerDbus) Parse(appid string, path string, dataPath string, cursor SourceLocation, options map[string]dbus.Variant) (dbus.ObjectPath, *dbus.Error) {
 	documents := []OpenDocument{
 		{path, dataPath},
 	}
 
-	ret, err := s.parse(appid, path, cursor, documents, options)
+	ret, err := s.parse(appid, path, documents, cursor, options)
 
 	if err != nil {
 		return "", err
@@ -222,8 +222,8 @@ func (s *ServerDbus) Parse(appid string, path string, cursor int64, dataPath str
 	return "", nil
 }
 
-func (s *ServerDbus) ParseAll(appid string, path string, cursor int64, documents []OpenDocument, options map[string]dbus.Variant) ([]RemoteDocument, *dbus.Error) {
-	return s.parse(appid, path, cursor, documents, options)
+func (s *ServerDbus) ParseAll(appid string, path string, documents []OpenDocument, cursor SourceLocation, options map[string]dbus.Variant) ([]RemoteDocument, *dbus.Error) {
+	return s.parse(appid, path, documents, cursor, options)
 }
 
 func (s *ServerDbus) disposeApp(app *App) {

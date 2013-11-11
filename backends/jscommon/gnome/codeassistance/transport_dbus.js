@@ -2,12 +2,13 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const System = imports.system;
 const Lang = imports.lang;
+const Types = imports.gnome.codeassistance.types;
 
 var ServiceIface = '<interface name="org.gnome.CodeAssist.v1.Service">          \
   <method name="Parse">                                                         \
     <arg direction="in"  type="s" name="path" />                                \
-    <arg direction="in"  type="x" name="cursor" />                              \
     <arg direction="in"  type="s" name="dataPath" />                            \
+    <arg direction="in"  type="(xx)" name="cursor" />                           \
     <arg direction="in"  type="a{sv}" name="options" />                         \
     <arg direction="out" type="o" name="documentPath"/>                         \
   </method>                                                                     \
@@ -19,8 +20,8 @@ var ServiceIface = '<interface name="org.gnome.CodeAssist.v1.Service">          
 var ProjectIface = '<interface name="org.gnome.CodeAssist.v1.Project">          \
   <method name="ParseAll">                                                      \
     <arg direction="in"  type="s" name="path" />                                \
-    <arg direction="in"  type="x" name="cursor" />                              \
     <arg direction="in"  type="a(ss)" name="documents" />                       \
+    <arg direction="in"  type="(xx)" name="cursor" />                           \
     <arg direction="in"  type="a{sv}" name="options" />                         \
     <arg direction="out" type="a(so)" name="documents" />                       \
   </method>                                                                     \
@@ -127,7 +128,7 @@ Service.prototype = {
     ParseAsync: function(args, invocation) {
         this.server.dbusAsync(args, invocation, function(sender, path, cursor, dataPath, options) {
             let app = this.ensureApp(sender);
-            let doc = this.ensureDocument(app, path, dataPath, cursor);
+            let doc = this.ensureDocument(app, path, dataPath, Types.SourceLocation.fromTuple(cursor));
 
             app.service['org.gnome.CodeAssist.v1.Service'].parse.call(app.service,
                                                                       doc,
@@ -169,7 +170,7 @@ Project.prototype = {
     ParseAllAsync: function(args, invocation) {
         this.server.dbusAsync(args, invocation, function(sender, path, cursor, documents, options) {
             let app = this.ensureApp(sender);
-            let doc = this.ensureDocument(app, path, '', cursor);
+            let doc = this.ensureDocument(app, path, '', Types.SourceLocation.fromTuple(cursor));
 
             let opendocs = documents.map(function (d) {
                 return OpenDocument.fromTuple(d);
@@ -314,7 +315,7 @@ Server.prototype = {
         return Gio.file_new_for_path(path).get_path();
     },
 
-    ensureDocument: function(app, path, dataPath, cursor=0) {
+    ensureDocument: function(app, path, dataPath, cursor) {
         let cpath = this.cleanPath(path);
 
         let doc;

@@ -24,7 +24,7 @@ public class Document : Object
 {
 	public string path { get; construct set; }
 	public string data_path { get; set; }
-	public int64 cursor { get; set; }
+	public SourceLocation cursor { get; set; }
 	public string client_path { get; set; }
 
 	public Diagnostic[] diagnostics { get; set; }

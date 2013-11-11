@@ -38,7 +38,7 @@ class Document(dbus.service.Object):
         self.path = ''
         self.client_path = ''
         self.data_path = ''
-        self.cursor = 0
+        self.cursor = types.SourceLocation()
 
 class Diagnostics(dbus.service.Object):
     """Diagnostics interface.
@@ -194,7 +194,7 @@ class Server(dbus.service.Object):
 
         return doc
 
-    def ensure_document(self, app, path, data_path, cursor=0):
+    def ensure_document(self, app, path, data_path, cursor=None):
         npath = (path and os.path.normpath(path))
 
         try:
@@ -203,7 +203,7 @@ class Server(dbus.service.Object):
             doc = self.make_document(app, npath, path)
 
         doc.data_path = (data_path or path)
-        doc.cursor = cursor
+        doc.cursor = cursor or types.SourceLocation()
 
         return doc
 
@@ -234,11 +234,11 @@ class Server(dbus.service.Object):
 
 class ServeService(dbus.service.Object):
     @dbus.service.method('org.gnome.CodeAssist.v1.Service',
-                         in_signature='sxa(ss)a{sv}', out_signature='o',
+                         in_signature='ss(xx)a{sv}', out_signature='o',
                          sender_keyword='sender')
-    def Parse(self, path, cursor, data_path, options, sender=None):
+    def Parse(self, path, data_path, cursor, options, sender=None):
         app = self.ensure_app(sender)
-        doc = self.ensure_document(app, path, data_path, cursor)
+        doc = self.ensure_document(app, path, data_path, types.SourceLocation.from_tuple(cursor))
 
         app.service.parse(doc, options)
 
@@ -259,11 +259,11 @@ class ServeService(dbus.service.Object):
 
 class ServeProject(dbus.service.Object):
     @dbus.service.method('org.gnome.CodeAssist.v1.Project',
-                         in_signature='sxa(ss)a{sv}', out_signature='a(so)',
+                         in_signature='sa(ss)(xx)a{sv}', out_signature='a(so)',
                          sender_keyword='sender')
-    def ParseAll(self, path, cursor, documents, options, sender=None):
+    def ParseAll(self, path, documents, cursor, options, sender=None):
         app = self.ensure_app(sender)
-        doc = self.ensure_document(app, path, '', cursor)
+        doc = self.ensure_document(app, path, '', types.SourceLocation.from_tuple(cursor))
 
         opendocs = [types.OpenDocument.from_tuple(d) for d in documents]
         docs = [self.ensure_document(app, d.path, d.data_path) for d in opendocs]

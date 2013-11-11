@@ -33,8 +33,8 @@ func (s *ServiceDbus) Introspect() *introspect.Node {
 						Name: "Parse",
 						Args: []introspect.Arg{
 							{"path", "s", "in"},
-							{"cursor", "x", "in"},
 							{"data_path", "s", "in"},
+							{"cursor", "(xx)", "in"},
 							{"options", "a{sv}", "in"},
 							{"result", "o", "out"},
 						},
@@ -55,8 +55,8 @@ func (s *ServiceDbus) Introspect() *introspect.Node {
 						Name: "ParseAll",
 						Args: []introspect.Arg{
 							{"path", "s", "in"},
-							{"cursor", "x", "in"},
 							{"documents", "a(ss)", "in"},
+							{"cursor", "(xx)", "in"},
 							{"options", "a{sv}", "in"},
 							{"result", "a(so)", "out"},
 						},
@@ -91,16 +91,16 @@ func (d *DocumentDbus) Introspect() *introspect.Node {
 	}
 }
 
-func (s *ServiceDbus) Parse(path string, cursor int64, dataPath string, options map[string]dbus.Variant, sender dbus.Sender) (dbus.ObjectPath, *dbus.Error) {
-	return s.Server.Parse(string(sender), path, cursor, dataPath, options)
+func (s *ServiceDbus) Parse(path string, dataPath string, cursor SourceLocation, options map[string]dbus.Variant, sender dbus.Sender) (dbus.ObjectPath, *dbus.Error) {
+	return s.Server.Parse(string(sender), path, dataPath, cursor, options)
 }
 
 func (s *ServiceDbus) Dispose(path string, sender dbus.Sender) *dbus.Error {
 	return s.Server.Dispose(string(sender), path)
 }
 
-func (s *ServiceDbus) ParseAll(path string, cursor int64, documents []OpenDocument, options map[string]dbus.Variant, sender dbus.Sender) ([]RemoteDocument, *dbus.Error) {
-	return s.Server.ParseAll(string(sender), path, cursor, documents, options)
+func (s *ServiceDbus) ParseAll(path string, documents []OpenDocument, cursor SourceLocation, options map[string]dbus.Variant, sender dbus.Sender) ([]RemoteDocument, *dbus.Error) {
+	return s.Server.ParseAll(string(sender), path, documents, cursor, options)
 }
 
 func (d *DocumentDbus) Diagnostics() ([]Diagnostic, *dbus.Error) {

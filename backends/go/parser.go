@@ -252,7 +252,7 @@ func (p *Parser) importSourceFirst(imports map[string]*types.Package, fs *token.
 	return pkg, err
 }
 
-func (p *Parser) Parse(path string, cursor int64, unsaved []UnsavedDocument, options Options) (*Parsed, error) {
+func (p *Parser) Parse(path string, cursor SourceLocation, unsaved []UnsavedDocument, options Options) (*Parsed, error) {
 	if len(options.GoPath) == 0 {
 		options.GoPath = os.Getenv("GOPATH")
 	}

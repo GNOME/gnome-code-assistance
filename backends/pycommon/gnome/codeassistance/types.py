@@ -46,6 +46,10 @@ class SourceLocation:
     def __repr__(self):
         return '{0}.{1}'.format(self.line, self.column)
 
+    @classmethod
+    def from_tuple(cls, tp):
+        return cls(tp[0], tp[1])
+
     def to_range(self, file=0):
         start = SourceLocation(line=self.line, column=self.column)
         end = SourceLocation(line=self.line, column=self.column)

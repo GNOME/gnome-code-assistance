@@ -64,6 +64,10 @@ module Gnome::CodeAssistance
             "#{@line}.#{@column}"
         end
 
+        def self.from_tuple(tp)
+            SourceLocation.new(tp[0], tp[1])
+        end
+
         def to_range(file=0)
             s = SourceLocation.new(@line, @column)
             e = SourceLocation.new(@line, @column)

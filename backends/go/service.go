@@ -49,7 +49,7 @@ type Document struct {
 	Path       string
 	DataPath   string
 	ClientPath string
-	Cursor     int64
+	Cursor     SourceLocation
 
 	Diagnostics []Diagnostic
 

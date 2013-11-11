@@ -25,6 +25,13 @@ SourceLocation.prototype = {
     }
 };
 
+SourceLocation.fromTuple = function(tp) {
+    return new SourceLocation({
+        line: tp[0],
+        column: tp[1]
+    });
+};
+
 let SourceRange = function(vals) {
     this._init(vals);
 };

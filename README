@@ -41,20 +41,20 @@ define the code assistance protocol.
         // Parse and analyse a single document.
         //
         // path:     the file path to be parsed.
-        // cursor:   the current location (in bytes) of the cursor. The cursor
-        //           position can be used for the purpose of obtaining
-        //           information for services like auto-completion.
         // dataPath: the path where the actual file data can be obtained. The
         //           dataPath should be used to provide the contents of a file
         //           that has modifications not yet written to disk (i.e. a file
         //           being edited).
+        // cursor:   the current location (line/column) of the cursor. The cursor
+        //           position can be used for the purpose of obtaining
+        //           information for services like auto-completion.
         // options:  a map of backend specific options.
         //
         // returns:  a dbus object path where information on the parsed document
         //           can be obtained. The object located at this path can
         //           be introspected to find out which services are available.
         //
-        Parse(path string, cursor int64, dataPath string, options map[string]variant) object
+        Parse(path string, dataPath string, cursor SourceLocation, options map[string]variant) object
 
         // Dispose the document representing the given file path. Note that this
         // is a file path, not a dbus object path. Clients can call dispose
@@ -74,7 +74,6 @@ define the code assistance protocol.
         // given path.
         //
         // path:      the file path to be parsed.
-        // cursor:    the cursor location (see org.gnome.CodeAssist.v1.Service.Parse).
         // documents: a list of open documents (path string, dataPath string).
         //            This list serves two purposes. 1) it provides dataPath
         //            for all being-edited documents and 2) it provides a list
@@ -83,6 +82,7 @@ define the code assistance protocol.
         //            language). Note that this list is *not* a list of files
         //            in a project. It is up to the backend to parse all files
         //            relevant to complete the file at path.
+        // cursor:    the cursor location (see org.gnome.CodeAssist.v1.Service.Parse).
         // options:   a map of backend specific options.
         //
         // returns:   a list of RemoteDocument (path string, remotePath object).
@@ -90,7 +90,7 @@ define the code assistance protocol.
         //            provided documents for which new information is available
         //            after parsing.
         //
-        ParseAll(path string, cursor int64, documents []OpenDocument, options map[string]variant) []RemoteDocument
+        ParseAll(path string, documents []OpenDocument, cursor SourceLocation, options map[string]variant) []RemoteDocument
     }
 
     // All services must the Document interface on each document

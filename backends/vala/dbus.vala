@@ -195,7 +195,7 @@ public class Service : Object
 		return doc;
 	}
 
-	private Document ensure_document(App app, string path, string data_path, int64 cursor)
+	private Document ensure_document(App app, string path, string data_path, SourceLocation cursor)
 	{
 		var cpath = clean_path(path);
 		Document doc;
@@ -222,7 +222,7 @@ public class Service : Object
 		return doc;
 	}
 
-	public ObjectPath parse(string path, int64 cursor, string data_path, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	public ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
 	{
 		var app = ensure_app(sender);
 		var doc = ensure_document(app, path, data_path, cursor);
