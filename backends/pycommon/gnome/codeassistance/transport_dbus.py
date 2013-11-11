@@ -26,10 +26,10 @@ class Document(dbus.service.Object):
     """Base Document interface.
 
     Implementations should inherit from this base class which implements the
-    org.gnome.CodeAssist.Document interface.
+    org.gnome.CodeAssist.v1.Document interface.
     """
 
-    interface = 'org.gnome.CodeAssist.Document'
+    interface = 'org.gnome.CodeAssist.v1.Document'
 
     def __init__(self):
         super(Document, self).__init__()
@@ -44,12 +44,12 @@ class Diagnostics(dbus.service.Object):
     """Diagnostics interface.
 
     Implementations can inherit from this class to implement the
-    org.gnome.CodeAssist.Diagnostics interface. Diagnostics are served from
+    org.gnome.CodeAssist.v1.Diagnostics interface. Diagnostics are served from
     the .diagnostics field which should be set to a list of types.Diagnostic
     objects.
     """
 
-    interface = 'org.gnome.CodeAssist.Diagnostics'
+    interface = 'org.gnome.CodeAssist.v1.Diagnostics'
 
     def __init__(self):
         super(Diagnostics, self).__init__()
@@ -233,7 +233,7 @@ class Server(dbus.service.Object):
             GLib.idle_add(lambda: sys.exit(0))
 
 class ServeService(dbus.service.Object):
-    @dbus.service.method('org.gnome.CodeAssist.Service',
+    @dbus.service.method('org.gnome.CodeAssist.v1.Service',
                          in_signature='sxa(ss)a{sv}', out_signature='o',
                          sender_keyword='sender')
     def Parse(self, path, cursor, data_path, options, sender=None):
@@ -244,7 +244,7 @@ class ServeService(dbus.service.Object):
 
         return doc._object_path
 
-    @dbus.service.method('org.gnome.CodeAssist.Service',
+    @dbus.service.method('org.gnome.CodeAssist.v1.Service',
                          in_signature='s', out_signature='',
                          sender_keyword='sender')
     def Dispose(self, path, sender=None):
@@ -258,7 +258,7 @@ class ServeService(dbus.service.Object):
         self.dispose(app, path)
 
 class ServeProject(dbus.service.Object):
-    @dbus.service.method('org.gnome.CodeAssist.Project',
+    @dbus.service.method('org.gnome.CodeAssist.v1.Project',
                          in_signature='sxa(ss)a{sv}', out_signature='a(so)',
                          sender_keyword='sender')
     def ParseAll(self, path, cursor, documents, options, sender=None):
@@ -276,8 +276,8 @@ class Transport():
     def __init__(self, service, document, srvtype=Server):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-        name = 'org.gnome.CodeAssist.' + service.language
-        path = '/org/gnome/CodeAssist/' + service.language
+        name = 'org.gnome.CodeAssist.v1.' + service.language
+        path = '/org/gnome/CodeAssist/v1/' + service.language
 
         bus = dbus.SessionBus()
         servercls = self.make_server_cls(service)

@@ -73,7 +73,7 @@ module Gnome::CodeAssistance::DBus
     end
 
     module Diagnostics
-        dbus_interface 'org.gnome.CodeAssist.Diagnostics' do
+        dbus_interface 'org.gnome.CodeAssist.v1.Diagnostics' do
             dbus_method :Diagnostics, "out diagnostics:a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" do
                 return [@_doc.diagnostics.collect { |d| d.to_tuple }]
             end
@@ -81,7 +81,7 @@ module Gnome::CodeAssistance::DBus
     end
 
     module Service
-        dbus_interface 'org.gnome.CodeAssist.Service' do
+        dbus_interface 'org.gnome.CodeAssist.v1.Service' do
             dbus_method :Parse, "in path:s, in cursor:x, in data_path:s, in options:a{sv}, out document:o" do |path, cursor, data_path, options|
                 app = ensure_app(@sender)
                 doc = ensure_document(app, path, data_path, cursor)
@@ -100,7 +100,7 @@ module Gnome::CodeAssistance::DBus
     end
 
     module Project
-        dbus_interface 'org.gnome.CodeAssist.Project' do
+        dbus_interface 'org.gnome.CodeAssist.v1.Project' do
             dbus_method :ParseAll, "in path:s, in cursor:x, in docs:a(ss), in options:a{sv}, out documents:a(so)" do |path, cursor, documents, options|
                 app = ensure_app(@sender)
                 doc = ensure_document(app, path, '', cursor)
@@ -310,8 +310,8 @@ module Gnome::CodeAssistance
 
     class Transport
         def initialize(service, document)
-            name = 'org.gnome.CodeAssist.' + service.language
-            path = '/org/gnome/CodeAssist/' + service.language
+            name = 'org.gnome.CodeAssist.v1.' + service.language
+            path = '/org/gnome/CodeAssist/v1/' + service.language
 
             allmods = Gnome::CodeAssistance.constants.collect { |x| Gnome::CodeAssistance.const_get(x) }
 

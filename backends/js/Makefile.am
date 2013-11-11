@@ -9,6 +9,6 @@ jsbackendexec_SCRIPTS = \
 
 jsbackendservicedir = $(datadir)/dbus-1/services
 jsbackendservice_DATA = \
-	backends/js/org.gnome.CodeAssist.js.service
+	backends/js/org.gnome.CodeAssist.v1.js.service
 
 GITIGNOREDEPS += backends/js/Makefile.am

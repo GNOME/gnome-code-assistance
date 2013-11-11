@@ -18,7 +18,7 @@ type ObjectDbus interface {
 
 func NewDbusError(name string, format string, args ...interface{}) *dbus.Error {
 	return &dbus.Error{
-		Name: "org.gnome.CodeAssist.Error." + name,
+		Name: "org.gnome.CodeAssist.v1.Error." + name,
 		Body: []interface{}{
 			fmt.Sprintf(format, args...),
 		},
@@ -58,14 +58,14 @@ func NewTransportDbus() (Transport, error) {
 		return nil, err
 	}
 
-	reply, err := conn.RequestName("org.gnome.CodeAssist.go", dbus.NameFlagDoNotQueue)
+	reply, err := conn.RequestName("org.gnome.CodeAssist.v1.go", dbus.NameFlagDoNotQueue)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if reply != dbus.RequestNameReplyPrimaryOwner {
-		return nil, errors.New("org.gnome.CodeAssist.go already taken")
+		return nil, errors.New("org.gnome.CodeAssist.v1.go already taken")
 	}
 
 	t := &TransportDbus{

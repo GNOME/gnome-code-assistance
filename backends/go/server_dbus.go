@@ -76,7 +76,7 @@ func NewServerDbus(transport *TransportDbus) (*ServerDbus, error) {
 }
 
 func (s *ServerDbus) dbusPath() dbus.ObjectPath {
-	return "/org/gnome/CodeAssist/go"
+	return "/org/gnome/CodeAssist/v1/go"
 }
 
 func (s *ServerDbus) documentDbusPath(app *App, doc *DocumentDbus) dbus.ObjectPath {

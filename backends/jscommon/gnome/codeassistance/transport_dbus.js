@@ -3,7 +3,7 @@ const Gio = imports.gi.Gio;
 const System = imports.system;
 const Lang = imports.lang;
 
-var ServiceIface = '<interface name="org.gnome.CodeAssist.Service">             \
+var ServiceIface = '<interface name="org.gnome.CodeAssist.v1.Service">          \
   <method name="Parse">                                                         \
     <arg direction="in"  type="s" name="path" />                                \
     <arg direction="in"  type="x" name="cursor" />                              \
@@ -16,7 +16,7 @@ var ServiceIface = '<interface name="org.gnome.CodeAssist.Service">             
   </method>                                                                     \
 </interface>';
 
-var ProjectIface = '<interface name="org.gnome.CodeAssist.Project">             \
+var ProjectIface = '<interface name="org.gnome.CodeAssist.v1.Project">          \
   <method name="ParseAll">                                                      \
     <arg direction="in"  type="s" name="path" />                                \
     <arg direction="in"  type="x" name="cursor" />                              \
@@ -26,10 +26,10 @@ var ProjectIface = '<interface name="org.gnome.CodeAssist.Project">             
   </method>                                                                     \
 </interface>';
 
-var DocumentIface = '<interface name="org.gnome.CodeAssist.Document">           \
+var DocumentIface = '<interface name="org.gnome.CodeAssist.v1.Document">        \
 </interface>';
 
-var DiagnosticsIface = '<interface name="org.gnome.CodeAssist.Diagnostics">     \
+var DiagnosticsIface = '<interface name="org.gnome.CodeAssist.v1.Diagnostics">  \
   <method name="Diagnostics">                                                   \
     <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" name="diagnostics"/> \
   </method>                                                                     \
@@ -106,7 +106,7 @@ Diagnostics.prototype = {
     },
 
     Diagnostics: function() {
-        let diagnostics = this.doc['org.gnome.CodeAssist.Diagnostics'].diagnostics.call(this.doc);
+        let diagnostics = this.doc['org.gnome.CodeAssist.v1.Diagnostics'].diagnostics.call(this.doc);
 
         return diagnostics.map(function (d) {
             return d.toTuple();
@@ -129,9 +129,9 @@ Service.prototype = {
             let app = this.ensureApp(sender);
             let doc = this.ensureDocument(app, path, dataPath, cursor);
 
-            app.service['org.gnome.CodeAssist.Service'].parse.call(app.service,
-                                                                   doc,
-                                                                   options);
+            app.service['org.gnome.CodeAssist.v1.Service'].parse.call(app.service,
+                                                                      doc,
+                                                                      options);
 
             return this.documentPath(app, doc);
         });
@@ -179,7 +179,7 @@ Project.prototype = {
                 return this.ensureDocument(app, d.path, d.dataPath);
             });
 
-            parsed = app.service['org.gnome.CodeAssist.Project'].call(app.service, doc, docs, options);
+            parsed = app.service['org.gnome.CodeAssist.v1.Project'].call(app.service, doc, docs, options);
 
             return parsed.map(function(d) {
                 return (new RemoteDocument({
@@ -192,13 +192,13 @@ Project.prototype = {
 };
 
 var ServerServices = {
-    'org.gnome.CodeAssist.Service': Service,
-    'org.gnome.CodeAssist.Project': Project,
+    'org.gnome.CodeAssist.v1.Service': Service,
+    'org.gnome.CodeAssist.v1.Project': Project,
 };
 
 var DocumentServices = {
-    'org.gnome.CodeAssist.Document': Document,
-    'org.gnome.CodeAssist.Diagnostics': Diagnostics
+    'org.gnome.CodeAssist.v1.Document': Document,
+    'org.gnome.CodeAssist.v1.Diagnostics': Diagnostics
 };
 
 const FreedesktopDBusProxy = Gio.DBusProxy.makeProxyWrapper(FreedesktopDBusIface);
@@ -216,7 +216,7 @@ Server.prototype = {
         this.apps = {};
         this.nextid = 0;
 
-        let path = '/org/gnome/CodeAssist/' + service.language;
+        let path = '/org/gnome/CodeAssist/v1/' + service.language;
 
         // Setup relevant server services
         for (let s in ServerServices) {
@@ -289,7 +289,7 @@ Server.prototype = {
     },
 
     documentPath: function(app, doc) {
-        return '/org/gnome/CodeAssist/' + this.service.language + '/' + app.id + '/documents/' + doc.id;
+        return '/org/gnome/CodeAssist/v1/' + this.service.language + '/' + app.id + '/documents/' + doc.id;
     },
 
     makeDocument: function(app, path, clientPath) {
@@ -336,7 +336,7 @@ Server.prototype = {
     },
 
     disposeDocument: function(app, doc) {
-        app.service['org.gnome.CodeAssist.Service'].dispose.call(app.service, doc);
+        app.service['org.gnome.CodeAssist.v1.Service'].dispose.call(app.service, doc);
 
         for (let i = 0; i < doc._proxies.length; i++) {
             doc._proxies[i].dbus.unexport(this.conn);
@@ -387,7 +387,7 @@ Server.prototype = {
                 let name = e.name;
 
                 if (name.indexOf('.') == -1) {
-                    name = 'org.gnome.CodeAssist.JSError.' + name;
+                    name = 'org.gnome.CodeAssist.v1.js.Error.' + name;
                 }
 
                 let errLoc = e.fileName + ':' + e.lineNumber + '.' + e.columnNumber;
@@ -421,7 +421,7 @@ Server.prototype = {
                 let errLoc = e.fileName + ':' + e.lineNumber + '.' + e.columnNumber;
                 let errMsg = 'in ' + errLoc + ': ' + objectPath + '(' + ifaceName + '.' + methodName + ') -> ' + outSignature;
 
-                invocation.return_dbus_error('org.gnome.CodeAssist.js.ValueError',
+                invocation.return_dbus_error('org.gnome.CodeAssist.v1.js.ValueError',
                                              'Failed to encode return value in `' + errMsg + '\': ' + e.message);
                 return;
             }
@@ -453,7 +453,7 @@ Transport.prototype = {
     },
 
     run: function() {
-        Gio.DBus.session.own_name('org.gnome.CodeAssist.' + this.service.language,
+        Gio.DBus.session.own_name('org.gnome.CodeAssist.v1.' + this.service.language,
                                   Gio.BusNameOwnerFlags.NONE,
                                   Lang.bind(this, this.onBusAcquired),
                                   Lang.bind(this, this.onNameAcquired),

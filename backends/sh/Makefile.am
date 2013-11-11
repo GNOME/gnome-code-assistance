@@ -8,6 +8,6 @@ shbackendexec_SCRIPTS = \
 
 shbackendservicedir = $(datadir)/dbus-1/services
 shbackendservice_DATA = \
-	backends/sh/org.gnome.CodeAssist.sh.service
+	backends/sh/org.gnome.CodeAssist.v1.sh.service
 
 GITIGNOREDEPS += backends/sh/Makefile.am

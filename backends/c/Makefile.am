@@ -17,6 +17,6 @@ cbackendexec_SCRIPTS = \
 
 cbackendservicedir = $(datadir)/dbus-1/services
 cbackendservice_DATA = \
-	backends/c/org.gnome.CodeAssist.c.service
+	backends/c/org.gnome.CodeAssist.v1.c.service
 
 GITIGNOREDEPS += backends/c/Makefile.am

@@ -1,3 +1,3 @@
 [D-BUS Service]
-Name=org.gnome.CodeAssist.c
+Name=org.gnome.CodeAssist.v1.c
 Exec=@backendexecdir@/c --transport dbus

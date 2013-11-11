@@ -20,7 +20,7 @@
 namespace Gca.Backends.Vala.DBus
 {
 
-[DBus (name = "org.gnome.CodeAssist.Document")]
+[DBus (name = "org.gnome.CodeAssist.v1.Document")]
 public class Document : Object
 {
 	private Gca.Backends.Vala.Document? d_document;
@@ -31,7 +31,7 @@ public class Document : Object
 	}
 }
 
-[DBus (name = "org.gnome.CodeAssist.Diagnostics")]
+[DBus (name = "org.gnome.CodeAssist.v1.Diagnostics")]
 public class Diagnostics : Object
 {
 	private Gca.Backends.Vala.Document? d_document;
@@ -59,7 +59,7 @@ interface FreedesktopDBus : Object {
 	public signal void name_owner_changed(string name, string oldowner, string newowner);
 }
 
-[DBus (name = "org.gnome.CodeAssist.Service")]
+[DBus (name = "org.gnome.CodeAssist.v1.Service")]
 public class Service : Object
 {
 	class Document
@@ -177,7 +177,7 @@ public class Service : Object
 
 		var doc = new Document(ndoc, app.nextid);
 
-		doc.path = new ObjectPath("/org/gnome/CodeAssist/vala/%u/documents/%u".printf(app.id, doc.id));
+		doc.path = new ObjectPath("/org/gnome/CodeAssist/v1/vala/%u/documents/%u".printf(app.id, doc.id));
 
 		try
 		{
@@ -301,9 +301,9 @@ public class Transport
 
 		try
 		{
-			conn.register_object("/org/gnome/CodeAssist/vala", d_service);
-			conn.register_object("/org/gnome/CodeAssist/vala/document", new DBus.Document());
-			conn.register_object("/org/gnome/CodeAssist/vala/document", new DBus.Diagnostics());
+			conn.register_object("/org/gnome/CodeAssist/v1/vala", d_service);
+			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DBus.Document());
+			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DBus.Diagnostics());
 		}
 		catch (Error e)
 		{
@@ -323,7 +323,7 @@ public class Transport
 	public void run()
 	{
 		Bus.own_name(BusType.SESSION,
-		             "org.gnome.CodeAssist.vala",
+		             "org.gnome.CodeAssist.v1.vala",
 		             BusNameOwnerFlags.NONE,
 		             on_bus_aquired,
 		             on_name_acquired,

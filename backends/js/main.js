@@ -12,10 +12,10 @@ Document.prototype = {
         this.diagnostics = [];
     },
 
-    'org.gnome.CodeAssist.Document': {
+    'org.gnome.CodeAssist.v1.Document': {
     },
 
-    'org.gnome.CodeAssist.Diagnostics': {
+    'org.gnome.CodeAssist.v1.Diagnostics': {
         diagnostics: function() {
             return this.diagnostics;
         }
@@ -31,7 +31,7 @@ Service.prototype = {
     
     },
 
-    'org.gnome.CodeAssist.Service': {
+    'org.gnome.CodeAssist.v1.Service': {
         parse: function(doc, options) {
             var c = GLib.file_get_contents(doc.dataPath);
 

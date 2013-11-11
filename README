@@ -37,7 +37,7 @@ define the code assistance protocol.
 
 ### Interfaces
     // All services must implement this interface on the root object.
-    type org.gnome.CodeAssist.Service interface {
+    type org.gnome.CodeAssist.v1.Service interface {
         // Parse and analyse a single document.
         //
         // path:     the file path to be parsed.
@@ -69,12 +69,12 @@ define the code assistance protocol.
     // analysing multiple documents at the same time to complete a translation
     // unit. This is mostly useful for statically typed languages, where multiple
     // documents are parsed to complete type information (think headers in C).
-    type org.gnome.CodeAssist.Project interface {
+    type org.gnome.CodeAssist.v1.Project interface {
         // Parse a number of documents to complete the translation unit of the
         // given path.
         //
         // path:      the file path to be parsed.
-        // cursor:    the cursor location (see org.gnome.CodeAssist.Service.Parse).
+        // cursor:    the cursor location (see org.gnome.CodeAssist.v1.Service.Parse).
         // documents: a list of open documents (path string, dataPath string).
         //            This list serves two purposes. 1) it provides dataPath
         //            for all being-edited documents and 2) it provides a list
@@ -94,12 +94,12 @@ define the code assistance protocol.
     }
 
     // All services must the Document interface on each document
-    type org.gnome.CodeAssist.Document interface {
+    type org.gnome.CodeAssist.v1.Document interface {
     }
 
     // The Diagnostics interface can be implemented on a document to provide
     // diagnostics after parsing.
-    type org.gnome.CodeAssist.Diagnostics {
+    type org.gnome.CodeAssist.v1.Diagnostics {
         // Obtain diagnostic information for the document. The return value
         // is a list of Diagnostic structs. Each diagnostic contains at least
         // a Severity level (e.g. Warning or Error), one or more SourceRange
@@ -111,15 +111,15 @@ define the code assistance protocol.
     }
 
 ### Objects
-A service for a language `X` is available on the dbus name `org.gnome.CodeAssist.X`.
-It further makes available two objects. The first is located at `/org/gnome/CodeAssist/X`
-and implements at least the `org.gnome.CodeAssist.Service` interface. It
-can optionally also implement the `org.gnome.CodeAssist.Project` interface if
+A service for a language `X` is available on the dbus name `org.gnome.CodeAssist.v1.X`.
+It further makes available two objects. The first is located at `/org/gnome/CodeAssist/v1/X`
+and implements at least the `org.gnome.CodeAssist.v1.Service` interface. It
+can optionally also implement the `org.gnome.CodeAssist.v1.Project` interface if
 the language supports parsing multiple documents at once.
 
-The second object that is made available is located at `/org/gnome/CodeAssist/X/document`
+The second object that is made available is located at `/org/gnome/CodeAssist/v1/X/document`
 and represents an empty dummy document which can be introspected to find out
-which services are implemented. All documents implement `org.gnome.CodeAssist.Document`,
+which services are implemented. All documents implement `org.gnome.CodeAssist.v1.Document`,
 but other services are optional.
 
 ### Types

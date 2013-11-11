@@ -24,7 +24,7 @@ endif
 
 valabackendservicedir = $(datadir)/dbus-1/services
 valabackendservice_DATA = \
-	backends/vala/org.gnome.CodeAssist.vala.service
+	backends/vala/org.gnome.CodeAssist.v1.vala.service
 
 CLEANFILES +=					\
 	$(backends_vala_vala_SOURCES:.vala=.c)	\

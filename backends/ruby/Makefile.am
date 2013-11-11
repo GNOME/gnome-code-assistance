@@ -9,6 +9,6 @@ rubybackendexec_SCRIPTS = \
 
 rubybackendservicedir = $(datadir)/dbus-1/services
 rubybackendservice_DATA = \
-	backends/ruby/org.gnome.CodeAssist.ruby.service
+	backends/ruby/org.gnome.CodeAssist.v1.ruby.service
 
 GITIGNOREDEPS += backends/ruby/Makefile.am

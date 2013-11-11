@@ -13,7 +13,7 @@ backends/go/go: $(backends_go_go_SOURCES)
 
 gobackendservicedir = $(datadir)/dbus-1/services
 gobackendservice_DATA = \
-	backends/go/org.gnome.CodeAssist.go.service
+	backends/go/org.gnome.CodeAssist.v1.go.service
 
 EXTRA_DIST += backends/go/deps
 

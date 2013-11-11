@@ -8,6 +8,6 @@ pythonbackendexec_SCRIPTS = \
 
 pythonbackendservicedir = $(datadir)/dbus-1/services
 pythonbackendservice_DATA = \
-	backends/python/org.gnome.CodeAssist.python.service
+	backends/python/org.gnome.CodeAssist.v1.python.service
 
 GITIGNOREDEPS += backends/python/Makefile.am

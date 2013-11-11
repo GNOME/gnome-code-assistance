@@ -8,6 +8,6 @@ xmlbackendexec_SCRIPTS = \
 
 xmlbackendservicedir = $(datadir)/dbus-1/services
 xmlbackendservice_DATA = \
-	backends/xml/org.gnome.CodeAssist.xml.service
+	backends/xml/org.gnome.CodeAssist.v1.xml.service
 
 GITIGNOREDEPS += backends/xml/Makefile.am
