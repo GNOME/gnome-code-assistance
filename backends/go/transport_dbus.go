@@ -8,13 +8,12 @@ import (
 )
 
 type TransportDbus struct {
-	conn    *dbus.Conn
-	service *ServiceDbus
+	conn   *dbus.Conn
+	server *ServerDbus
 }
 
 type ObjectDbus interface {
 	Introspect() *introspect.Node
-	Path() dbus.ObjectPath
 }
 
 func NewDbusError(name string, format string, args ...interface{}) *dbus.Error {
@@ -26,9 +25,18 @@ func NewDbusError(name string, format string, args ...interface{}) *dbus.Error {
 	}
 }
 
-func (t *TransportDbus) export(obj ObjectDbus) error {
+func (t *TransportDbus) unexport(obj ObjectDbus, p dbus.ObjectPath) {
 	n := obj.Introspect()
-	p := obj.Path()
+
+	for _, i := range n.Interfaces {
+		t.conn.Unexport(p, i.Name)
+	}
+
+	t.conn.Unexport(p, "org.freedesktop.DBus.Introspectable")
+}
+
+func (t *TransportDbus) export(obj ObjectDbus, p dbus.ObjectPath) error {
+	n := obj.Introspect()
 
 	for _, i := range n.Interfaces {
 		if err := t.conn.Export(obj, p, i.Name); err != nil {
@@ -64,12 +72,13 @@ func NewTransportDbus() (Transport, error) {
 		conn: conn,
 	}
 
-	t.service = NewServiceDbus(t)
+	server, err := NewServerDbus(t)
 
-	if err := t.export(t.service); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
+	t.server = server
 	return t, nil
 }
 
