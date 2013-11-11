@@ -1,5 +1,5 @@
-let SourceLocation = function(line, column) {
-    this._init(line, column);
+let SourceLocation = function(vals) {
+    this._init(vals);
 };
 
 SourceLocation.prototype = {
@@ -8,7 +8,7 @@ SourceLocation.prototype = {
         this.column = vals.column || 0;
     },
 
-    to_range: function(vals) {
+    toRange: function(vals) {
         return new SourceRange({
             file: vals.file || 0,
             start: new SourceLocation(this),
@@ -16,7 +16,7 @@ SourceLocation.prototype = {
         });
     },
 
-    to_tuple: function() {
+    toTuple: function() {
         return [this.line, this.column];
     },
 
@@ -36,7 +36,7 @@ SourceRange.prototype = {
         this.end = vals.end || new SourceLocation(this);
     },
 
-    to_range: function() {
+    toRange: function() {
         return new SourceRange({
             file: this.file,
             start: new SourceLocation(this.start),
@@ -44,8 +44,8 @@ SourceRange.prototype = {
         });
     },
 
-    to_tuple: function() {
-        return [this.file, this.start.to_tuple(), this.end.to_tuple()];
+    toTuple: function() {
+        return [this.file, this.start.toTuple(), this.end.toTuple()];
     },
 
     toString: function() {
@@ -63,8 +63,8 @@ Fixit.prototype = {
         this.replacement = vals.replacement || '';
     },
 
-    to_tuple: function() {
-        return [this.location.to_tuple(), this.replacement];
+    toTuple: function() {
+        return [this.location.toTuple(), this.replacement];
     },
 
     toString: function() {
@@ -93,12 +93,12 @@ Diagnostic.prototype = {
         this.message = vals.message || '';
     },
 
-    to_tuple: function() {
+    toTuple: function() {
         let m = function(ar) {
             let ret = [];
 
             for (let i = 0; i < ar.length; i++) {
-                ret.push(ar[i].to_tuple());
+                ret.push(ar[i].toTuple());
             }
 
             return ret;

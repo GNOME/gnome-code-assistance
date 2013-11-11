@@ -7,15 +7,22 @@ var ServiceIface = '<interface name="org.gnome.CodeAssist.Service">             
   <method name="Parse">                                                         \
     <arg direction="in"  type="s" name="path" />                                \
     <arg direction="in"  type="x" name="cursor" />                              \
-    <arg direction="in"  type="a(ss)" name="unsaved" />                         \
+    <arg direction="in"  type="s" name="dataPath" />                            \
     <arg direction="in"  type="a{sv}" name="options" />                         \
-    <arg direction="out" type="o" />                                            \
+    <arg direction="out" type="o" name="documentPath"/>                         \
   </method>                                                                     \
   <method name="Dispose">                                                       \
     <arg direction="in"  type="s" name="path" />                                \
   </method>                                                                     \
-  <method name="SupportedServices">                                             \
-    <arg direction="out" type="as" />                                           \
+</interface>';
+
+var ProjectIface = '<interface name="org.gnome.CodeAssist.Project">             \
+  <method name="ParseAll">                                                      \
+    <arg direction="in"  type="s" name="path" />                                \
+    <arg direction="in"  type="x" name="cursor" />                              \
+    <arg direction="in"  type="a(ss)" name="documents" />                       \
+    <arg direction="in"  type="a{sv}" name="options" />                         \
+    <arg direction="out" type="a(so)" name="documents" />                       \
   </method>                                                                     \
 </interface>';
 
@@ -24,7 +31,7 @@ var DocumentIface = '<interface name="org.gnome.CodeAssist.Document">           
 
 var DiagnosticsIface = '<interface name="org.gnome.CodeAssist.Diagnostics">     \
   <method name="Diagnostics">                                                   \
-    <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)"/>              \
+    <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" name="diagnostics"/> \
   </method>                                                                     \
 </interface>';
 
@@ -35,6 +42,47 @@ var FreedesktopDBusIface = '<interface name="org.freedesktop.DBus">             
     <arg direction="out" type="s"/>                                             \
   </signal>                                                                     \
 </interface>';
+
+let OpenDocument = function(vals) {
+    this._init(vals);
+};
+
+OpenDocument.prototype = {
+    _init: function(vals) {
+        this.path = vals.path || '';
+        this.dataPath = vals.dataPath || '';
+    },
+
+    toString: function() {
+        return '[object OpenDocument{path:' + this.path + ', dataPath:' + this.dataPath + '}]';
+    }
+};
+
+OpenDocument.fromTuple = function(tp) {
+    return new OpenDocument({
+        path: tp[0],
+        dataPath: tp[1]
+    });
+};
+
+let RemoteDocument = function(vals) {
+    this._init(vals);
+};
+
+RemoteDocument.prototype = {
+    _init: function(vals) {
+        this.path = vals.path || '';
+        this.remotePath = vals.remotePath || '';
+    },
+
+    toTuple: function() {
+        return [this.path, this.remotePath];
+    },
+
+    toString: function() {
+        return '[object RemoteDocument{path:' + this.path + ', remotePath:' + this.remotePath + '}]';
+    }
+};
 
 var Document = function(doc) {
     this._init(doc);
@@ -58,27 +106,106 @@ Diagnostics.prototype = {
     },
 
     Diagnostics: function() {
-        let retval = this.doc['org.gnome.CodeAssist.Diagnostics'].diagnostics.call(this.doc);
-        let ret = [];
+        let diagnostics = this.doc['org.gnome.CodeAssist.Diagnostics'].diagnostics.call(this.doc);
 
-        for (let i = 0; i < retval.length; i++) {
-            ret.push(retval[i].to_tuple());
-        }
-
-        return ret;
+        return diagnostics.map(function (d) {
+            return d.toTuple();
+        });
     }
 };
 
-var Services = {
+var Service = function(server) {
+    this._init(server);
+};
+
+Service.prototype = {
+    _init: function(server) {
+        this.server = server;
+        this.dbus = Gio.DBusExportedObject.wrapJSObject(ServiceIface, this);
+    },
+
+    ParseAsync: function(args, invocation) {
+        this.server.dbusAsync(args, invocation, function(sender, path, cursor, dataPath, options) {
+            let app = this.ensureApp(sender);
+            let doc = this.ensureDocument(app, path, dataPath, cursor);
+
+            app.service['org.gnome.CodeAssist.Service'].parse.call(app.service,
+                                                                   doc,
+                                                                   options);
+
+            return this.documentPath(app, doc);
+        });
+    },
+
+    DisposeAsync: function(args, invocation) {
+        this.server.dbusAsync(args, invocation, function(sender, path) {
+            if (sender in this.apps) {
+                let app = this.apps[sender];
+                let cpath = this.cleanPath(path);
+
+                if (cpath in app.docs) {
+                    this.disposeDocument(app.docs[cpath]);
+                    delete app.docs[cpath];
+
+                    if (Object.keys(app.docs).length == 0) {
+                        this.disposeApp(app);
+                    }
+                }
+            }
+        });
+    }
+};
+
+var Project = function(server) {
+    this._init(server);
+};
+
+Project.prototype = {
+    _init: function(server) {
+        this.server = server;
+        this.dbus = Gio.DBusExportedObject.wrapJSObject(ProjectIface, this);
+    },
+
+    ParseAllAsync: function(args, invocation) {
+        this.server.dbusAsync(args, invocation, function(sender, path, cursor, documents, options) {
+            let app = this.ensureApp(sender);
+            let doc = this.ensureDocument(app, path, '', cursor);
+
+            let opendocs = documents.map(function (d) {
+                return OpenDocument.fromTuple(d);
+            });
+
+            let docs = opendocs.map(function(d) {
+                return this.ensureDocument(app, d.path, d.dataPath);
+            });
+
+            parsed = app.service['org.gnome.CodeAssist.Project'].call(app.service, doc, docs, options);
+
+            return parsed.map(function(d) {
+                return (new RemoteDocument({
+                    path: d.clientPath,
+                    remotePath: this.documentPath(app, d)
+                })).toTuple();
+            });
+        });
+    }
+};
+
+var ServerServices = {
+    'org.gnome.CodeAssist.Service': Service,
+    'org.gnome.CodeAssist.Project': Project,
+};
+
+var DocumentServices = {
     'org.gnome.CodeAssist.Document': Document,
     'org.gnome.CodeAssist.Diagnostics': Diagnostics
 };
 
+const FreedesktopDBusProxy = Gio.DBusProxy.makeProxyWrapper(FreedesktopDBusIface);
+
 function Server(conn, service, document) {
     this._init(conn, service, document);
 }
-
-const FreedesktopDBusProxy = Gio.DBusProxy.makeProxyWrapper(FreedesktopDBusIface);
 
 Server.prototype = {
     _init: function(conn, service, document) {
@@ -89,58 +216,152 @@ Server.prototype = {
         this.apps = {};
         this.nextid = 0;
 
-        this._impl = Gio.DBusExportedObject.wrapJSObject(ServiceIface, this);
-        this._impl.export(Gio.DBus.session, '/org/gnome/CodeAssist/' + service.language);
+        let path = '/org/gnome/CodeAssist/' + service.language;
 
-        this.services = [];
-
-        var proto = this.document.prototype;
-
-        for (var s in Services) {
-            if (s in proto) {
-                this.services.push(s);
+        // Setup relevant server services
+        for (let s in ServerServices) {
+            if (s in service.prototype) {
+                let serv = new ServerServices[s](this);
+                serv.dbus.export(conn, path);
             }
         }
+
+        let docservices = [];
+
+        for (let s in DocumentServices) {
+            if (s in document.prototype) {
+                docservices.push(DocumentServices[s]);
+            }
+        }
+
+        this.makeDocumentProxies = function(doc, path) {
+            let remotes = [];
+
+            for (let i = 0; i < docservices.length; i++) {
+                let remote = new docservices[i](doc);
+
+                remote.dbus.export(conn, path);
+                remotes.push(remote);
+            }
+
+            return remotes;
+        };
+
+        this.dummy = this.makeDocumentProxies(null, path + '/document');
 
         var proxy = new FreedesktopDBusProxy(Gio.DBus.session,
                                              'org.freedesktop.DBus',
                                              '/org/freedesktop/DBus');
 
-        proxy.connectSignal('NameOwnerChanged', Lang.bind(this, this.on_name_owner_changed));
+        proxy.connectSignal('NameOwnerChanged', Lang.bind(this, this.onNameOwnerChanged));
     },
 
-    on_name_owner_changed: function(emitter, senderName, parameters) {
-        var oldname = parameters[1];
-        var newname = parameters[2];
+    onNameOwnerChanged: function(emitter, senderName, parameters) {
+        let oldname = parameters[1];
+        let newname = parameters[2];
 
         if (newname == '' && oldname in this.apps) {
-            this.dispose_app(this.apps[oldname]);
+            this.disposeApp(this.apps[oldname]);
         }
     },
 
-    app: function(appid) {
+    makeApp: function(appid) {
+        let app = {
+            id: this.nextid,
+            name: appid,
+            service: new this.service(),
+            docs: {},
+            nextid: 0
+        };
+
+        this.apps[appid] = app;
+        this.nextid += 1;
+
+        return app;
+    },
+
+    ensureApp: function(appid) {
         if (!(appid in this.apps)) {
-            var app = {
-                id: this.nextid,
-                name: appid,
-                service: new this.service(),
-                docs: {},
-                ids: {},
-                nextid: 0
-            };
+            return this.makeApp(appid);
+        } else {
+            return this.apps[appid];
+        }
+    },
 
-            this.apps[appid] = app;
-            this.nextid += 1;
+    documentPath: function(app, doc) {
+        return '/org/gnome/CodeAssist/' + this.service.language + '/' + app.id + '/documents/' + doc.id;
+    },
+
+    makeDocument: function(app, path, clientPath) {
+        let doc = new this.document();
+
+        doc.id = app.nextid;
+        doc.path = path;
+        doc.clientPath = clientPath;
+
+        app.nextid += 1;
+        app.docs[path] = doc;
+
+        doc._proxies = this.makeDocumentProxies(doc, this.documentPath(app, doc));
+        return doc;
+    },
+
+    cleanPath: function(path) {
+        if (path.length == 0) {
+            return path;
         }
 
-        return this.apps[appid];
+        return Gio.file_new_for_path(path).get_path();
     },
 
-    _SupportedServices: function(sender) {
-        this.app(sender);
+    ensureDocument: function(app, path, dataPath, cursor=0) {
+        let cpath = this.cleanPath(path);
+
+        let doc;
+
+        if (cpath in app.docs) {
+            doc = app.docs[cpath];
+        } else {
+            doc = this.makeDocument(app, cpath, path);
+        }
+
+        doc.dataPath = dataPath;
+
+        if (!doc.dataPath) {
+            doc.dataPath = path;
+        }
+
+        doc.cursor = cursor;
+        return doc;
     },
 
-    _makeOutSignature: function(args) {
+    disposeDocument: function(app, doc) {
+        app.service['org.gnome.CodeAssist.Service'].dispose.call(app.service, doc);
+
+        for (let i = 0; i < doc._proxies.length; i++) {
+            doc._proxies[i].dbus.unexport(this.conn);
+
+            doc._proxies[i].doc = null;
+            doc._proxies[i].dbus = null;
+        }
+
+        doc._proxies = [];
+    },
+
+    disposeApp: function(app) {
+        for (let path in app.docs) {
+            this.disposeDocument(app, app.docs[path]);
+        }
+
+        app.docs = {};
+        delete this.apps[app.name];
+
+        if (Object.keys(this.apps).length == 0) {
+            System.exit(0);
+        }
+    },
+
+    makeOutSignature: function(args) {
         var ret = '(';
 
         for (var i = 0; i < args.length; i++) {
@@ -151,11 +372,14 @@ Server.prototype = {
     },
 
     // Mostly copied from gjs
-    _callSync: function(f, invocation) {
+    dbusAsync: function(args, invocation, f) {
         var retval;
 
         try {
-            retval = f.call(this, invocation.get_sender());
+            let rargs = args.map(function (a) { return a; });
+
+            rargs.unshift(invocation.get_sender());
+            retval = f.apply(this, rargs);
         } catch (e) {
             if (e instanceof GLib.Error) {
                 invocation.return_gerror(e);
@@ -181,7 +405,7 @@ Server.prototype = {
             let methodInfo = invocation.get_method_info();
             let outArgs = methodInfo.out_args;
 
-            let outSignature = this._makeOutSignature(outArgs);
+            let outSignature = this.makeOutSignature(outArgs);
 
             if (outArgs.length == 1) {
                 retval = [retval];
@@ -204,135 +428,8 @@ Server.prototype = {
         }
 
         invocation.return_value(retval);
-    },
-
-    documentPath: function(app, doc) {
-        return '/org/gnome/CodeAssist/' + this.service.language + '/' + app.id + '/documents/' + doc.id;
-    },
-
-    exportDocument: function(app, doc) {
-        doc._dbus_registered = {};
-
-        var path = this.documentPath(app, doc);
-
-        for (var i = 0; i < this.services.length; i++) {
-            var name = this.services[i];
-            var service = Services[name];
-
-            var obj = new service(doc);
-
-            doc._dbus_registered[name] = obj;
-            obj.dbus.export(this.conn, path);
-        }
-    },
-
-    _clean_path: function(path) {
-        if (path.length == 0) {
-            return path;
-        }
-
-        return Gio.file_new_for_path(path).get_path();
-    },
-
-    parse: function(app, path, cursor, unsaved, options) {
-        var doc = null;
-
-        path = this._clean_path(path);
-
-        if (path in app.ids) {
-            doc = app.docs[app.ids[path]];
-        }
-
-        var uns = [];
-
-        for (var i = 0; i < unsaved.length; i++) {
-            uns.push({
-                path: this._clean_path(unsaved[i][0]),
-                data_path: this._clean_path(unsaved[i][1])
-            });
-        }
-
-        doc = app.service['org.gnome.CodeAssist.Service'].parse.call(app.service,
-                                                                     path,
-                                                                     cursor,
-                                                                     uns,
-                                                                     options,
-                                                                     doc);
-
-        if (!(path in app.ids)) {
-            doc.id = app.nextid;
-            app.nextid += 1
-
-            app.ids[path] = doc.id;
-            app.docs[doc.id] = doc
-
-            this.exportDocument(app, doc);
-        }
-
-        return this.documentPath(app, doc);
-    },
-
-    dispose_app: function(app) {
-        for (var id in app.docs) {
-            this.dispose_document(app, app.docs[id]);
-        }
-
-        app.ids = {};
-        app.docs = {};
-
-        delete this.apps[app.name];
-
-        if (Object.keys(this.apps).length == 0) {
-            System.exit(0);
-        }
-    },
-
-    dispose_document: function(app, doc) {
-        app.service['org.gnome.CodeAssist.Service'].dispose.call(app.service, doc);
-
-        for (var name in doc._dbus_registered) {
-            doc._dbus_registered[name].dbus.unexport(this.conn);
-        }
-    },
-
-    dispose_real: function(app, path) {
-        path = this._clean_path(path);
-
-        if (path in app.ids) {
-            var id = app.ids[path];
-            var doc = app.docs[id];
-
-            this.dispose_document(app, doc);
-
-            delete app.docs[id];
-            delete app.ids[path];
-        }
-
-        if (Object.keys(a.ids).length == 0)
-        {
-            this.dispose_app(app);
-        }
-    },
-
-    SupportedServicesAsync: function([], invocation) {
-        this._callSync(function (sender) {
-            this.app(sender);
-            return this.services;
-        }, invocation);
-    },
-
-    ParseAsync: function([path, cursor, unsaved, options], invocation) {
-        this._callSync(function (sender) {
-            return this.parse(this.app(sender), path, cursor, unsaved, options);
-        }, invocation);
-    },
-
-    DisposeAsync: function([path], invocation) {
-        this._callSync(function (sender) {
-            this.dispose_real(this.app(sender), path);
-        }, invocation);
     }
-}
+};
 
 function Transport(service, document) {
     this._init(service, document);
@@ -345,32 +442,28 @@ Transport.prototype = {
         this.main = new GLib.MainLoop(null, true);
     },
 
-    on_bus_acquired: function(conn, name) {
+    onBusAcquired: function(conn, name) {
         this.server = new Server(conn, this.service, this.document);
     },
 
-    on_name_acquired: function(conn, name) {
-    
+    onNameAcquired: function(conn, name) {
     },
 
-    on_name_lost: function(conn, name) {
-    
+    onNameLost: function(conn, name) {
     },
 
     run: function() {
         Gio.DBus.session.own_name('org.gnome.CodeAssist.' + this.service.language,
                                   Gio.BusNameOwnerFlags.NONE,
-                                  Lang.bind(this, this.on_bus_acquired),
-                                  Lang.bind(this, this.on_name_acquired),
-                                  Lang.bind(this, this.on_name_lost));
+                                  Lang.bind(this, this.onBusAcquired),
+                                  Lang.bind(this, this.onNameAcquired),
+                                  Lang.bind(this, this.onNameLost));
 
         this.main.run();
     }
 };
 
-var exports = {
-    Document: Document,
-    Diagnostics: Diagnostics,
+let exports = {
     Transport: Transport
 };
 

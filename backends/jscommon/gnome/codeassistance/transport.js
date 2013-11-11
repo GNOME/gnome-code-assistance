@@ -44,17 +44,7 @@ function _parseArgs() {
 
 function _run() {
     var opts = _parseArgs();
-
-    switch (opts.transport) {
-    case 'dbus':
-        return imports.gnome.codeassistance.transport_dbus.exports;
-        break;
-    default:
-        print('Invalid transport: ' + opts.transport);
-        System.exit(1);
-    }
-
-    return {};
+    return imports.gnome.codeassistance['transport_' + opts.transport].exports;
 }
 
 let _mod = _run();
