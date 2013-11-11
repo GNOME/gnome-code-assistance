@@ -24,17 +24,8 @@ module Gnome::CodeAssistance
         attr_accessor :path, :data_path
 
         def initialize(path='', data_path='')
-            if path.length != 0
-                @path = Pathname.new(path).cleanpath.to_s
-            else
-                @path = path
-            end
-
-            if data_path.length != 0
-                @data_path = Pathname.new(data_path).cleanpath.to_s
-            else
-                @data_path = @path
-            end
+            @path = path
+            @data_path = @path
         end
 
         def self.from_tuple(tp)
@@ -81,7 +72,7 @@ module Gnome::CodeAssistance
         end
 
         def to_tuple
-            return [@line, @column]
+            [@line, @column]
         end
     end
 
@@ -107,7 +98,7 @@ module Gnome::CodeAssistance
         end
 
         def to_tuple
-            return [@file, @start.to_tuple, @end.to_tuple]
+            [@file, @start.to_tuple, @end.to_tuple]
         end
     end
 
@@ -124,7 +115,7 @@ module Gnome::CodeAssistance
         end
 
         def to_tuple
-            return [@location.to_tuple(), @replacement]
+            [@location.to_tuple(), @replacement]
         end
     end
 
@@ -153,7 +144,7 @@ module Gnome::CodeAssistance
             fixits = @fixits.collect { |f| f.to_tuple }
             locations = @locations.collect { |l| l.to_tuple }
 
-            return [@severity, fixits, locations, @message]
+            [@severity, fixits, locations, @message]
         end
     end
 end

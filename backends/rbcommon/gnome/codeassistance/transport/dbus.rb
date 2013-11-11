@@ -19,21 +19,51 @@ require 'dbus'
 require 'gnome/codeassistance/types'
 require 'pathname'
 
-module Gnome; end
-module Gnome::CodeAssistance; end
+module DBus
+    class ErrorMessage
+        # Override this so that we get meaningful dbus error replies. glib
+        # expects a simple string, while the ruby dbus bindings give the
+        # backtrace as an array of strings. Doing so prevents GDBus from
+        # converting the error message to a nice GError, which is what vala
+        # uses.
+        def self.from_exception(ex)
+            name = if ex.is_a? DBus::Error
+                ex.name
+            else
+                "org.freedesktop.DBus.Error.Failed"
+            end
 
+            bt = ex.backtrace.collect { |x| "\tfrom #{x}" }.join("\n")
+            description = "#{ex.message}\n#{bt}"
 
-class Gnome::CodeAssistance::Service
-    class << self; attr_reader :language; end
-    @language = nil
+            if not ex.is_a?(DBus::Error)
+                puts description
+                puts
+            end
 
-    def parse(doc, options)
-    end
-
-    def dispose(doc)
+            self.new(name, description)
+        end
     end
 end
 
+module Gnome; end
+module Gnome::CodeAssistance; end
+
+class Module
+    def dbus_interface(name, &b)
+        metaclass = class << self; self; end
+
+        metaclass.send(:define_method, :included) do |base|
+            base.instance_eval do
+                dbus_interface(name) do
+                    base.instance_eval(&b)
+                end
+            end
+        end
+    end
+end
+
+# Dbus interfaces for documents and servers
 module Gnome::CodeAssistance::DBus
     class Document < DBus::Object
         def initialize(path, doc)
@@ -43,18 +73,50 @@ module Gnome::CodeAssistance::DBus
     end
 
     module Diagnostics
-        def self.included(base)
-            base.instance_eval do
-                dbus_interface 'org.gnome.CodeAssist.Diagnostics' do
-                    dbus_method :Diagnostics, "out diagnostics:a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" do
-                        return [@_doc.diagnostics.collect { |d| d.to_tuple }]
-                    end
-                end
+        dbus_interface 'org.gnome.CodeAssist.Diagnostics' do
+            dbus_method :Diagnostics, "out diagnostics:a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" do
+                return [@_doc.diagnostics.collect { |d| d.to_tuple }]
+            end
+        end
+    end
+
+    module Service
+        dbus_interface 'org.gnome.CodeAssist.Service' do
+            dbus_method :Parse, "in path:s, in cursor:x, in data_path:s, in options:a{sv}, out document:o" do |path, cursor, data_path, options|
+                app = ensure_app(@sender)
+                doc = ensure_document(app, path, data_path, cursor)
+
+                app.service.parse(doc, options)
+
+                return doc._dbus.path
+            end
+
+            dbus_method :Dispose, "in path:s" do |path|
+                app = @apps[@sender]
+
+                dispose(app, normpath(path)) if app
+            end
+        end
+    end
+
+    module Project
+        dbus_interface 'org.gnome.CodeAssist.Project' do
+            dbus_method :ParseAll, "in path:s, in cursor:x, in docs:a(ss), in options:a{sv}, out documents:a(so)" do |path, cursor, documents, options|
+                app = ensure_app(@sender)
+                doc = ensure_document(app, path, '', cursor)
+
+                opendocs = documents.collect { |d| OpenDocument.from_tuple(d) }
+                docs = opendocs.collect { |d| ensure_document(app, d.path, d.data_path) }
+
+                parsed = app.service.parse_all(doc, docs, options)
+
+                return parsed.collect { |d| RemoteDocument.new(d.client_path, d._dbus.path).to_tuple }
             end
         end
     end
 end
 
+# Services to be implemented by documents
 module Gnome::CodeAssistance::Services
     module Diagnostics
         def diagnostics
@@ -71,70 +133,15 @@ module Gnome::CodeAssistance::Services
     end
 end
 
-module Gnome::CodeAssistance::Servers
-    module Service
-        def dispose
-            a = app(@sender)
-
-            if path.length != 0
-                path = Pathname.new(path).cleanpath.to_s
-            end
-
-            if a.ids.include?(path)
-                id = a.ids[path]
-                dispose_document(a.docs[id])
-
-                a.docs.delete(id)
-                a.ids.delete(path)
-
-                if a.ids.length == 0
-                    dispose_app(@sender)
-                end
-            end
-        end
-
-        def self.included(base)
-            base.instance_eval do
-                dbus_interface 'org.gnome.CodeAssist.Service' do
-                    dbus_method :Parse, "in path:s, in cursor:x, in data_path:s, in options:a{sv}, out document:o" do |path, cursor, data_path, options|
-                        app = ensure_app(@sender)
-                        doc = ensure_document(app, path, data_path, cursor)
-
-                        app.service.parse(doc, options)
-
-                        return doc.path
-                    end
-
-                    dbus_method :Dispose, "in path:s" do |path|
-                        if @apps.include?(@sender)
-                            dispose(@apps[@sender], Pathname.new(path).cleanpath.to_s)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    module Project
-        def self.included(base)
-            base.instance_eval do
-                dbus_interface 'org.gnome.CodeAssist.Project' do
-                    dbus_method :ParseProject, "in path:s, in cursor:x, in docs:a(ss), in options:a{sv}, out documents:a(so)" do |path, cursor, docs, options|
-                        begin
-                            return parse_project(path, cursor, docs, options)
-                        rescue Exception => e
-                            p e
-                            raise
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
+# Classes to be subclassed or modules to be included
 module Gnome::CodeAssistance
     class Service
+        @@language = nil
+
+        def self.language
+            @@language
+        end
+
         def parse(doc, options)
         end
 
@@ -148,120 +155,181 @@ module Gnome::CodeAssistance
     end
 
     class Document
+        attr_accessor :id, :path, :data_path, :client_path, :cursor, :_dbus
+
         @@_dbus = Gnome::CodeAssistance::DBus::Document
 
         def self._dbus
             @@_dbus
         end
 
-        def initialize(path)
+        def self.new(path)
+            obj = self.allocate
+            obj._initialize_dbus(path)
+
+            obj.send(:initialize)
+
+            obj
+        end
+
+        def _initialize_dbus(path)
             @_dbus = @@_dbus.new(path, self)
         end
     end
-end
 
-class Gnome::CodeAssistance::Server < DBus::Object
-    class App
-        attr_accessor :id, :name, :docs, :ids, :nextid, :service
+    class Server < ::DBus::Object
+        include DBus::Service
 
-        def initialize
-            @id = 0
-            @name = ''
-            @docs = {}
+        class App
+            attr_accessor :id, :name, :docs, :nextid, :service
+
+            def initialize
+                @id = 0
+                @name = ''
+
+                @docs = {}
+                @nextid = 0
+                @service = nil
+            end
+        end
+
+        def initialize(name, path, service, document)
+            super(path)
+
+            @apps = {}
             @nextid = 0
-            @service = nil
-        end
-    end
 
-    def initialize(bus, name, path, service, document)
-        super(path)
+            bus = ::DBus::SessionBus.instance
 
-        @apps = {}
-        @nextid = 0
+            @server = bus.request_service(name)
 
-        @bus = bus
-        @server = @bus.request_service(name)
+            @appservice = service
+            @document = document
 
-        @appservice = service
-        @document = document
+            @server.export(self)
 
-        @server.export(self)
+            # Export dummy document
+            @dummy = document.new(path + '/document')
+            @server.export(@dummy._dbus)
 
-        dbus_service = @bus.service('org.freedesktop.DBus')
-        dbus = dbus_service.object('/org/freedesktop/DBus')
-        dbus.default_iface = 'org.freedesktop.DBus'
-        dbus.introspect
+            dbus_service = bus.service('org.freedesktop.DBus')
+            dbus = dbus_service.object('/org/freedesktop/DBus')
+            dbus.default_iface = 'org.freedesktop.DBus'
+            dbus.introspect
 
-        dbus.on_signal('NameOwnerChanged') do |_, oldname, newname|
-            if newname.empty?
-                dispose_app(oldname)
+            dbus.on_signal('NameOwnerChanged') do |_, oldname, newname|
+                if newname.empty?
+                    app = @apps[oldname]
+                    dispose_app(app) if app
+                end
             end
         end
-    end
 
-    def document_path(a, docid)
-        "#{@path}/#{a.id}/documents/#{docid}"
-    end
+        def make_app(appid)
+            app = App.new
+            app.id = @nextid
+            app.name = appid
+            app.service = @appservice.new
 
-    def dispose_document(a, doc)
-        a.service.dispose(doc)
-        @server.unexport(doc)
-    end
+            @apps[appid] = app
+            @nextid += 1
 
-    def dispose_app(appid)
-        if @apps.include?(appid)
-            a = @apps[appid]
+            app
+        end
 
-            a.docs.each do |docid, doc|
-                dispose_document(a, doc)
+        def ensure_app(appid)
+            @apps[appid] or make_app(appid)
+        end
+
+        def make_document(app, path, client_path)
+            docid = app.nextid
+            docpath = "#{@path}/#{app.id}/documents/#{docid}"
+
+            doc = @document.new(docpath)
+            doc.id = docid
+            doc.client_path = client_path
+            doc.path = path
+
+            app.nextid += 1
+            app.docs[path] = doc
+
+            @server.export(doc._dbus)
+
+            doc
+        end
+
+        def ensure_document(app, path, data_path, cursor=0)
+            npath = normpath(path)
+
+            doc = app.docs[npath] || make_document(app, npath, path)
+
+            doc.data_path = data_path || path
+            doc.cursor = cursor
+
+            doc
+        end
+
+        def dispose(app, path)
+            doc = app.docs[path]
+
+            if doc
+                dispose_document(app, doc)
+                app.docs.delete(path)
+
+                dispose_app(app) if app.docs.empty?
+            end
+        end
+
+        def dispose_document(app, doc)
+            app.service.dispose(doc)
+            @server.unexport(doc._dbus)
+        end
+
+        def dispose_app(app)
+            app.docs.each do |_, doc|
+                dispose_document(app, doc)
             end
 
-            @apps.delete(appid)
+            @apps.delete(app.name)
 
-            if @apps.length == 0
+            if @apps.empty?
                 exit(0)
             end
         end
-    end
 
-    def app(appid)
-        unless @apps.include?(appid)
-            a = App.new()
-
-            a.id = @nextid
-            a.name = appid
-
-            a.service = @appservice.new
-
-            @apps[a.name] = a
-            @nextid += 1
-
-            return a
+        def normpath(path)
+            return Pathname.new(path).cleanpath.to_s if path
+            path
         end
 
-        return @apps[appid]
+        def dispatch(msg)
+            @sender = msg.sender
+            super(msg)
+        end
     end
 
-    def dispatch(msg)
-        @sender = msg.sender
-        super(msg)
-    end
-end
+    class Transport
+        def initialize(service, document)
+            name = 'org.gnome.CodeAssist.' + service.language
+            path = '/org/gnome/CodeAssist/' + service.language
 
-class Gnome::CodeAssistance::Transport
-    def initialize(service, document)
-        @bus = DBus::SessionBus.instance
+            allmods = Gnome::CodeAssistance.constants.collect { |x| Gnome::CodeAssistance.const_get(x) }
 
-        name = 'org.gnome.CodeAssist.' + service.language
-        path = '/org/gnome/CodeAssist/' + service.language
+            # Mixin relevant dbus services into the server class
+            service.included_modules.each do |mod|
+                next unless allmods.include?(mod)
 
-        @server = srvtype.new(@bus, name, path, service, document)
-    end
+                Server.send(:include, DBus.const_get(mod.to_s.split('::').last))
+            end
 
-    def run
-        main = DBus::Main.new
-        main << @bus
-        main.run
+            @server = Server.new(name, path, service, document)
+        end
+
+        def run
+            main = ::DBus::Main.new
+            main << ::DBus::SessionBus.instance
+            main.run
+        end
     end
 end
 
