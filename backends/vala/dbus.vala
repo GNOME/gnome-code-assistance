@@ -266,16 +266,6 @@ public class Service : Object
 		dispose_real(app(sender), path);
 	}
 
-	public string[] supported_services(GLib.BusName sender)
-	{
-		app(sender);
-
-		return new string[] {
-			"org.gnome.CodeAssist.Document",
-			"org.gnome.CodeAssist.Diagnostics",
-			"org.gnome.CodeAssist.Service",
-		};
-	}
 }
 
 public class Transport
