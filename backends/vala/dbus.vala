@@ -23,9 +23,9 @@ namespace Gca.Backends.Vala.DBus
 [DBus (name = "org.gnome.CodeAssist.Document")]
 public class Document : Object
 {
-	private Gca.Backends.Vala.Document d_document;
+	private Gca.Backends.Vala.Document? d_document;
 
-	public Document(Gca.Backends.Vala.Document document)
+	public Document(Gca.Backends.Vala.Document? document = null)
 	{
 		d_document = document;
 	}
@@ -34,16 +34,23 @@ public class Document : Object
 [DBus (name = "org.gnome.CodeAssist.Diagnostics")]
 public class Diagnostics : Object
 {
-	private Gca.Backends.Vala.Document d_document;
+	private Gca.Backends.Vala.Document? d_document;
 
-	public Diagnostics(Gca.Backends.Vala.Document document)
+	public Diagnostics(Gca.Backends.Vala.Document? document = null)
 	{
 		d_document = document;
 	}
 
 	public Diagnostic[] diagnostics()
 	{
-		return d_document.diagnostics;
+		if (d_document != null)
+		{
+			return d_document.diagnostics;
+		}
+		else
+		{
+			return new Diagnostic[0];
+		}
 	}
 }
 
@@ -86,8 +93,7 @@ public class Service : Object
 		public uint id;
 		public string name;
 		public Gca.Backends.Vala.Service service;
-		public Gee.HashMap<string, uint> ids;
-		public Gee.HashMap<uint, Document> docs;
+		public Gee.HashMap<string, Document> docs;
 		public uint nextid;
 
 		public App(uint id, string name)
@@ -96,8 +102,7 @@ public class Service : Object
 			this.name = name;
 
 			service = new Gca.Backends.Vala.Service();
-			ids = new Gee.HashMap<string, uint>();
-			docs = new Gee.HashMap<uint, Document>();
+			docs = new Gee.HashMap<string, Document>();
 
 			nextid = 0;
 		}
@@ -105,7 +110,7 @@ public class Service : Object
 
 	private MainLoop d_main;
 	private DBusConnection d_conn;
-	private Gee.HashMap<string, App> d_services;
+	private Gee.HashMap<string, App> d_apps;
 	private uint d_nextid;
 	private FreedesktopDBus d_proxy;
 
@@ -113,7 +118,7 @@ public class Service : Object
 	{
 		d_main = mloop;
 		d_conn = conn;
-		d_services = new Gee.HashMap<string, App>();
+		d_apps = new Gee.HashMap<string, App>();
 		d_nextid = 0;
 
 		Bus.get_proxy.begin<FreedesktopDBus>(BusType.SESSION, "org.freedesktop.DBus", "/org/freedesktop/DBus", 0, null, (obj, res) => {
@@ -127,23 +132,32 @@ public class Service : Object
 
 	private void on_name_owner_changed(string name, string oldowner, string newowner)
 	{
-		if (newowner == "" && d_services.has_key(oldowner))
+		if (newowner == "" && d_apps.has_key(oldowner))
 		{
-			dispose_app(d_services[oldowner]);
+			dispose_app(d_apps[oldowner]);
 		}
 	}
 
-	private App app(string name)
+	private App make_app(string name)
 	{
-		if (!d_services.has_key(name))
+		var app = new App(d_nextid, name);
+
+		d_nextid++;
+		d_apps[name] = app;
+
+		return app;
+	}
+
+	private App ensure_app(string name)
+	{
+		if (d_apps.has_key(name))
 		{
-			var app = new App(d_nextid, name);
-
-			d_nextid++;
-			d_services[name] = app;
+			return d_apps[name];
 		}
-
-		return d_services[name];
+		else
+		{
+			return make_app(name);
+		}
 	}
 
 	private string clean_path(string path)
@@ -156,55 +170,66 @@ public class Service : Object
 		return File.new_for_path(path).get_path();
 	}
 
-	public ObjectPath parse(string path, int64 cursor, string data_path, HashTable<string, Variant> options, GLib.BusName sender)
+	private Document make_document(App app, string path, string client_path)
 	{
-		var a = app(sender);
-		Gca.Backends.Vala.Document? doc = null;
-		Document? ddoc = null;
+		var ndoc = new Gca.Backends.Vala.Document(path);
+		ndoc.client_path = client_path;
 
-		var cpath = clean_path(path);
+		var doc = new Document(ndoc, app.nextid);
 
-		if (a.ids.has_key(cpath))
+		doc.path = new ObjectPath("/org/gnome/CodeAssist/vala/%u/documents/%u".printf(app.id, doc.id));
+
+		try
 		{
-			ddoc = a.docs[a.ids[cpath]];
-			doc = ddoc.document;
+			doc.ddocument_regid = d_conn.register_object(doc.path, doc.ddocument);
+			doc.ddiagnostics_regid = d_conn.register_object(doc.path, doc.ddiagnostics);
+		}
+		catch (IOError e)
+		{
+			stderr.printf("Failed to register document: %s\n", e.message);
 		}
 
-		string dpath;
+		app.docs[path] = doc;
+		app.nextid++;
 
-		if (data_path == null || data_path == "")
+		return doc;
+	}
+
+	private Document ensure_document(App app, string path, string data_path, int64 cursor)
+	{
+		var cpath = clean_path(path);
+		Document doc;
+
+		if (app.docs.has_key(cpath))
 		{
-			dpath = path;
+			doc = app.docs[cpath];
 		}
 		else
 		{
-			dpath = data_path;
+			doc = make_document(app, cpath, path);
 		}
 
-		doc = a.service.parse(cpath, cursor, dpath, options, doc);
-
-		if (!a.ids.has_key(cpath))
+		if (data_path != null && data_path != "")
 		{
-			ddoc = new Document(doc, a.nextid);
-			ddoc.path = new ObjectPath("/org/gnome/CodeAssist/vala/%u/documents/%u".printf(a.id, ddoc.id));
-
-			try
-			{
-				ddoc.ddocument_regid = d_conn.register_object(ddoc.path, ddoc.ddocument);
-				ddoc.ddiagnostics_regid = d_conn.register_object(ddoc.path, ddoc.ddiagnostics);
-			}
-			catch (IOError e)
-			{
-				stderr.printf("Failed to register document: %s\n", e.message);
-			}
-
-			a.ids[cpath] = a.nextid;
-			a.docs[a.nextid] = ddoc;
-
-			a.nextid++;
+			doc.document.data_path = data_path;
+		}
+		else
+		{
+			doc.document.data_path = doc.document.path;
 		}
 
-		return ddoc.path;
+		doc.document.cursor = cursor;
+		return doc;
+	}
+
+	public ObjectPath parse(string path, int64 cursor, string data_path, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	{
+		var app = ensure_app(sender);
+		var doc = ensure_document(app, path, data_path, cursor);
+
+		app.service.parse(doc.document, options);
+
+		return doc.path;
 	}
 
 	private void dispose_document(App a, Document ddoc)
@@ -229,43 +254,35 @@ public class Service : Object
 			dispose_document(app, ddoc);
 		}
 
-		app.ids.clear();
 		app.docs.clear();
 
-		d_services.unset(app.name);
+		d_apps.unset(app.name);
 
-		if (d_services.size == 0)
+		if (d_apps.size == 0)
 		{
 			d_main.quit();
 		}
 	}
 
-	private void dispose_real(App app, string path)
-	{
-		var cpath = clean_path(path);
-
-		if (app.ids.has_key(cpath))
-		{
-			var id = app.ids[cpath];
-			var ddoc = app.docs[id];
-
-			dispose_document(app, ddoc);
-
-			app.docs.unset(id);
-			app.ids.unset(cpath);
-		}
-
-		if (app.ids.size == 0)
-		{
-			dispose_app(app);
-		}
-	}
-
 	public new void dispose(string path, GLib.BusName sender)
 	{
-		dispose_real(app(sender), path);
-	}
+		if (d_apps.has_key(sender))
+		{
+			var app = d_apps[sender];
+			var cpath = clean_path(path);
 
+			if (app.docs.has_key(cpath))
+			{
+				dispose_document(app, app.docs[cpath]);
+				app.docs.unset(cpath);
+
+				if (app.docs.size == 0)
+				{
+					dispose_app(app);
+				}
+			}
+		}
+	}
 }
 
 public class Transport

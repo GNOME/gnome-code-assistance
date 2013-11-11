@@ -123,23 +123,19 @@ public class Diagnostics : Report
 
 public class Service : Object
 {
-	public Document parse(string path, int64 cursor, string data_path, HashTable<string, Variant> options, Document? document)
+	public void parse(Document doc, HashTable<string, Variant> options) throws Error
 	{
-		var doc = document;
-
-		if (doc == null)
-		{
-			doc = new Document(path);
-		}
-
 		CodeContext context = new CodeContext();
 
-		var diags = new Diagnostics(data_path);
+		var diags = new Diagnostics(doc.path);
 		context.report = diags;
 
 		CodeContext.push(context);
 
-		var sf = new SourceFile(context, SourceFileType.SOURCE, data_path, null, true);
+		string source;
+		FileUtils.get_contents(doc.data_path, out source);
+
+		var sf = new SourceFile(context, SourceFileType.SOURCE, doc.path, source, true);
 		context.add_source_file(sf);
 
 		Parser ast = new Parser();
@@ -148,8 +144,6 @@ public class Service : Object
 		CodeContext.pop();
 
 		doc.diagnostics = diags.diagnostics;
-
-		return doc;
 	}
 
 	public new void dispose(Document document)
