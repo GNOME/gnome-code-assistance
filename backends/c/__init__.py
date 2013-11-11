@@ -63,13 +63,13 @@ class Service(transport.Service, transport.Project):
 
         for d in docs:
             if d.data_path != d.path:
-                unsaved.append((d.path, open(d.data_path)))
+                unsaved.append((d.path, open(d.data_path, 'rb')))
 
         return [self._parse(doc, unsaved, options)]
 
     def parse(self, doc, options):
         if doc.data_path != doc.path:
-            unsaved = [(doc.path, open(doc.data_path))]
+            unsaved = [(doc.path, open(doc.data_path, 'rb'))]
         else:
             unsaved = []
 
