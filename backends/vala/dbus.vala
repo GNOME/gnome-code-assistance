@@ -285,6 +285,8 @@ public class Transport
 		try
 		{
 			conn.register_object("/org/gnome/CodeAssist/vala", d_service);
+			conn.register_object("/org/gnome/CodeAssist/vala/document", new DBus.Document());
+			conn.register_object("/org/gnome/CodeAssist/vala/document", new DBus.Diagnostics());
 		}
 		catch (Error e)
 		{
