@@ -35,7 +35,7 @@ class Service(transport.Service):
         doc.diagnostics = []
 
         try:
-            p = subprocess.Popen(["/bin/sh", "-n", doc.data_path], stdout=DEVNULL, stderr=subprocess.PIPE)
+            p = subprocess.Popen(["/bin/bash", "-n", doc.data_path], stdout=DEVNULL, stderr=subprocess.PIPE)
 
             for l in iter(p.stderr.readline, ''):
                 if not l:
