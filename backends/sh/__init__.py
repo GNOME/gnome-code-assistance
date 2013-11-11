@@ -31,13 +31,12 @@ class Service(transport.Service):
 
     pattern = re.compile("^.*line ([0-9]+).*: (.*)$")
 
-    def parse(self, path, cursor, unsaved, options, doc):
-        path = self.data_path(path, unsaved)
-
-        errors = []
+    def parse(self, doc, options):
+        doc.diagnostics = []
 
         try:
-            p = subprocess.Popen(["/bin/sh", "-n", path], stdout=DEVNULL, stderr=subprocess.PIPE)
+            p = subprocess.Popen(["/bin/sh", "-n", doc.data_path], stdout=DEVNULL, stderr=subprocess.PIPE)
+
             for l in iter(p.stderr.readline, ''):
                 if not l:
                     break
@@ -45,27 +44,18 @@ class Service(transport.Service):
                 m = Service.pattern.match(l.decode())
                 if m:
                     loc = types.SourceLocation(line=m.group(1))
-                    errors.append(types.Diagnostic(severity=types.Diagnostic.Severity.ERROR,
-                                                   locations=[loc.to_range()],
-                                                    message=m.group(2)))
+
+                    doc.diagnostics.append(types.Diagnostic(severity=types.Diagnostic.Severity.ERROR,
+                                                            locations=[loc.to_range()],
+                                                            message=m.group(2)))
         except Error as e:
             pass
-
-        if doc is None:
-            doc = self.document()
-
-        doc.errors = errors
-
-        return doc
 
     def dispose(self, doc):
         pass
 
 class Document(transport.Document, transport.Diagnostics):
-    errors = None
-
-    def diagnostics(self):
-        return self.errors
+    pass
 
 def run():
     transport.Transport(Service, Document).run()
