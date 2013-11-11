@@ -137,7 +137,7 @@ class Document(transport.Document, transport.Diagnostics):
         severity = self._map_cseverity(d.severity)
 
         ranges = [self._map_csource_range(r) for r in d.ranges]
-        ranges = filter(lambda x: not x is None, ranges)
+        ranges = list(filter(lambda x: not x is None, ranges))
         ranges.insert(0, loc.to_range())
 
         fixits = [self._map_cfixit(f) for f in d.fixits]
