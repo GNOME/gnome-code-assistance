@@ -18,51 +18,39 @@
 require 'gnome/codeassistance/transport'
 require 'gnome/codeassistance/ruby/parser'
 
-module Gnome::CodeAssistance::Ruby
-    class Service < Gnome::CodeAssistance::Service
-        @language = 'ruby'
+module Gnome::CodeAssistance
+    module Ruby
+        class Service < Service
+            @@language = 'ruby'
 
-        def parse(path, cursor, unsaved, options, doc)
-            dp = data_path(path, unsaved)
+            def parse(doc, options)
+                doc.diagnostics = []
 
-            f = File.new(dp, 'r')
+                f = File.new(doc.data_path, 'r')
 
-            if doc == nil
-                doc = new_document
+                begin
+                    Parser.parse(f, doc.path)
+                rescue Parser::ParseError => e
+                    doc.diagnostics = e.errors.collect { |e| make_diagnostic(e) }
+                end
+
+                f.close
             end
 
-            begin
-                Parser.parse(f, path)
-            rescue Parser::ParseError => e
-                doc.errors = e.errors.collect { |e| make_diagnostic(e) }
+            def make_diagnostic(e)
+                loc = SourceLocation.new(e.line, e.column)
+                Diagnostic.new(Diagnostic::Severity::ERROR, [], [loc.to_range], e.message)
             end
-
-            return doc
         end
 
-        def make_diagnostic(e)
-            loc = Gnome::CodeAssistance::SourceLocation.new(e.line, e.column)
-            Gnome::CodeAssistance::Diagnostic.new(Gnome::CodeAssistance::Diagnostic::Severity::ERROR, [], [loc.to_range], e.message)
-        end
-    end
-
-    class Document < Gnome::CodeAssistance::Document
-        extend Gnome::CodeAssistance::Services::Diagnostics
-
-        attr_accessor :errors
-
-        def initialize
-            @errors = []
+        class Document < Document
+            include Services::Diagnostics
         end
 
-        def diagnostics
-            @errors
-        end
-    end
-
-    class Application
-        def self.run()
-            Gnome::CodeAssistance::Transport.new(Service, Document).run()
+        class Application
+            def self.run()
+                Transport.new(Service, Document).run()
+            end
         end
     end
 end
