@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-from gi.repository import GObject, GLib
+from gi.repository import GLib
 
 import dbus, dbus.service, dbus.mainloop.glib
 import inspect, sys, os
@@ -189,7 +189,7 @@ class Transport():
         self.server = Server(bus, path, service, document)
 
     def run(self):
-        ml = GObject.MainLoop()
+        ml = GLib.MainLoop()
         ml.run()
 
 # ex:ts=4:et:
