@@ -29,11 +29,6 @@ public class Document : Object
 	{
 		Object(path: path);
 	}
-
-	public string[] paths(int64[] ids)
-	{
-		return new string[]{};
-	}
 }
 
 }
