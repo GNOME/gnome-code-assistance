@@ -71,9 +71,14 @@ if test "x$python_found" != "xno"; then
 fi
 
 if test "x$python_found" != "xno"; then
-	PKG_CHECK_EXISTS([pygobject-3.0],
-	                 [],
-	                 [python_found=no])
+	AC_MSG_CHECKING([python gobject])
+	$PYTHON -c 'import gi; gi.check_version("3.8")' 2>/dev/null
+	if test $? -ne 0 ; then
+		AC_MSG_RESULT([no (require at least 3.8)])
+		python_found=no
+	else
+		AC_MSG_RESULT([yes])
+	fi
 fi
 
 AM_CONDITIONAL(PYTHON_ENABLE, test "x$PYTHON" != "x")
