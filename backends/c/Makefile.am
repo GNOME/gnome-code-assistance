@@ -1,6 +1,7 @@
 cbackenddir = $(GCA_PYBACKENDS_DIR)/c
 cbackend_PYTHON = 				\
 	backends/c/__init__.py			\
+	backends/c/service.py			\
 	backends/c/clangimporter.py		\
 	backends/c/makefileintegration.py	\
 	backends/c/config.py
