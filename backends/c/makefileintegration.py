@@ -137,13 +137,18 @@ class MakefileIntegration:
                 return makefile
 
             if tryac:
-                configureac = os.path.join(parent, 'configure.ac')
+                tocheck = ['configure.ac', 'configure.in', 'configure']
 
-                if os.path.isfile(configureac):
-                    ret = self._subdir_makefile_for(path, parent)
+                for f in tocheck:
+                    configuref = os.path.join(parent, f)
 
-                    if not ret is None:
-                        return ret
+                    if os.path.isfile(configuref):
+                        ret = self._subdir_makefile_for(path, parent)
+
+                        if not ret is None:
+                            return ret
+
+                        break
 
             parent = os.path.dirname(parent)
 
