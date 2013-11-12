@@ -103,7 +103,6 @@ class MakefileIntegration:
 
         flags = self._flags_from_targets(makefile, path, targets)
 
-
         if self.debug:
             print('  Flags: [{0}]'.format(', '.join(flags)))
 
