@@ -52,11 +52,9 @@ class Service(transport.Service, transport.Project):
 
     def _parse(self, doc, docs, unsaved, options):
         if (not doc.tu is None) and not self.makefile.changed_for_file(doc.path):
-            print('reparse')
             doc.tu.reparse(unsaved)
         else:
             args = self.makefile.flags_for_file(doc.path)
-            print(doc.path, args)
 
             doc.tu = cindex.TranslationUnit.from_source(doc.path,
                                                         args=args,
@@ -131,9 +129,6 @@ class Service(transport.Service, transport.Project):
                 continue
 
             rdoc.diagnostics.append(self._map_cdiagnostic(d))
-
-        for d in docmap:
-            print(d, docmap[d].diagnostics)
 
     def dispose(self, doc):
         doc.tu = None
