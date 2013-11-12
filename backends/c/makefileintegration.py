@@ -209,7 +209,8 @@ class MakefileIntegration:
                 outstr = subprocess.check_output(args, cwd=wd, stderr=stderr).decode('utf-8')
         except StandardError as e:
             if self.debug:
-                print('  Failed to run make: {0}'.format(e.message))
+                print('  Failed to run make: {0}'.format(e))
+
             return []
 
         targets = []
@@ -274,7 +275,10 @@ class MakefileIntegration:
         try:
             with open(os.devnull, 'w') as stderr:
                 outstr = subprocess.check_output(args, cwd=wd, stderr=stderr).decode('utf-8')
-        except:
+        except Exception as e:
+            if self.debug:
+                print('  Failed to run make: {0}'.format(e))
+
             return []
 
         regfind = re.compile(fakecc + '([^\n]*)$', re.M)
