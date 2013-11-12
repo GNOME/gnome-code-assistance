@@ -40,6 +40,9 @@ class DynamicImporter(object):
         parser.add_argument('--address', metavar='ADDRESS', type=str,
                             help='the http address to listen on', default=':0')
 
+        parser.add_argument('args', metavar='ARG', type=str, nargs='*',
+                            help='other arguments...')
+
         args = parser.parse_args()
 
         transport = importlib.import_module('gnome.codeassistance.transport_' + args.transport)
