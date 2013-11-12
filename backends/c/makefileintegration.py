@@ -246,14 +246,6 @@ class MakefileIntegration:
         return len(regs)
 
     def _targets_from_make(self, makefile, source):
-        try:
-            m = self._cache[makefile]
-
-            if m.up_to_date_for(source):
-                return m.flags_for_file(source)
-        except KeyError:
-            pass
-
         wd = os.path.dirname(makefile)
 
         lookfor = [
