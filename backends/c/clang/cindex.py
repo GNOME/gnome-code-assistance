@@ -2260,7 +2260,7 @@ class File(ClangObject):
         """Return the last modification time of the file."""
         return conf.lib.clang_getFileTime(self)
 
-    def __str__(self):
+    def __bytes__(self):
         return self.name
 
     def __repr__(self):
