@@ -38,7 +38,7 @@ class MakefileIntegration:
                 return False
 
             try:
-                st = os.path.stat(self.path)
+                st = os.stat(self.path)
             except:
                 return False
 
