@@ -18,6 +18,8 @@
 import os, subprocess, re, shlex
 
 class MakefileIntegration:
+    debug = False
+
     class Makefile:
         def __init__(self, path):
             self.path = path
@@ -79,6 +81,10 @@ class MakefileIntegration:
         path = self._file_as_abs(path)
         makefile = self._makefile_for(path)
 
+        if self.debug:
+            print('Scanning for {0}'.format(path))
+            print('  Makefile: {0}'.format(makefile))
+
         if makefile is None:
             return []
 
@@ -91,7 +97,15 @@ class MakefileIntegration:
             pass
 
         targets = self._targets_from_make(makefile, path)
+
+        if self.debug:
+            print('  Targets: [{0}]'.format(', '.join(targets)))
+
         flags = self._flags_from_targets(makefile, path, targets)
+
+
+        if self.debug:
+            print('  Flags: [{0}]'.format(', '.join(flags)))
 
         return self._update_cache(makefile, path, flags)
 
@@ -331,7 +345,10 @@ class MakefileIntegration:
         return ret
 
 if __name__ == '__main__':
+    import sys
+
     m = MakefileIntegration()
-    print(m.flags_for_file('../../clients/gedit/gca-plugin.c'))
+    m.debug = True
+    m.flags_for_file(sys.argv[1])
 
 # ex:ts=4:et:
