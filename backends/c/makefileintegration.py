@@ -157,6 +157,13 @@ class MakefileIntegration:
 
         return None
 
+    def _sort_target(self, target, regs):
+        for i, reg in enumerate(regs):
+            if reg.match(target):
+                return i
+
+        return len(regs)
+
     def _targets_from_make(self, makefile, source):
         try:
             m = self._cache[makefile]
@@ -169,53 +176,64 @@ class MakefileIntegration:
         wd = os.path.dirname(makefile)
 
         lookfor = [
-            os.path.relpath(source, wd),
-            os.path.basename(source)
+            os.path.relpath(source, wd)
         ]
 
-        noext = [os.path.splitext(x)[0] for x in lookfor]
+        bname = os.path.basename(source)
+
+        if lookfor[0] != bname:
+            lookfor.append(bname)
+
+        origlookfor = lookfor
+
+        if self.debug:
+            print('  Looking for: [{0}]'.format(', '.join(lookfor)))
+
         args = ['make', '-p', '-n']
 
         try:
             with open(os.devnull, 'w') as stderr:
-                outstr = str(subprocess.check_output(args, cwd=wd, stderr=stderr), 'utf-8')
-        except:
+                outstr = subprocess.check_output(args, cwd=wd, stderr=stderr).decode('utf-8')
+        except StandardError as e:
+            if self.debug:
+                print('  Failed to run make: {0}'.format(e.message))
             return []
 
-        relookfor = [re.escape(x) for x in lookfor]
-        reg = re.compile('^([^:\n]+):.*({0})'.format('|'.join(relookfor)), re.M)
+        targets = []
+        found = {}
 
-        fnames = [re.escape(x) for x in noext]
+        while len(lookfor) > 0:
+            # Make a regular expression which will match all printed targets that
+            # depend on the file we are looking for
+            relookfor = [re.escape(x) for x in lookfor]
+            reg = re.compile('^([^:\n ]+):.*({0})'.format('|'.join(relookfor)), re.M)
+            lookfor = []
+
+            for match in reg.finditer(outstr):
+                target = match.group(1)
+
+                if target[0] == '#':
+                    continue
+
+                if target in found:
+                    continue
+
+                targets.append(target)
+                found[target] = True
+                lookfor.append(target)
+
+        noext = [re.escape(os.path.splitext(x)[0]) for x in origlookfor]
 
         targetregs = [
-            re.compile('^([^:]*(({0})\\.(o|lo)))$'.format('|'.join(fnames))),
-            re.compile('^[a-z]+$')
+            # Targets that are object or libtool object files are good
+            re.compile('^(.*(({0})\\.(o|lo)))$'.format('|'.join(noext))),
+
+            # Any object or libtool object file
+            re.compile('^(.*\\.(o|lo))$')
         ]
 
-        targets = {}
-
-        for match in reg.finditer(outstr):
-            target = match.group(1)
-
-            if target[0] == '#':
-                continue
-
-            for i, r in enumerate(targetregs):
-                if r.match(target):
-                    try:
-                        ic = targets[target]
-
-                        if i < ic:
-                            targets[target] = i
-                    except KeyError:
-                        targets[target] = i
-
-                    break
-
-        ret = list(targets.keys())
-        ret.sort(key=lambda x: targets[x])
-
-        return ret
+        targets.sort(key=lambda x: self._sort_target(x, targetregs))
+        return targets
 
     def _flags_from_targets(self, makefile, source, targets):
         if len(targets) == 0:
