@@ -260,7 +260,7 @@ class MakefileIntegration:
 
         try:
             with open(os.devnull, 'w') as stderr:
-                outstr = str(subprocess.check_output(args, cwd=wd, stderr=stderr), 'utf-8')
+                outstr = subprocess.check_output(args, cwd=wd, stderr=stderr).decode('utf-8')
         except:
             return []
 
