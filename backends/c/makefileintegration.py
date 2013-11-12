@@ -202,7 +202,7 @@ class MakefileIntegration:
         if self.debug:
             print('  Looking for: [{0}]'.format(', '.join(lookfor)))
 
-        args = ['make', '-p', '-n']
+        args = ['make', '-p', '-n', '-s']
 
         try:
             with open(os.devnull, 'w') as stderr:
