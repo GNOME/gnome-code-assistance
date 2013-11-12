@@ -16,44 +16,81 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os, subprocess, re, shlex
+from gi.repository import Gio
 
 class MakefileIntegration:
     debug = False
 
     class Makefile:
+        class Source:
+            mtime = 0
+            flags = []
+
         def __init__(self, path):
             self.path = path
+            self._sources = {}
+
+            self._update_mtime()
+
+            f = Gio.file_new_for_path(path)
 
             try:
-                st = os.stat(self.path)
-                self._mtime = st.st_mtime
+                self._monitor = f.monitor(Gio.FileMonitorFlags.NONE, None)
+                self._monitor.connect('changed', self._on_changed)
+            except:
+                self._monitor = None
+
+        def _update_mtime(self):
+            try:
+                self._mtime = os.stat(self.path).st_mtime
             except:
                 self._mtime = 0
 
-            self._sources = {}
+        def _on_changed(self, *args):
+            self._update_mtime()
+
+        def dispose(self):
+            if not self._monitor is None:
+                self._monitor.cancel()
+                self._monitor = None
+
+        def make_source(self, flags):
+            ret = MakefileIntegration.Makefile.Source()
+            ret.flags = flags
+            ret.mtime = self._mtime
+
+            return ret
 
         def add(self, source, flags):
-            self._sources[source] = flags
+            self._sources[source] = self.make_source(flags)
+
+        def remove(self, source):
+            try:
+                del self._sources[source]
+
+                if len(self._sources) == 0:
+                    self.dispose()
+                    return True
+            except:
+                pass
+
+            return False
 
         def up_to_date_for(self, source):
             if not source in self._sources:
                 return False
 
-            try:
-                st = os.stat(self.path)
-            except:
-                return False
-
-            return st.st_mtime <= self._mtime
+            return self._mtime <= self._sources[source].mtime
 
         def flags_for_file(self, source):
             try:
-                return self._sources[source]
+                return self._sources[source].flags
             except KeyError:
                 return []
 
     def __init__(self):
         self._cache = {}
+        self._file_to_makefile = {}
 
     def _file_as_abs(self, path):
         if not os.path.isabs(path):
@@ -77,6 +114,17 @@ class MakefileIntegration:
         except KeyError:
             return True
 
+    def dispose(self, path):
+        try:
+            makefile = self._file_to_makefile[path]
+
+            if makefile.dispose(path):
+                del self._cache[makefile.path]
+
+            del self._file_to_makefile[path]
+        except:
+            pass
+
     def flags_for_file(self, path):
         path = self._file_as_abs(path)
         makefile = self._makefile_for(path)
@@ -92,7 +140,12 @@ class MakefileIntegration:
             m = self._cache[makefile]
 
             if m.up_to_date_for(path):
-                return m.flags_for_file(path)
+                flags = m.flags_for_file(path)
+
+                if self.debug:
+                    print('  From cache: {0}'.format(', '.join(flags)))
+
+                return flags
         except KeyError:
             pass
 
@@ -116,6 +169,8 @@ class MakefileIntegration:
             self._cache[makefile] = m
 
         m.add(path, flags)
+        self._file_to_makefile[path] = m
+
         return flags
 
     def _find_subdir_with_path(self, parent, path):
@@ -141,6 +196,19 @@ class MakefileIntegration:
         return self._find_subdir_with_path(parent, relpath)
 
     def _makefile_for(self, path, tryac=True):
+        if self.debug:
+            print('  Find makefile')
+
+        try:
+            fromcache =  self._file_to_makefile[path].path
+
+            if self.debug:
+                print('  From cache: {0}'.format(fromcache))
+
+            return fromcache
+        except KeyError:
+            pass
+
         parent = os.path.dirname(path)
 
         while True:
