@@ -41,7 +41,7 @@ class Service(transport.Service, transport.Project):
         self.makefile = makefileintegration.MakefileIntegration()
 
     def _parse(self, doc, unsaved, options):
-        if not doc.tu is None:
+        if (not doc.tu is None) and not self.makefile.changed_for_file(doc.path):
             doc.tu.reparse(unsaved)
         else:
             args = self.makefile.flags_for_file(doc.path)

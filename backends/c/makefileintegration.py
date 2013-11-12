@@ -53,15 +53,30 @@ class MakefileIntegration:
     def __init__(self):
         self._cache = {}
 
-    def flags_for_file(self, path):
+    def _file_as_abs(self, path):
         if not os.path.isabs(path):
             try:
                 path = os.path.join(os.getcwd(), path)
             except:
                 pass
 
-        os.path.normpath(path)
+        return os.path.normpath(path)
 
+    def changed_for_file(self, path):
+        path = self._file_as_abs(path)
+        makefile = self._makefile_for(path)
+
+        if makefile is None:
+            return False
+
+        try:
+            m = self._cache[makefile]
+            return not m.up_to_date_for(path)
+        except KeyError:
+            return True
+
+    def flags_for_file(self, path):
+        path = self._file_as_abs(path)
         makefile = self._makefile_for(path)
 
         if makefile is None:
