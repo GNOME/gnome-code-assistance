@@ -131,6 +131,7 @@ class Service(transport.Service, transport.Project):
             rdoc.diagnostics.append(self._map_cdiagnostic(d))
 
     def dispose(self, doc):
+        self.makefile.dispose(doc.path)
         doc.tu = None
 
     def _map_cseverity(self, severity):
