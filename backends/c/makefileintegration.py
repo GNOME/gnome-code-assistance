@@ -277,18 +277,15 @@ class MakefileIntegration:
         except:
             return []
 
-        try:
-            pos = outstr.rindex(fakecc)
-        except ValueError:
-            return []
+        regfind = re.compile(fakecc + '([^\n]*)$', re.M)
 
-        try:
-            epos = outstr.index(os.linesep, pos)
-        except ValueError:
-            epos = len(outstr)
+        for m in regfind.finditer(outstr):
+            flags = self._filter_flags(makefile, shlex.split(m.group(1)))
 
-        pargs = outstr[pos + len(fakecc):epos]
-        return self._filter_flags(makefile, shlex.split(pargs))
+            if len(flags) != 0:
+                return flags
+
+        return []
 
     def _filter_flags(self, makefile, flags):
         # Keep only interesting flags:
