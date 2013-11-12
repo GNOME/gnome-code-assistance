@@ -12,7 +12,7 @@ type App struct {
 	id   uint64
 	name string
 
-	docs   map[string]*DocumentDbus
+	docs map[string]*DocumentDbus
 
 	service *Service
 
@@ -85,9 +85,9 @@ func (s *ServerDbus) documentDbusPath(app *App, doc *DocumentDbus) dbus.ObjectPa
 
 func (s *ServerDbus) makeApp(name string) *App {
 	app := &App{
-		id: s.nextid,
-		name: name,
-		docs: make(map[string]*DocumentDbus),
+		id:      s.nextid,
+		name:    name,
+		docs:    make(map[string]*DocumentDbus),
 		service: NewService(),
 	}
 
@@ -107,8 +107,8 @@ func (s *ServerDbus) ensureApp(name string) *App {
 
 func (s *ServerDbus) makeDocument(app *App, path string, clientPath string) *DocumentDbus {
 	doc := &Document{
-		Id: app.nextid,
-		Path: path,
+		Id:         app.nextid,
+		Path:       path,
 		ClientPath: clientPath,
 	}
 

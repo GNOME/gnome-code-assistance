@@ -9,6 +9,7 @@ import (
 type TransportConstructor func() (Transport, error)
 
 const defaultTransport = "dbus"
+
 var transports = map[string]TransportConstructor{}
 
 func RegisterTransport(name string, constructor TransportConstructor) {

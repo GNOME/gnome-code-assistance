@@ -27,7 +27,7 @@ func (s *ServiceDbus) Introspect() *introspect.Node {
 	n := &introspect.Node{
 		Interfaces: []introspect.Interface{
 			{
-				Name:    "org.gnome.CodeAssist.v1.Service",
+				Name: "org.gnome.CodeAssist.v1.Service",
 				Methods: []introspect.Method{
 					{
 						Name: "Parse",
@@ -49,7 +49,7 @@ func (s *ServiceDbus) Introspect() *introspect.Node {
 			},
 
 			introspect.Interface{
-				Name:    "org.gnome.CodeAssist.v1.Project",
+				Name: "org.gnome.CodeAssist.v1.Project",
 				Methods: []introspect.Method{
 					{
 						Name: "ParseAll",
@@ -73,11 +73,11 @@ func (d *DocumentDbus) Introspect() *introspect.Node {
 	return &introspect.Node{
 		Interfaces: []introspect.Interface{
 			introspect.Interface{
-				Name:    "org.gnome.CodeAssist.v1.Document",
+				Name: "org.gnome.CodeAssist.v1.Document",
 			},
 
 			introspect.Interface{
-				Name:    "org.gnome.CodeAssist.v1.Diagnostics",
+				Name: "org.gnome.CodeAssist.v1.Diagnostics",
 				Methods: []introspect.Method{
 					{
 						Name: "Diagnostics",
