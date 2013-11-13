@@ -25,6 +25,31 @@ else
     require 'sass'
 end
 
+class CssParser < Sass::SCSS::CssParser
+    def self.expected(scanner, expected, line)
+        pos = scanner.pos
+        eos = scanner.eos?
+
+        if eos
+            pos -= 1
+            line -= 1
+
+            nlpos = scanner.string.rindex("\n", pos - 1)
+        else
+            nlpos = scanner.string.rindex("\n", pos)
+        end
+
+        begin
+            super(scanner, expected, line)
+        rescue Sass::SyntaxError => e
+            e.modify_backtrace({:column => pos - nlpos})
+            raise e
+        end
+    end
+
+    @sass_script_parser = Class.new(Sass::Script::CssParser)
+    @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
+end
 
 module Gnome::CodeAssistance
     module Css
@@ -37,7 +62,7 @@ module Gnome::CodeAssistance
                 f = File.new(doc.data_path, 'r')
 
                 begin
-                    parser = Sass::SCSS::CssParser.new(f.read(), doc.path)
+                    parser = CssParser.new(f.read(), doc.path)
                     parser.parse()
                 rescue Sass::SyntaxError => e
                     doc.diagnostics = [make_diagnostic(e)]
@@ -47,7 +72,7 @@ module Gnome::CodeAssistance
             end
 
             def make_diagnostic(e)
-                loc = SourceLocation.new(e.sass_line, 0)
+                loc = SourceLocation.new(e.sass_line, e.sass_backtrace.first[:column] || 0)
                 Diagnostic.new(Diagnostic::Severity::ERROR, [], [loc.to_range], e.to_s)
             end
         end
