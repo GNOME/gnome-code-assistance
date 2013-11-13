@@ -28,16 +28,7 @@ end
 class CssParser < Sass::SCSS::CssParser
     def self.expected(scanner, expected, line)
         pos = scanner.pos
-        eos = scanner.eos?
-
-        if eos
-            pos -= 1
-            line -= 1
-
-            nlpos = scanner.string.rindex("\n", pos - 1)
-        else
-            nlpos = scanner.string.rindex("\n", pos)
-        end
+        nlpos = scanner.string.rindex("\n", pos)
 
         begin
             super(scanner, expected, line)
