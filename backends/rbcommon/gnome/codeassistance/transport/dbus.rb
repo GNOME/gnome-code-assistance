@@ -84,7 +84,7 @@ module Gnome::CodeAssistance::DBus
         dbus_interface 'org.gnome.CodeAssist.v1.Service' do
             dbus_method :Parse, "in path:s, in data_path:s, in cursor:(xx), in options:a{sv}, out document:o" do |path, data_path, cursor, options|
                 app = ensure_app(@sender)
-                doc = ensure_document(app, path, data_path, SourceLocation.from_tuple(cursor))
+                doc = ensure_document(app, path, data_path, Gnome::CodeAssistance::SourceLocation.from_tuple(cursor))
 
                 app.service.parse(doc, options)
 
@@ -103,14 +103,14 @@ module Gnome::CodeAssistance::DBus
         dbus_interface 'org.gnome.CodeAssist.v1.Project' do
             dbus_method :ParseAll, "in path:s, in docs:a(ss), in cursor:(xx), in options:a{sv}, out documents:a(so)" do |path, cursor, documents, options|
                 app = ensure_app(@sender)
-                doc = ensure_document(app, path, '', SourceLocation.from_tuple(cursor))
+                doc = ensure_document(app, path, '', Gnome::CodeAssistance::SourceLocation.from_tuple(cursor))
 
-                opendocs = documents.collect { |d| OpenDocument.from_tuple(d) }
+                opendocs = documents.collect { |d| Gnome::CodeAssistance::OpenDocument.from_tuple(d) }
                 docs = opendocs.collect { |d| ensure_document(app, d.path, d.data_path) }
 
                 parsed = app.service.parse_all(doc, docs, options)
 
-                return parsed.collect { |d| RemoteDocument.new(d.client_path, d._dbus.path).to_tuple }
+                return parsed.collect { |d| Gnome::CodeAssistance::RemoteDocument.new(d.client_path, d._dbus.path).to_tuple }
             end
         end
     end
