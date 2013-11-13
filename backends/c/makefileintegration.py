@@ -279,14 +279,17 @@ class MakefileIntegration:
         while len(lookfor) > 0:
             # Make a regular expression which will match all printed targets that
             # depend on the file we are looking for
+            if self.debug:
+                print('  looking for: [{0}]'.format(', '.join(lookfor)))
+
             relookfor = [re.escape(x) for x in lookfor]
-            reg = re.compile('^([^:\n ]+):.*({0})'.format('|'.join(relookfor)), re.M)
+            reg = re.compile('^([^:\n ]+):.*\\b({0})\\b'.format('|'.join(relookfor)), re.M)
             lookfor = []
 
             for match in reg.finditer(outstr):
                 target = match.group(1)
 
-                if target[0] == '#':
+                if target[0] == '#' or target[0] == '.' or '-am' in target:
                     continue
 
                 if target in found:
