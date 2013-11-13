@@ -232,6 +232,49 @@ AM_CONDITIONAL(BACKENDS_RUBY_ENABLE, test "x$enable_ruby" = "xyes")
 
 
 dnl ================================================================
+dnl css backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([css],
+              AS_HELP_STRING([--enable-css],[enable css backend]),
+              [enable_css=$enableval],
+              [enable_css=auto])
+
+AC_MSG_CHECKING([css backend])
+
+if test "x$enable_css" = "xauto"; then
+	if test "x$RUBY" = "x"; then
+		AC_MSG_RESULT([no (requires ruby 2.0)])
+		enable_css=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_css=yes
+	fi
+elif test "x$enable_css" != "xno"; then
+	if test "x$RUBY" = "x"; then
+		AC_MSG_ERROR([no (requires ruby 2.0)])
+	else
+		AC_MSG_RESULT([yes])
+		enable_css=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+ruby_sass=
+
+if test "x$enable_css" = "xyes"; then
+	$RUBY -rsass -e '' 2>/dev/null
+	if test $? -eq 0 ; then
+		ruby_sass=yes
+	fi
+fi
+
+color_enable_var("$enable_css", [enable_css_msg])
+
+AM_CONDITIONAL(BACKENDS_CSS_ENABLE, test "x$enable_css" = "xyes")
+AM_CONDITIONAL(RUBY_SASS, test "x$ruby_sass" = "xyes")
+
+dnl ================================================================
 dnl js support
 dnl ================================================================
 AC_PATH_PROG([GJS],[gjs])
@@ -498,6 +541,8 @@ backends/js/org.gnome.CodeAssist.v1.js.service
 backends/js/js
 backends/sh/org.gnome.CodeAssist.v1.sh.service
 backends/sh/sh
+backends/css/org.gnome.CodeAssist.v1.css.service
+backends/css/css
 ])
 
 AC_OUTPUT
@@ -520,5 +565,6 @@ Configuration:
 		ruby:           $enable_ruby_msg
 		javascript:     $enable_js_msg
 		shell:          $enable_sh_msg
+		css:            $enable_css_msg
 "
 

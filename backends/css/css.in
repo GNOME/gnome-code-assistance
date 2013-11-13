@@ -1,0 +1,6 @@
+#!/usr/bin/env @RUBY_BASE@
+
+$:.unshift('@GCA_RBBACKENDS_ROOT_EX@')
+
+require 'gnome/codeassistance/css/app'
+Gnome::CodeAssistance::Css::Application.run()

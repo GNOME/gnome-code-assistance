@@ -42,4 +42,8 @@ if BACKENDS_SH_ENABLE
 include backends/sh/Makefile.am
 endif
 
+if BACKENDS_CSS_ENABLE
+include backends/css/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am
