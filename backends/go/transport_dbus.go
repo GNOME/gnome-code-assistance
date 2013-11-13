@@ -29,10 +29,10 @@ func (t *TransportDbus) unexport(obj ObjectDbus, p dbus.ObjectPath) {
 	n := obj.Introspect()
 
 	for _, i := range n.Interfaces {
-		t.conn.Unexport(p, i.Name)
+		t.conn.Export(nil, p, i.Name)
 	}
 
-	t.conn.Unexport(p, "org.freedesktop.DBus.Introspectable")
+	t.conn.Export(nil, p, "org.freedesktop.DBus.Introspectable")
 }
 
 func (t *TransportDbus) export(obj ObjectDbus, p dbus.ObjectPath) error {

@@ -22,6 +22,10 @@ var (
 	}
 )
 
+// Sender is a type which can be used in exported methods to receive the message
+// sender.
+type Sender string
+
 func exportedMethod(v interface{}, name string) reflect.Value {
 	if v == nil {
 		return reflect.Value{}
@@ -192,6 +196,11 @@ func (conn *Conn) Emit(path ObjectPath, name string, values ...interface{}) erro
 // *Error is not nil, it is sent back to the caller as an error.
 // Otherwise, a method reply is sent with the other return values as its body.
 //
+// Any parameters with the special type Sender are set to the sender of the
+// dbus message when the method is called. Parameters of this type do not
+// contribute to the dbus signature of the method (i.e. the method is exposed
+// as if the parameters of type Sender were not there).
+//
 // Every method call is executed in a new goroutine, so the method may be called
 // in multiple goroutines at once.
 //
@@ -260,11 +269,6 @@ func (conn *Conn) RequestName(name string, flags RequestNameFlags) (RequestNameR
 		conn.namesLck.Unlock()
 	}
 	return RequestNameReply(r), nil
-}
-
-func (conn *Conn) Unexport(path ObjectPath, iface string) {
-	conn.handlersLck.Lock()
-	conn.handlersLck.Unlock()
 }
 
 // ReleaseNameReply is the reply to a ReleaseName call.
