@@ -118,7 +118,7 @@ class MakefileIntegration:
         try:
             makefile = self._file_to_makefile[path]
 
-            if makefile.dispose(path):
+            if makefile.remove(path):
                 del self._cache[makefile.path]
 
             del self._file_to_makefile[path]
