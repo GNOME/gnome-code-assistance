@@ -140,11 +140,14 @@ def test(name):
                     self.args = args
                     self.kwargs = kwargs
 
-                def __call__(self):
-                    return f(*self.args, **self.kwargs)
+                def __call__(self, *args, **kwargs):
+                    if len(args) == 0 and len(kwargs) == 0:
+                        return f(*self.args, **self.kwargs)
+                    else:
+                        return f(self.args[0], *args, **kwargs)
 
                 def __enter__(self):
-                    txt = '  TEST {0} ({1}) ... '.format(name, ', '.join([str(x) for x in self.args[1:]]))
+                    txt = '  TEST {0} ({1}) ... '.format(name, ', '.join([str(a) for a in self.args[1:]]))
                     sys.stdout.write(txt)
                     return self
 
@@ -288,8 +291,8 @@ class ServiceTest:
         ret = [gcatypes.Diagnostic.from_tuple(dd) for dd in diag.Diagnostics()]
         orig = [gcatypes.Diagnostic.from_json(dd) for dd in d['diagnostics']]
 
-        with self.test_diagnostics(orig, ret) as t:
-            t()
+        with self.test_diagnostics(path) as t:
+            t(orig, ret)
 
     def run(self):
         print('TESTING {0}'.format(self.name))
