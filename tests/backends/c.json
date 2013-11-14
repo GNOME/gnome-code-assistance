@@ -18,6 +18,42 @@
           "message": "cannot initialize a variable of type 'char *' with an rvalue of type 'void *'"
         }
       ]
+    },
+    {
+      "parse_all": {
+        "path": "c/all/test.cc",
+        "documents": ["c/all/test.hh"]
+      },
+      "documents": ["c/all/test.cc", "c/all/test.hh"],
+      "diagnostics": {
+        "c/all/test.cc": [
+          {
+            "severity": 4,
+            "locations": [
+              {"start": {"line": 4, "column": 19}}
+            ],
+            "fixits": [
+              {
+                "location": {
+                  "start": {"line": 4, "column": 19}
+                },
+                "replacement": ";"
+              }
+            ],
+            "message": "expected ';' after return statement"
+          }
+        ],
+        "c/all/test.hh": [
+          {
+            "severity": 2,
+            "locations": [
+              {"start": {"line": 3, "column": 1}}
+            ],
+            "fixits": [],
+            "message": "control reaches end of non-void function"
+          }
+        ]
+      }
     }
   ]
 }
