@@ -471,6 +471,7 @@ adl_RECURSIVE_EVAL("$datadir", [datadirex])
 AC_SUBST(datadirex)
 
 GCA_BACKENDS_EXEC_DIR="$backendexecdir_unex"
+AC_SUBST(GCA_BACKENDS_EXEC_DIR)
 
 GCA_BACKENDS_DIR="$GCA_BACKENDS_EXEC_DIR/backends"
 AC_SUBST(GCA_BACKENDS_DIR)
