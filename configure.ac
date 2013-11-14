@@ -24,6 +24,8 @@ AM_SILENT_RULES([yes])
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
+GLIB_GSETTINGS
+
 dnl adl_RECURSIVE_EVAL(VALUE, RESULT)
 dnl =================================
 dnl Interpolate the VALUE in loop until it doesn't change,
@@ -543,6 +545,7 @@ backends/sh/org.gnome.CodeAssist.v1.sh.service
 backends/sh/sh
 backends/css/org.gnome.CodeAssist.v1.css.service
 backends/css/css
+data/org.gnome.codeassistance.gschema.xml
 ])
 
 AC_OUTPUT

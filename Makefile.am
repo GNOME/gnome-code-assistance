@@ -28,8 +28,18 @@ GITIGNOREFILES =
 GITIGNOREDEPS =
 BUILT_SOURCES =
 DISTCLEANFILES =
+MAINTAINERCLEANFILES =
+gsettings_SCHEMAS =
 
+include data/Makefile.am
 include backends/Makefile.am
+
+@GSETTINGS_RULES@
+
+CLEANFILES += $(gsettings_SCHEMAS)
+DISTCLEANFILES += $(gsettings_SCHEMAS)
+
+MAINTAINERCLEANFILES += $(gsettings_SCHEMAS:.xml=.valid)
 
 dist-hook-changelog:
 	@if test -d "$(srcdir)/.git"; \
