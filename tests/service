@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import gcatypes
 sys.path = sys.path[1:]
 
+has_failures = False
 (console_width, console_height) = shutil.get_terminal_size(fallback=(80, 25))
 
 class Interface:
@@ -161,6 +162,9 @@ def test(name):
                     global console_width
 
                     if not value is None:
+                        global has_failures
+                        has_failures = True
+
                         rettext = '[\033[31mFAIL\033[0m]: {0}'.format(value)
                     else:
                         rettext = '[\033[32mOK\033[0m]'
@@ -418,5 +422,8 @@ try:
 finally:
     daemon.terminate()
     daemon.wait()
+
+if has_failures:
+    sys.exit(1)
 
 # vi:ts=4:et
