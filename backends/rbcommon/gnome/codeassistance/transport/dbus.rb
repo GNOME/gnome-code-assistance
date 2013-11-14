@@ -266,7 +266,7 @@ module Gnome::CodeAssistance
 
             doc = app.docs[npath] || make_document(app, npath, path)
 
-            doc.data_path = data_path || path
+            doc.data_path = path if data_path.empty? else data_path
             doc.cursor = cursor || SourceLocation()
 
             doc
