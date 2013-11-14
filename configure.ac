@@ -548,7 +548,6 @@ backends/sh/sh
 backends/css/org.gnome.CodeAssist.v1.css.service
 backends/css/css
 data/org.gnome.codeassistance.gschema.xml
-tests/config.py
 tests/dbus.conf
 ])
 
