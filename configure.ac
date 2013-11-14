@@ -1,7 +1,7 @@
 AC_PREREQ(2.63.2)
 
 m4_define(gnome_code_assistance_major_version, 0)
-m4_define(gnome_code_assistance_minor_version, 2)
+m4_define(gnome_code_assistance_minor_version, 1)
 m4_define(gnome_code_assistance_micro_version, 0)
 m4_define(gnome_code_assistance_version, gnome_code_assistance_major_version.gnome_code_assistance_minor_version.gnome_code_assistance_micro_version)
 
