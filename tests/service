@@ -219,7 +219,7 @@ class ServiceTest:
     def assert_fixit(self, f1, f2):
         self.assert_source_range(f1.location, f2.location)
 
-        if f1.replacement != f2.replacemnt:
+        if f1.replacement != f2.replacement:
             raise ValueError("Expected fixit replacement {0} but got {1}".format(f1.replacement, f2.replacement))
 
     def assert_diagnostic(self, d1, d2):
