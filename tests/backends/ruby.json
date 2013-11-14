@@ -1,0 +1,27 @@
+{
+  "language": "ruby",
+  "interfaces": [],
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
+  "diagnostics": [
+    {
+      "parse": {
+        "path": "ruby_fail.rb"
+      },
+      "diagnostics": [
+        {
+          "severity": 4,
+          "locations": [
+            {
+              "start": {
+                "line": 4,
+                "column": 8
+              }
+            }
+          ],
+          "fixits": [],
+          "message": "unexpected '<'"
+        }
+      ]
+    }
+  ]
+}

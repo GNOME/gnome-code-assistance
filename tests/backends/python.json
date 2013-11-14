@@ -1,0 +1,5 @@
+{
+  "language": "python",
+  "interfaces": [],
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"]
+}

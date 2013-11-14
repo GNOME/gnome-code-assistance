@@ -1,0 +1,255 @@
+#!/usr/bin/python3
+
+import sys, dbus, json, subprocess, os, glob, traceback
+import lxml.objectify
+
+sys.path.insert(0, os.path.dirname(__file__))
+import config
+sys.path = sys.path[1:]
+
+class Interface:
+    class Arg:
+        def __init__(self):
+            self.name = ''
+            self.direction = 'in'
+            self.signature = ''
+
+        def assert_equal(self, other):
+            if self.direction != other.direction:
+                raise ValueError("Expected direction {0} for argument {1}, but got {2}".format(self.direction, self.name, other.direction))
+
+            if self.signature != other.signature:
+                raise ValueError("Expected signature {0} for argument {1}, but got {2}".format(self.signature, self.name, other.signature))
+
+    class Method:
+        def __init__(self):
+            self.name = ''
+            self.args = []
+
+        def assert_equal(self, other):
+            if self.name != other.name:
+                raise ValueError("Methods have different names, expected {0} but got {1}".format(self.name, other.name))
+
+            for i, a in enumerate(self.args):
+                if i >= len(other.args):
+                    raise ValueError("Missing expected argument {0}:{1} missing".format(a.name, a.signature))
+
+                a.assert_equal(other.args[i])
+
+            for a in other.args[len(self.args):]:
+                raise ValueError("Unexpected argument {0}:{1}".format(a.name, a.signature))
+
+    def __init__(self):
+        self.name = ''
+        self.methods = {}
+
+    def assert_equal(self, other):
+        if self.name != other.name:
+            raise ValueError("Interfaces have different names, expected {0} but got {1}".format(self.name, other.name))
+
+        otherm = {m: True for m in other.methods}
+
+        for m in self.methods:
+            m1 = self.methods[m]
+
+            if not m in otherm:
+                raise ValueError("Missing method {0}".format(m))
+
+            del otherm[m]
+            m1.assert_equal(other.methods[m])
+
+        for k in otherm:
+            raise ValueError("Unexpected method {0}".format(k))
+
+    @classmethod
+    def from_xml(cls, xml):
+        ret = {}
+        obj = lxml.objectify.fromstring(xml)
+
+        for i in obj.interface:
+            ii = cls()
+
+            ii.name = i.attrib['name']
+            ret[ii.name] = ii
+
+            if not hasattr(i, 'method'):
+                continue
+
+            for m in i.method:
+                meth = cls.Method()
+                meth.name = m.attrib['name']
+
+                ii.methods[meth.name] = meth
+
+                if not hasattr(m, 'arg'):
+                    continue
+
+                for a in m.arg:
+                    aa = cls.Arg()
+                    aa.direction = a.attrib['direction']
+                    aa.signature = a.attrib['type']
+
+                    if 'name' in a.attrib:
+                        aa.name = a.attrib['name']
+
+                    meth.args.append(aa)
+
+        return ret
+
+    @classmethod
+    def from_json(cls, js):
+        with open(js) as f:
+            contents = f.read()
+
+        js = json.loads(contents)
+        ret = {}
+
+        for k in js:
+            ii = cls()
+            ii.name = k
+
+            ret[k] = ii
+
+            methods = js[k]
+
+            for mname in methods:
+                meth = cls.Method()
+                meth.name = mname
+
+                m = methods[mname]
+
+                ii.methods[meth.name] = meth
+
+                for a in m:
+                    aa = cls.Arg()
+                    aa.direction = a['direction']
+                    aa.signature = a['type']
+
+                    if 'name' in a:
+                        aa.name = a['name']
+
+                    meth.args.append(aa)
+
+        return ret
+
+def test(name):
+    def decorator(f):
+        def dummy(*args, **kwargs):
+            class C:
+                def __init__(self, args, kwargs):
+                    self.args = args
+                    self.kwargs = kwargs
+
+                def __call__(self):
+                    f(*self.args, **self.kwargs)
+
+                def __enter__(self):
+                    txt = '  TEST {0} ({1}) ... '.format(name, ', '.join([str(x) for x in self.args[1:]]))
+                    sys.stdout.write(txt)
+                    return self
+
+                def __exit__(self, typ, value, tb):
+                    if not value is None:
+                        print('[FAIL]: {0}'.format(value))
+                        print('      {0}'.format(''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
+                    else:
+                        print('[OK]')
+
+                    return True
+
+            return C(args, kwargs)
+
+        return dummy
+
+    return decorator
+
+class ServiceTest:
+    interfaces = Interface.from_json(os.path.join(os.path.dirname(__file__), 'interfaces.json'))
+
+    def __init__(self, bus, test):
+        self.test = test
+        self.language = test['language']
+        self.name = 'org.gnome.CodeAssist.v1.' + self.language
+        self.path = '/org/gnome/CodeAssist/v1/' + self.language
+        self.bus = bus
+
+    def full_path(self, path):
+        if path != '/':
+            return self.path + path
+        else:
+            return self.path
+
+    @test('object')
+    def test_object(self, path):
+        self.bus.get_object(self.name, self.full_path(path))
+
+    @test('interface')
+    def test_interface(self, path, interface):
+        obj = self.bus.get_object(self.name, self.full_path(path))
+
+        intro = dbus.Interface(obj, 'org.freedesktop.DBus.Introspectable')
+        xml = intro.Introspect()
+        introf = Interface.from_xml(xml)
+
+        if not interface in introf:
+            raise ValueError("Missing interface {0}".format(interface))
+
+        if not interface in self.interfaces:
+            raise ValueError("Unknown interface {0}".format(interface))
+
+        introf[interface].assert_equal(self.interfaces[interface])
+
+    def run(self):
+        print('TESTING {0}'.format(self.name))
+
+        # Test for default interfaces and paths
+        with self.test_object('/') as t:
+            t()
+
+        with self.test_interface('/', 'org.gnome.CodeAssist.v1.Service') as t:
+            t()
+
+        if 'interfaces' in self.test:
+            for interface in self.test['interfaces']:
+                with self.test_interface('/', interface) as t:
+                    t()
+
+        with self.test_object('/document') as t:
+            t()
+
+        with self.test_interface('/document', 'org.gnome.CodeAssist.v1.Document') as t:
+            t()
+
+        if 'document_interfaces' in self.test:
+            for interface in self.test['document_interfaces']:
+                with self.test_interface('/document', interface) as t:
+                    t()
+
+def run_test(testfile):
+    with open(testfile, 'r') as j:
+        test = json.loads(j.read())
+
+    bus = dbus.SessionBus(private=True)
+    t = ServiceTest(bus, test)
+    t.run()
+
+dirname = os.path.dirname(__file__)
+
+testfiles = glob.glob(os.path.join(dirname, 'backends', '*.json'))
+
+dn = open(os.devnull, 'w')
+daemon = subprocess.Popen(['dbus-daemon', '--print-address', '--nofork', '--config-file', os.path.join(dirname, 'dbus.conf')], stdout=subprocess.PIPE, stderr=dn, close_fds=True)
+
+try:
+    address = daemon.stdout.readline().rstrip()
+
+    os.environ['DBUS_SESSION_BUS_ADDRESS'] = address.decode('utf-8')
+    os.environ['DBUS_SESSION_BUS_PID'] = str(daemon.pid)
+
+    for testfile in testfiles:
+        run_test(testfile)
+finally:
+    daemon.terminate()
+    daemon.wait()
+
+# vi:ts=4:et

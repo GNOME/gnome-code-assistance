@@ -1,0 +1,1 @@
+TESTS += tests/service

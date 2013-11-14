@@ -467,8 +467,10 @@ backendexecdir_unex="$libexecdir/gnome-code-assistance"
 adl_RECURSIVE_EVAL("$backendexecdir_unex", [backendexecdir])
 AC_SUBST(backendexecdir)
 
-GCA_BACKENDS_EXEC_DIR="$libexecdir/gnome-code-assistance"
-AC_SUBST(GCA_BACKENDS_EXEC_DIR)
+adl_RECURSIVE_EVAL("$datadir", [datadirex])
+AC_SUBST(datadirex)
+
+GCA_BACKENDS_EXEC_DIR="$backendexecdir_unex"
 
 GCA_BACKENDS_DIR="$GCA_BACKENDS_EXEC_DIR/backends"
 AC_SUBST(GCA_BACKENDS_DIR)
@@ -546,6 +548,8 @@ backends/sh/sh
 backends/css/org.gnome.CodeAssist.v1.css.service
 backends/css/css
 data/org.gnome.codeassistance.gschema.xml
+tests/config.py
+tests/dbus.conf
 ])
 
 AC_OUTPUT

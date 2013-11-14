@@ -29,9 +29,11 @@ GITIGNOREDEPS =
 BUILT_SOURCES =
 DISTCLEANFILES =
 gsettings_SCHEMAS =
+TESTS =
 
 include data/Makefile.am
 include backends/Makefile.am
+include tests/Makefile.am
 
 @GSETTINGS_RULES@
 

@@ -1,0 +1,21 @@
+{
+  "org.gnome.CodeAssist.v1.Service": {
+    "Parse": [
+      {"name": "path", "direction": "in", "type": "s"},
+      {"name": "data_path", "direction": "in", "type": "s"},
+      {"name": "cursor", "direction": "in", "type": "(xx)"},
+      {"name": "options", "direction": "in", "type": "a{sv}"},
+      {"name": "document", "direction": "out", "type": "o"}
+    ],
+    "Dispose": [
+      {"name": "path", "direction": "in", "type": "s"}
+    ]
+  },
+  "org.gnome.CodeAssist.v1.Document": {
+  },
+  "org.gnome.CodeAssist.v1.Diagnostics": {
+    "Diagnostics": [
+      {"name": "result", "direction": "out", "type": "a(ua((x(xx)(xx))s)a(x(xx)(xx))s)"}
+    ]
+  }
+}
