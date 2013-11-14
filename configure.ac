@@ -5,7 +5,7 @@ m4_define(gnome_code_assistance_minor_version, 3)
 m4_define(gnome_code_assistance_micro_version, 0)
 m4_define(gnome_code_assistance_version, gnome_code_assistance_major_version.gnome_code_assistance_minor_version.gnome_code_assistance_micro_version)
 
-AC_INIT([gnome-code-assistance],[gnome_code_assistance_version],[http://bugzilla.gnome.org/enter_bug.cgi?product=gedit],[gnome-code-assistance],[http://projects.gnome.org/gedit/])
+AC_INIT([gnome-code-assistance],[gnome_code_assistance_version],[http://bugzilla.gnome.org/enter_bug.cgi?product=gnome-code-assistance],[gnome-code-assistance],[http://live.gnome.org/CodeAssistance/])
 
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([m4])
