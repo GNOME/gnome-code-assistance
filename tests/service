@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
-import sys, dbus, json, subprocess, os, glob, traceback
+import sys, dbus, json, subprocess, os, glob, traceback, shutil, re
 import lxml.objectify
 
 sys.path.insert(0, os.path.dirname(__file__))
 import gcatypes
 sys.path = sys.path[1:]
+
+(console_width, console_height) = shutil.get_terminal_size(fallback=(80, 25))
 
 class Interface:
     class Arg:
@@ -136,6 +138,8 @@ def test(name):
     def decorator(f):
         def dummy(*args, **kwargs):
             class C:
+                ansire = re.compile('\033\\[[^m]*m')
+
                 def __init__(self, args, kwargs):
                     self.args = args
                     self.kwargs = kwargs
@@ -147,16 +151,26 @@ def test(name):
                         return f(self.args[0], *args, **kwargs)
 
                 def __enter__(self):
-                    txt = '  TEST {0} ({1}) ... '.format(name, ', '.join([str(a) for a in self.args[1:]]))
-                    sys.stdout.write(txt)
+                    text = '  TEST {0} ({1})'.format(name, ', '.join([str(a) for a in self.args[1:]]))
+
+                    self.enter_text = text
+                    sys.stdout.write(text)
                     return self
 
                 def __exit__(self, typ, value, tb):
+                    global console_width
+
                     if not value is None:
-                        print('[FAIL]: {0}'.format(value))
-                        print('      {0}'.format(''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
+                        rettext = '[\033[31mFAIL\033[0m]: {0}'.format(value)
                     else:
-                        print('[OK]')
+                        rettext = '[\033[32mOK\033[0m]'
+
+                    cleart = self.ansire.sub('', (self.enter_text + rettext))
+
+                    print(' {0} {1}'.format('.' * (console_width - len(cleart) - 2), rettext))
+
+                    if not value is None:
+                        print('      {0}'.format(''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
 
                     return True
 
@@ -344,7 +358,7 @@ class ServiceTest:
             raise ValueError('Do not know how to parse diagnostic')
 
     def run(self):
-        print('TESTING {0}'.format(self.name))
+        print('\nTESTING {0}'.format(self.name))
 
         # Test for default interfaces and paths
         with self.test_object('/') as t:
