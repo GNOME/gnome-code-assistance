@@ -171,10 +171,10 @@ def test(name):
 
                     cleart = self.ansire.sub('', (self.enter_text + rettext))
 
-                    print(' {0} {1}'.format('.' * (console_width - len(cleart) - 2), rettext))
+                    print(' \033[30m{0}\033[0m {1}'.format('.' * (console_width - len(cleart) - 2), rettext))
 
                     if not value is None:
-                        print('      {0}'.format(''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
+                        print('      \033[33;1m{0}\033[0m'.format(''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
 
                     return True
 
@@ -362,7 +362,7 @@ class ServiceTest:
             raise ValueError('Do not know how to parse diagnostic')
 
     def run(self):
-        print('\nTESTING {0}'.format(self.name))
+        print('\n\033[1mTESTING {0}\033[0m'.format(self.name))
 
         # Test for default interfaces and paths
         with self.test_object('/') as t:
