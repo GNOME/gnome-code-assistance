@@ -76,7 +76,7 @@ class Service(transport.Service, transport.Project):
         else:
             unsaved = []
 
-        self._parse(doc, unsaved, options)
+        self._parse(doc, [doc], unsaved, options)
 
     def _included_docs(self, doc, docmap):
         includes = doc.tu.get_includes()
