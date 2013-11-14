@@ -4,7 +4,7 @@ import sys, dbus, json, subprocess, os, glob, traceback
 import lxml.objectify
 
 sys.path.insert(0, os.path.dirname(__file__))
-import config
+import gcatypes
 sys.path = sys.path[1:]
 
 class Interface:
@@ -141,7 +141,7 @@ def test(name):
                     self.kwargs = kwargs
 
                 def __call__(self):
-                    f(*self.args, **self.kwargs)
+                    return f(*self.args, **self.kwargs)
 
                 def __enter__(self):
                     txt = '  TEST {0} ({1}) ... '.format(name, ', '.join([str(x) for x in self.args[1:]]))
@@ -181,7 +181,7 @@ class ServiceTest:
 
     @test('object')
     def test_object(self, path):
-        self.bus.get_object(self.name, self.full_path(path))
+        return self.bus.get_object(self.name, self.full_path(path))
 
     @test('interface')
     def test_interface(self, path, interface):
@@ -198,6 +198,98 @@ class ServiceTest:
             raise ValueError("Unknown interface {0}".format(interface))
 
         introf[interface].assert_equal(self.interfaces[interface])
+
+    def assert_source_location(self, l1, l2):
+        if l1.line != l2.line:
+            raise ValueError("Expected source location line {0} but got {1}".format(l1.line, l2.line))
+
+        if l1.column != l2.column:
+            raise ValueError("Expected source location column {0} but got {1}".format(l1.column, l2.column))
+
+    def assert_source_range(self, r1, r2):
+        if r1.file != r2.file:
+            raise ValueError("Expected source range file {0} but got {1}".format(r1.file, r2.file))
+
+        self.assert_source_location(r1.start, r2.start)
+        self.assert_source_location(r1.end, r2.end)
+
+    def assert_fixit(self, f1, f2):
+        self.assert_source_range(f1.location, f2.location)
+
+        if f1.replacement != f2.replacemnt:
+            raise ValueError("Expected fixit replacement {0} but got {1}".format(f1.replacement, f2.replacement))
+
+    def assert_diagnostic(self, d1, d2):
+        if d1.severity != d2.severity:
+            raise ValueError("Expected severity '{0}' but got '{1}'".format(d1.severity, d2.severity))
+
+        for i, v in enumerate(d1.fixits):
+            if i >= len(d2.fixits):
+                raise ValueError("Expected fixit {0}".format(v))
+
+            self.assert_fixit(v, d2.fixits[i])
+
+        for v in d2.fixits[len(d1.fixits):]:
+            raise ValueError("Unexpected fixit {0}".format(v))
+
+        for i, v in enumerate(d1.locations):
+            if i >= len(d2.locations):
+                raise ValueError("Expected source range {0}".format(v))
+
+            self.assert_source_range(v, d2.locations[i])
+
+        for v in d2.locations[len(d1.locations):]:
+            raise ValueError("Unexpected source range {0}".format(v))
+
+        if d1.message != d2.message:
+            raise ValueError("Expected message '{0}' but got '{1}'".format(d1.message, d2.message))
+
+    @test('diagnostics')
+    def test_diagnostics(self, d1, d2):
+        for i, v in enumerate(d1):
+            if i >= len(d2):
+                raise ValueError("Expected diagnostic {0}".format(v))
+
+            self.assert_diagnostic(v, d2[i])
+
+        for v in d2[len(d1):]:
+            raise ValueError("Unexpected diagnostic {0}".format(v))
+
+    def run_parse(self, p):
+        path = p['path']
+        obj = self.bus.get_object(self.name, self.path)
+
+        iface = dbus.Interface(obj, 'org.gnome.CodeAssist.v1.Service')
+
+        dpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'backends', path))
+        doc = iface.Parse(dpath, '', (0, 0), {})
+
+        doc = doc[len(self.path):]
+
+        with self.test_object(doc) as t:
+            obj = t()
+
+        return doc, obj
+
+    def run_parse_all(self, p):
+        pass
+
+    def run_diagnostic(self, d):
+        if 'parse' in d:
+            path, parsed = self.run_parse(d['parse'])
+        else:
+            raise ValueError('Do not know how to parse diagnostic')
+
+        with self.test_interface(path, 'org.gnome.CodeAssist.v1.Diagnostics') as t:
+            t()
+
+        diag = dbus.Interface(parsed, 'org.gnome.CodeAssist.v1.Diagnostics')
+
+        ret = [gcatypes.Diagnostic.from_tuple(dd) for dd in diag.Diagnostics()]
+        orig = [gcatypes.Diagnostic.from_json(dd) for dd in d['diagnostics']]
+
+        with self.test_diagnostics(orig, ret) as t:
+            t()
 
     def run(self):
         print('TESTING {0}'.format(self.name))
@@ -225,6 +317,12 @@ class ServiceTest:
                 with self.test_interface('/document', interface) as t:
                     t()
 
+        if 'diagnostics' in self.test:
+            diagnostics = self.test['diagnostics']
+
+            for d in diagnostics:
+                self.run_diagnostic(d)
+
 def run_test(testfile):
     with open(testfile, 'r') as j:
         test = json.loads(j.read())
@@ -235,7 +333,10 @@ def run_test(testfile):
 
 dirname = os.path.dirname(__file__)
 
-testfiles = glob.glob(os.path.join(dirname, 'backends', '*.json'))
+if len(sys.argv) <= 1:
+    testfiles = glob.glob(os.path.join(dirname, 'backends', '*.json'))
+else:
+    testfiles = sys.argv[1:]
 
 dn = open(os.devnull, 'w')
 daemon = subprocess.Popen(['dbus-daemon', '--print-address', '--nofork', '--config-file', os.path.join(dirname, 'dbus.conf')], stdout=subprocess.PIPE, stderr=dn, close_fds=True)
