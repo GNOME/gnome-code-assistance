@@ -40,6 +40,18 @@ class Document(dbus.service.Object):
         self.data_path = ''
         self.cursor = types.SourceLocation()
 
+    def Introspect(self, object_path, connection):
+        ret = super(Document, self).Introspect(object_path, connection)
+
+        # This is so nasty, I don't have words for it. I'm sincerely sorry!
+        # If the Document interface gets any methods, please remove this
+        # atrocity!!
+        if not 'org.gnome.CodeAssist.v1.Document' in ret:
+            find = "<interface name=\"org.gnome.CodeAssist.v1.Diagnostics\">"
+            ret = ret.replace(find, "<interface name=\"org.gnome.CodeAssist.v1.Document\"/>\n  " + find)
+
+        return ret
+
 class Diagnostics(dbus.service.Object):
     """Diagnostics interface.
 
