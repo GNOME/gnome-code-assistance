@@ -1,5 +1,23 @@
 {
-  "language": "python",
+  "language": "c",
   "interfaces": [],
-  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"]
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
+  "diagnostics": [
+    {
+      "parse": {
+        "path": "c/makefile/test.cc"
+      },
+      "diagnostics": [
+        {
+          "severity": 4,
+          "locations": [
+            {"start": {"line": 4, "column": 8}, "end": {"line": 4, "column": 8}},
+            {"start": {"line": 4, "column": 12}, "end": {"line": 4, "column": 19}}
+          ],
+          "fixits": [],
+          "message": "cannot initialize a variable of type 'char *' with an rvalue of type 'void *'"
+        }
+      ]
+    }
+  ]
 }
