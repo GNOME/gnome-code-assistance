@@ -258,14 +258,16 @@ class ServiceTest:
         for v in d2[len(d1):]:
             raise ValueError("Unexpected diagnostic {0}".format(v))
 
+    def file_path(self, p):
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), 'backends', p))
+
+
     def run_parse(self, p):
         path = p['path']
         obj = self.bus.get_object(self.name, self.path)
 
         iface = dbus.Interface(obj, 'org.gnome.CodeAssist.v1.Service')
-
-        dpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'backends', path))
-        doc = iface.Parse(dpath, '', (0, 0), {})
+        doc = iface.Parse(self.file_path(path), '', (0, 0), {})
 
         doc = doc[len(self.path):]
 
@@ -274,25 +276,72 @@ class ServiceTest:
 
         return doc, obj
 
+    @test('remote documents')
+    def test_remote_documents(self, orig, docmap):
+        for f in orig:
+            ff = self.file_path(f)
+
+            if not ff in docmap:
+                raise ValueError('Expected remote document {0}'.format(f))
+
+            del docmap[ff]
+
+        for k in docmap:
+            raise ValueError('Unexpected remote document {0}'.format(k))
+
     def run_parse_all(self, p):
-        pass
+        obj = self.bus.get_object(self.name, self.path)
 
-    def run_diagnostic(self, d):
-        if 'parse' in d:
-            path, parsed = self.run_parse(d['parse'])
-        else:
-            raise ValueError('Do not know how to parse diagnostic')
+        path = self.file_path(p['path'])
+        docs = [gcatypes.OpenDocument(self.file_path(d)) for d in p['documents']]
+        docs.insert(0, gcatypes.OpenDocument(path))
 
+        iface = dbus.Interface(obj, 'org.gnome.CodeAssist.v1.Project')
+        return iface.ParseAll(self.file_path(path), [d.to_tuple() for d in docs], (0, 0), {})
+
+    def verify_parse_diagnostics(self, path, obj, diagnostics):
         with self.test_interface(path, 'org.gnome.CodeAssist.v1.Diagnostics') as t:
             t()
 
-        diag = dbus.Interface(parsed, 'org.gnome.CodeAssist.v1.Diagnostics')
+        diag = dbus.Interface(obj, 'org.gnome.CodeAssist.v1.Diagnostics')
 
         ret = [gcatypes.Diagnostic.from_tuple(dd) for dd in diag.Diagnostics()]
-        orig = [gcatypes.Diagnostic.from_json(dd) for dd in d['diagnostics']]
+        orig = [gcatypes.Diagnostic.from_json(dd) for dd in diagnostics]
 
         with self.test_diagnostics(path) as t:
             t(orig, ret)
+
+    def test_parse(self, d):
+        path, parsed = self.run_parse(d['parse'])
+        self.verify_parse_diagnostics(path, parsed, d['diagnostics'])
+
+    def test_parse_all(self, d):
+        docs = self.run_parse_all(d['parse_all'])
+
+        def make_doc_map():
+            return {str(d[0]): str(d[1])[len(self.path):] for d in docs}
+
+        with self.test_remote_documents(*d['documents']) as t:
+            t(d['documents'], make_doc_map())
+
+        docmap = make_doc_map()
+        diags = d['diagnostics']
+
+        for k in diags:
+            remote = docmap[self.file_path(k)]
+
+            with self.test_object(remote) as t:
+                obj = t()
+
+            self.verify_parse_diagnostics(remote, obj, diags[k])
+
+    def run_diagnostic(self, d):
+        if 'parse' in d:
+            self.test_parse(d)
+        elif 'parse_all' in d:
+            self.test_parse_all(d)
+        else:
+            raise ValueError('Do not know how to parse diagnostic')
 
     def run(self):
         print('TESTING {0}'.format(self.name))

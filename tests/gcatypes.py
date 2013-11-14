@@ -24,6 +24,9 @@ class OpenDocument:
     def from_tuple(cls, tp):
         return cls(tp[0], tp[1])
 
+    def to_tuple(self):
+        return (self.path, self.data_path)
+
     def __repr__(self):
         return '<OpenDocument: {0}, {1}>'.format(self.path, self.data_path)
 
