@@ -25,20 +25,31 @@ else
     require 'sass'
 end
 
-class CssParser < Sass::SCSS::CssParser
-    def self.expected(scanner, expected, line)
+module ColumnInfo
+    def expected(scanner, expeced, line)
         pos = scanner.pos
         nlpos = scanner.string.rindex("\n", pos)
 
         begin
-            super(scanner, expected, line)
+            super
         rescue Sass::SyntaxError => e
             e.modify_backtrace({:column => pos - nlpos})
             raise e
         end
     end
+end
+
+class CssParser < Sass::SCSS::CssParser
+    extend ColumnInfo
 
     @sass_script_parser = Class.new(Sass::Script::CssParser)
+    @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
+end
+
+class ScssParser < Sass::SCSS::Parser
+    extend ColumnInfo
+
+    @sass_script_parser = Class.new(Sass::Script::Parser)
     @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
 end
 
@@ -52,8 +63,14 @@ module Gnome::CodeAssistance
 
                 f = File.new(doc.data_path, 'r')
 
+                if doc.path.end_with?('.css')
+                    cls = CssParser
+                else
+                    cls = ScssParser
+                end
+
                 begin
-                    parser = CssParser.new(f.read(), doc.path)
+                    parser = cls.new(f.read(), doc.path)
                     parser.parse()
                 rescue Sass::SyntaxError => e
                     doc.diagnostics = [make_diagnostic(e)]

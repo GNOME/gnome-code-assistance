@@ -1,7 +1,7 @@
 <schemalist>
   <schema id="org.gnome.codeassistance" path="/org/gnome/codeassistance/">
     <key name="language-mapping" type="a{ss}">
-      <default>{'cpp': 'c', 'objc': 'c', 'chdr': 'c'}</default>
+      <default>{'cpp': 'c', 'objc': 'c', 'chdr': 'c', 'sass': 'css'}</default>
       <summary>Language Mapping</summary>
       <description>A mapping from language id to backend id</description>
     </key>
