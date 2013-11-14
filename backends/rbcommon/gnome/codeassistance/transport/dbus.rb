@@ -66,6 +66,9 @@ end
 # Dbus interfaces for documents and servers
 module Gnome::CodeAssistance::DBus
     class Document < DBus::Object
+        dbus_interface 'org.gnome.CodeAssist.v1.Document' do
+        end
+
         def initialize(path, doc)
             super(path)
             @_doc = doc
