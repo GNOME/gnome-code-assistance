@@ -388,7 +388,7 @@ dirname = os.path.dirname(__file__)
 if len(sys.argv) <= 1:
     testfiles = glob.glob(os.path.join(dirname, 'backends', '*.json'))
 else:
-    testfiles = sys.argv[1:]
+    testfiles = [os.path.join(dirname, 'backends', d + '.json') for d in sys.argv[1:]]
 
 dn = open(os.devnull, 'w')
 daemon = subprocess.Popen(['dbus-daemon', '--print-address', '--nofork', '--config-file', os.path.join(dirname, 'dbus.conf')], stdout=subprocess.PIPE, stderr=dn, close_fds=True)
