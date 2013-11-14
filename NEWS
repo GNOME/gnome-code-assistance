@@ -1,61 +1,17 @@
 ===========================
-gedit-code-assistance 0.2.0
+gnome-code-assistance 0.1.0
 ===========================
 
-New Features and Fixes
-======================
-Ported to python 3 (Ignacio Casal Quinteiro)
-Misc bugfixes
+gnome-code-assistance provides code assistance as a service for source code
+editors.
 
-===========================
-gedit-code-assistance 0.1.5
-===========================
-
-New Features and Fixes
-======================
-Fix the XML backend (Ignacio Casal Quinteiro)
-
-===========================
-gedit-code-assistance 0.1.4
-===========================
-
-New Features and Fixes
-======================
-Added XML backend (Jono Finger)
-Added python backend (Jesse van den Kieboom)
-Moved backends to peas based plugin system (Jesse van den Kieboom)
-
-===========================
-gedit-code-assistance 0.1.3
-===========================
-
-New Features and Fixes
-======================
-Fix memory leaks (Jesse van den Kieboom)
-Move c backend to its own directory (Jesse van den Kieboom)
-Misc bugfixes.
-
-===========================
-gedit-code-assistance 0.1.2
-===========================
-
-New Features and Fixes
-======================
-Move various tasks to background threads (Jesse van den Kieboom)
-Misc bugfixes.
-
-===========================
-gedit-code-assistance 0.1.1
-===========================
-
-New Features and Fixes
-======================
-Fixed tarball build.
-
-===========================
-gedit-code-assistance 0.1.0
-===========================
-
-New Features and Fixes
-======================
-Initial version of the plugin.
+New backends:
+  c/c++/objc
+  css/sass
+  go
+  javascript
+  python
+  ruby
+  sh
+  vala
+  xml
