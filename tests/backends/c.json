@@ -1,6 +1,6 @@
 {
   "language": "c",
-  "interfaces": [],
+  "interfaces": ["org.gnome.CodeAssist.v1.Project"],
   "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
   "diagnostics": [
     {
