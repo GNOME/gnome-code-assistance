@@ -35,4 +35,6 @@ GITIGNOREFILES +=				\
 	backends/vala/.dirstamp			\
 	backends/vala/*.o
 
+EXTRA_DIST += $(valabackendservide_DATA)
+
 GITIGNOREDEPS += backends/vala/Makefile.am

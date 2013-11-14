@@ -10,4 +10,6 @@ xmlbackendservicedir = $(datadir)/dbus-1/services
 xmlbackendservice_DATA = \
 	backends/xml/org.gnome.CodeAssist.v1.xml.service
 
+EXTRA_DIST += $(xmlbackendservice_DATA)
+
 GITIGNOREDEPS += backends/xml/Makefile.am

@@ -11,4 +11,8 @@ jsbackendservicedir = $(datadir)/dbus-1/services
 jsbackendservice_DATA = \
 	backends/js/org.gnome.CodeAssist.v1.js.service
 
+EXTRA_DIST +=				\
+	$(jsbackend_DATA)		\
+	$(jsbackendservice_DATA)
+
 GITIGNOREDEPS += backends/js/Makefile.am

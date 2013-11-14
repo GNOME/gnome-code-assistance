@@ -20,4 +20,6 @@ cbackendservicedir = $(datadir)/dbus-1/services
 cbackendservice_DATA = \
 	backends/c/org.gnome.CodeAssist.v1.c.service
 
+EXTRA_DIST += $(cbackendservice_DATA)
+
 GITIGNOREDEPS += backends/c/Makefile.am

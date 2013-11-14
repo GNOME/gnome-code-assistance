@@ -10,4 +10,6 @@ shbackendservicedir = $(datadir)/dbus-1/services
 shbackendservice_DATA = \
 	backends/sh/org.gnome.CodeAssist.v1.sh.service
 
+EXTRA_DIST += $(shbackendservice_DATA)
+
 GITIGNOREDEPS += backends/sh/Makefile.am

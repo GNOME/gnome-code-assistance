@@ -11,4 +11,8 @@ rubybackendservicedir = $(datadir)/dbus-1/services
 rubybackendservice_DATA = \
 	backends/ruby/org.gnome.CodeAssist.v1.ruby.service
 
+EXTRA_DIST +=					\
+	$(rubybackend_DATA)			\
+	$(rubybackendservice_DATA)
+
 GITIGNOREDEPS += backends/ruby/Makefile.am
