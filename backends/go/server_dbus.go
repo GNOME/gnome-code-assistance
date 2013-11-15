@@ -235,7 +235,16 @@ func (s *ServerDbus) disposeApp(app *App) {
 	delete(s.apps, app.name)
 
 	if len(s.apps) == 0 {
-		os.Exit(0)
+		// Do the final exit, but from a go routine so that we can
+		// block on something in go.dbus. Here we call ReleaseName
+		// which is a pretty valid thing to do just before exiting.
+		// This ensures that if we are currently still dispatching a
+		// method call, that this method call still returns before
+		// we exit (most likely Dispose)
+		go func() {
+			s.transport.conn.ReleaseName("org.gnome.CodeAssist.v1.go")
+			os.Exit(0)
+		}()
 	}
 }
 
