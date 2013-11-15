@@ -202,11 +202,11 @@ class ServiceTest:
 
     @test('object')
     def test_object(self, path):
-        return self.bus.get_object(self.name, self.full_path(path))
+        return self.get_object(path)
 
     @test('interface')
     def test_interface(self, path, interface):
-        obj = self.bus.get_object(self.name, self.full_path(path))
+        obj = self.get_object(path)
 
         intro = dbus.Interface(obj, 'org.freedesktop.DBus.Introspectable')
         xml = intro.Introspect()
@@ -269,7 +269,7 @@ class ServiceTest:
     def test_diagnostics(self, d1, d2):
         for i, v in enumerate(d1):
             if i >= len(d2):
-                raise ValueError("Expected diagnostic {0}".format(v))
+                raise ValueError("Expected diagnostic {0} (got {1} diagnostics instead of {2})".format(v, len(d2), len(d1)))
 
             self.assert_diagnostic(v, d2[i])
 
@@ -279,10 +279,9 @@ class ServiceTest:
     def file_path(self, p):
         return os.path.abspath(os.path.join(os.path.dirname(__file__), 'backends', p))
 
-
     def run_parse(self, p):
         path = p['path']
-        obj = self.bus.get_object(self.name, self.path)
+        obj = self.get_object('/')
 
         iface = dbus.Interface(obj, 'org.gnome.CodeAssist.v1.Service')
         doc = iface.Parse(self.file_path(path), '', (0, 0), {})
@@ -307,8 +306,11 @@ class ServiceTest:
         for k in docmap:
             raise ValueError('Unexpected remote document {0}'.format(k))
 
+    def get_object(self, path):
+        return self.bus.get_object(self.name, self.full_path(path))
+
     def run_parse_all(self, p):
-        obj = self.bus.get_object(self.name, self.path)
+        obj = self.get_object('/')
 
         path = self.file_path(p['path'])
         docs = [gcatypes.OpenDocument(self.file_path(d)) for d in p['documents']]
