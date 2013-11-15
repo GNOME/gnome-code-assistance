@@ -3,7 +3,6 @@ valabackend_PROGRAMS = backends/vala/vala
 
 backends_vala_vala_SOURCES =			\
 	backends/vala/application.vala		\
-	backends/vala/options.vala		\
 	backends/vala/types.vala		\
 	backends/vala/dbus.vala			\
 	backends/vala/diagnostics.vala		\

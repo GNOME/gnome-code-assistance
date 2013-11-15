@@ -22,14 +22,31 @@ namespace Gca.Backends.Vala
 
 public class Application
 {
+	static string transport;
+	static string address;
+
+	static void init_options()
+	{
+		transport = "dbus";
+		address = ":0";
+	}
+
+	const GLib.OptionEntry[] options = {
+		{ "transport", 't', 0, OptionArg.STRING, ref transport, "the transport (dbus or http)", "TRANSPORT" },
+		{ "address", 'a', 0, OptionArg.STRING, ref address, "the http address to listen on", "ADDRESS" },
+
+		// list terminator
+		{ null }
+	};
+
 	public static int main(string[] args)
 	{
-		Options.init();
+		init_options();
 
 		var ctx = new OptionContext("- gnome code assistance daemon");
 
 		ctx.set_help_enabled(true);
-		ctx.add_main_entries(Options.options, null);
+		ctx.add_main_entries(options, null);
 
 		try
 		{
@@ -42,7 +59,7 @@ public class Application
 			return 1;
 		}
 
-		if (Options.transport == "dbus")
+		if (transport == "dbus")
 		{
 			(new DBus.Transport()).run();
 		}
