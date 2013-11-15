@@ -15,9 +15,6 @@ EXTRA_DIST +=				\
 	$(cssbackendservice_DATA)	\
 	backends/css/gems
 
-if RUBY_SASS
-else
 include backends/css/deps.mf
-endif
 
 GITIGNOREDEPS += backends/css/Makefile.am
