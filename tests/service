@@ -432,6 +432,8 @@ def run_test(testfile):
     t = ServiceTest(bus, test)
     t.run()
 
+    bus.close()
+
 dirname = os.path.dirname(__file__)
 
 if len(sys.argv) <= 1:
