@@ -1,5 +1,27 @@
 {
   "language": "go",
   "interfaces": [],
-  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"]
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
+  "diagnostics": [
+    {
+      "parse": {
+        "path": "go_fail.go"
+      },
+      "diagnostics": [
+        {
+          "severity": 4,
+          "locations": [
+            {
+              "start": {
+                "line": 4,
+                "column": 2
+              }
+            }
+          ],
+          "fixits": [],
+          "message": "no result values expected"
+        }
+      ]
+    }
+  ]
 }
