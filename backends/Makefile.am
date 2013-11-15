@@ -46,4 +46,8 @@ if BACKENDS_CSS_ENABLE
 include backends/css/Makefile.am
 endif
 
+if BACKENDS_JSON_ENABLE
+include backends/json/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am

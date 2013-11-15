@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.gnome.CodeAssist.v1.json
+Exec=@backendexecdir@/json --transport dbus

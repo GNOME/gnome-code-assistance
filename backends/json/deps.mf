@@ -1,0 +1,15 @@
+if PYTHON_SIMPLEJSON
+else
+json_deps_simplejsondir = $(GCA_PYBACKENDS_DIR)/json/deps/simplejson
+json_deps_simplejson_DATA = \
+	backends/json/deps/simplejson/__init__.py \
+	backends/json/deps/simplejson/compat.py \
+	backends/json/deps/simplejson/decoder.py \
+	backends/json/deps/simplejson/encoder.py \
+	backends/json/deps/simplejson/ordered_dict.py \
+	backends/json/deps/simplejson/scanner.py
+
+endif
+
+EXTRA_DIST += \
+	$(json_deps_simplejson_DATA)

@@ -276,6 +276,51 @@ color_enable_var("$enable_css", [enable_css_msg])
 AM_CONDITIONAL(BACKENDS_CSS_ENABLE, test "x$enable_css" = "xyes")
 AM_CONDITIONAL(RUBY_SASS, test "x$ruby_sass" = "xyes")
 
+
+
+dnl ================================================================
+dnl json backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([json],
+              AS_HELP_STRING([--enable-json],[enable json backend]),
+              [enable_json=$enableval],
+              [enable_json=auto])
+
+AC_MSG_CHECKING([json backend])
+
+if test "x$enable_json" = "xauto"; then
+	if test "x$PYTHON" = "x"; then
+		AC_MSG_RESULT([no (requires python)])
+		enable_json=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_json=yes
+	fi
+elif test "x$enable_json" != "xno"; then
+	if test "x$PYTHON" = "x"; then
+		AC_MSG_ERROR([no (requires python)])
+	else
+		AC_MSG_RESULT([yes])
+		enable_json=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+python_simplejson=
+
+if test "x$enable_json" = "xyes"; then
+	$PYTHON -c 'import simplejson' 2>/dev/null
+	if test $? -eq 0 ; then
+		python_simplejson=yes
+	fi
+fi
+
+color_enable_var("$enable_json", [enable_json_msg])
+
+AM_CONDITIONAL(BACKENDS_JSON_ENABLE, test "x$enable_json" = "xyes")
+AM_CONDITIONAL(PYTHON_SIMPLEJSON, test "x$python_simplejson" = "xyes")
+
 dnl ================================================================
 dnl js support
 dnl ================================================================
@@ -548,6 +593,8 @@ backends/sh/org.gnome.CodeAssist.v1.sh.service
 backends/sh/sh
 backends/css/org.gnome.CodeAssist.v1.css.service
 backends/css/css
+backends/json/org.gnome.CodeAssist.v1.json.service
+backends/json/json
 data/org.gnome.codeassistance.gschema.xml
 tests/dbus.conf
 ])
@@ -573,5 +620,6 @@ Configuration:
 		javascript:     $enable_js_msg
 		shell:          $enable_sh_msg
 		css:            $enable_css_msg
+		json:           $enable_json_msg
 "
 
