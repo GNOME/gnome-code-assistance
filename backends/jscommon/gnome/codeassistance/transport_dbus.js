@@ -126,7 +126,7 @@ Service.prototype = {
     },
 
     ParseAsync: function(args, invocation) {
-        this.server.dbusAsync(args, invocation, function(sender, path, cursor, dataPath, options) {
+        this.server.dbusAsync(args, invocation, function(sender, path, dataPath, cursor, options) {
             let app = this.ensureApp(sender);
             let doc = this.ensureDocument(app, path, dataPath, Types.SourceLocation.fromTuple(cursor));
 
