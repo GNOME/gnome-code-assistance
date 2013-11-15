@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, dbus, json, subprocess, os, glob, traceback, shutil, re
+import sys, dbus, json, subprocess, os, glob, traceback, shutil, re, time
 import lxml.objectify
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -331,9 +331,31 @@ class ServiceTest:
         with self.test_diagnostics(path) as t:
             t(orig, ret)
 
+    @test('exited')
+    def test_exited(self):
+        try:
+            self.bus.get_name_owner(self.name)
+        except:
+            return
+
+        raise ValueError('Service did not exit')
+
+    @test('dispose')
+    def test_dispose(self, path):
+        obj = self.get_object('/')
+        iface = dbus.Interface(obj, 'org.gnome.CodeAssist.v1.Service')
+        iface.Dispose(path)
+        time.sleep(0.1)
+
     def test_parse(self, d):
         path, parsed = self.run_parse(d['parse'])
         self.verify_parse_diagnostics(path, parsed, d['diagnostics'])
+
+        with self.test_dispose(self.file_path(d['parse']['path'])) as t:
+            t()
+
+        with self.test_exited() as t:
+            t()
 
     def test_parse_all(self, d):
         docs = self.run_parse_all(d['parse_all'])
@@ -354,6 +376,13 @@ class ServiceTest:
                 obj = t()
 
             self.verify_parse_diagnostics(remote, obj, diags[k])
+
+        for k in docmap:
+            with self.test_dispose(k) as t:
+                t()
+
+        with self.test_exited() as t:
+            t()
 
     def run_diagnostic(self, d):
         if 'parse' in d:
