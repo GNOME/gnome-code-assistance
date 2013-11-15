@@ -5,7 +5,7 @@
   "diagnostics": [
     {
       "parse": {
-        "path": "json_fail.json"
+        "path": "json/json_fail.json"
       },
 
       "diagnostics": [
