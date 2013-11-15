@@ -1,0 +1,23 @@
+{
+  "language": "json",
+  "interfaces": [],
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
+  "diagnostics": [
+    {
+      "parse": {
+        "path": "json_fail.json"
+      },
+
+      "diagnostics": [
+        {
+          "severity": 4,
+          "locations": [
+            {"start": {"line": 3, "column": 1}}
+          ],
+          "fixits": [],
+          "message": "Expecting property name enclosed in double quotes"
+        }
+      ]
+    }
+  ]
+}
