@@ -165,7 +165,7 @@ def test(name):
                         global has_failures
                         has_failures = True
 
-                        rettext = '[\033[31mFAIL\033[0m]: {0}'.format(value)
+                        rettext = '[\033[31mFAIL\033[0m]'
                     else:
                         rettext = '[\033[32mOK\033[0m]'
 
@@ -174,7 +174,7 @@ def test(name):
                     print(' \033[30m{0}\033[0m {1}'.format('.' * (console_width - len(cleart) - 2), rettext))
 
                     if not value is None:
-                        print('      \033[33;1m{0}\033[0m'.format(''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
+                        print('      \033[31m{0}\n      {1}\033[0m'.format(str(value), ''.join(traceback.format_tb(tb)).replace("\n", '\n      ')))
 
                     return True
 
