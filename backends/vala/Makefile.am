@@ -6,6 +6,7 @@ backends_vala_vala_SOURCES =			\
 	backends/vala/options.vala		\
 	backends/vala/types.vala		\
 	backends/vala/dbus.vala			\
+	backends/vala/diagnostics.vala		\
 	backends/vala/document.vala		\
 	backends/vala/service.vala
 
