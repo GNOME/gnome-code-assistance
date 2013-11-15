@@ -296,7 +296,7 @@ module Gnome::CodeAssistance
             @apps.delete(app.name)
 
             if @apps.empty?
-                exit(0)
+                @main.quit
             end
         end
 
@@ -308,6 +308,12 @@ module Gnome::CodeAssistance
         def dispatch(msg)
             @sender = msg.sender
             super(msg)
+        end
+
+        def run
+            @main = ::DBus::Main.new
+            @main << ::DBus::SessionBus.instance
+            @main.run
         end
     end
 
@@ -329,9 +335,7 @@ module Gnome::CodeAssistance
         end
 
         def run
-            main = ::DBus::Main.new
-            main << ::DBus::SessionBus.instance
-            main.run
+            @server.run
         end
     end
 end
