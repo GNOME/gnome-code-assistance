@@ -28,11 +28,14 @@ func NewDbusError(name string, format string, args ...interface{}) *dbus.Error {
 func (t *TransportDbus) unexport(obj ObjectDbus, p dbus.ObjectPath) {
 	n := obj.Introspect()
 
-	for _, i := range n.Interfaces {
-		t.conn.Export(nil, p, i.Name)
-	}
+	// Prevent deadlock when called from exported methods
+	go func() {
+		for _, i := range n.Interfaces {
+			t.conn.Export(nil, p, i.Name)
+		}
 
-	t.conn.Export(nil, p, "org.freedesktop.DBus.Introspectable")
+		t.conn.Export(nil, p, "org.freedesktop.DBus.Introspectable")
+	}()
 }
 
 func (t *TransportDbus) export(obj ObjectDbus, p dbus.ObjectPath) error {
