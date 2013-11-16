@@ -144,7 +144,7 @@ Service.prototype = {
                 let cpath = this.cleanPath(path);
 
                 if (cpath in app.docs) {
-                    this.disposeDocument(app.docs[cpath]);
+                    this.disposeDocument(app, app.docs[cpath]);
                     delete app.docs[cpath];
 
                     if (Object.keys(app.docs).length == 0) {
