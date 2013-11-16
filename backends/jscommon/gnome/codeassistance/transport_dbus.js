@@ -138,6 +138,8 @@ Service.prototype = {
     },
 
     DisposeAsync: function(args, invocation) {
+        var retval;
+
         this.server.dbusAsync(args, invocation, function(sender, path) {
             if (sender in this.apps) {
                 let app = this.apps[sender];
@@ -148,9 +150,16 @@ Service.prototype = {
                     delete app.docs[cpath];
 
                     if (Object.keys(app.docs).length == 0) {
-                        this.disposeApp(app);
+                        retval = this.disposeApp(app);
                     }
                 }
+            }
+        }, function() {
+            if (retval)
+            {
+                GLib.idle_add(GLib.PRIORITY_LOW, Lang.bind(this, function() {
+                    this.main.quit();
+                }));
             }
         });
     }
@@ -357,9 +366,7 @@ Server.prototype = {
         app.docs = {};
         delete this.apps[app.name];
 
-        if (Object.keys(this.apps).length == 0) {
-            this.main.quit();
-        }
+        return (Object.keys(this.apps).length == 0);
     },
 
     makeOutSignature: function(args) {
@@ -373,7 +380,7 @@ Server.prototype = {
     },
 
     // Mostly copied from gjs
-    dbusAsync: function(args, invocation, f) {
+    dbusAsync: function(args, invocation, f, finishedcb) {
         var retval;
 
         try {
@@ -393,6 +400,11 @@ Server.prototype = {
 
                 let errLoc = e.fileName + ':' + e.lineNumber + '.' + e.columnNumber;
                 invocation.return_dbus_error(name, errLoc + ': ' + e.message);
+            }
+
+            if (finishedcb)
+            {
+                finishedcb.call(this);
             }
 
             return;
@@ -429,6 +441,11 @@ Server.prototype = {
         }
 
         invocation.return_value(retval);
+
+        if (finishedcb)
+        {
+            finishedcb.call(this);
+        }
     }
 };
 
