@@ -1,5 +1,27 @@
 {
   "language": "python",
   "interfaces": [],
-  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"]
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
+  "diagnostics": [
+    {
+      "parse": {
+        "path": "python/python_fail.py"
+      },
+      "diagnostics": [
+        {
+          "severity": 4,
+          "locations": [
+            {
+              "start": {
+                "line": 3,
+                "column": 8
+              }
+            }
+          ],
+          "fixits": [],
+          "message": "expected an indented block"
+        }
+      ]
+    }
+  ]
 }
