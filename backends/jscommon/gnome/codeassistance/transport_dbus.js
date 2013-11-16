@@ -157,9 +157,8 @@ Service.prototype = {
         }, function() {
             if (retval)
             {
-                GLib.idle_add(GLib.PRIORITY_LOW, Lang.bind(this, function() {
-                    this.main.quit();
-                }));
+                this.conn.flush_sync(null);
+                this.main.quit();
             }
         });
     }
@@ -436,6 +435,12 @@ Server.prototype = {
 
                 invocation.return_dbus_error('org.gnome.CodeAssist.v1.js.ValueError',
                                              'Failed to encode return value in `' + errMsg + '\': ' + e.message);
+
+                if (finishedcb)
+                {
+                    finishedcb.call(this);
+                }
+
                 return;
             }
         }
