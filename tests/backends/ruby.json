@@ -5,7 +5,7 @@
   "diagnostics": [
     {
       "parse": {
-        "path": "ruby_fail.rb"
+        "path": "ruby/ruby_fail.rb"
       },
       "diagnostics": [
         {

@@ -5,7 +5,7 @@
   "diagnostics": [
     {
       "parse": {
-        "path": "go_fail.go"
+        "path": "go/go_fail.go"
       },
       "diagnostics": [
         {
