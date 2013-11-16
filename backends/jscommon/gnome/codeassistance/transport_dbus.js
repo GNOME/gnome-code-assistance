@@ -1,6 +1,5 @@
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
-const System = imports.system;
 const Lang = imports.lang;
 const Types = imports.gnome.codeassistance.types;
 
@@ -204,12 +203,13 @@ var DocumentServices = {
 
 const FreedesktopDBusProxy = Gio.DBusProxy.makeProxyWrapper(FreedesktopDBusIface);
 
-function Server(conn, service, document) {
-    this._init(conn, service, document);
+function Server(main, conn, service, document) {
+    this._init(main, conn, service, document);
 }
 
 Server.prototype = {
-    _init: function(conn, service, document) {
+    _init: function(main, conn, service, document) {
+        this.main = main;
         this.conn = conn;
         this.service = service;
         this.document = document;
@@ -358,7 +358,7 @@ Server.prototype = {
         delete this.apps[app.name];
 
         if (Object.keys(this.apps).length == 0) {
-            System.exit(0);
+            this.main.quit();
         }
     },
 
@@ -444,7 +444,7 @@ Transport.prototype = {
     },
 
     onBusAcquired: function(conn, name) {
-        this.server = new Server(conn, this.service, this.document);
+        this.server = new Server(this.main, conn, this.service, this.document);
     },
 
     onNameAcquired: function(conn, name) {
