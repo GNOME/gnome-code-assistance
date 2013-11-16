@@ -1,5 +1,27 @@
 {
   "language": "js",
   "interfaces": [],
-  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"]
+  "document_interfaces": ["org.gnome.CodeAssist.v1.Diagnostics"],
+  "diagnostics": [
+    {
+      "parse": {
+        "path": "js/js_fail.js"
+      },
+      "diagnostics": [
+        {
+          "severity": 4,
+          "locations": [
+            {
+              "start": {
+                "line": 2,
+                "column": 9
+              }
+            }
+          ],
+          "fixits": [],
+          "message": "Unexpected token (2:8)"
+        }
+      ]
+    }
+  ]
 }
