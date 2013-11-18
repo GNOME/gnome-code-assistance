@@ -18,10 +18,7 @@
  * along with gnome-code-assistance.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using global::Vala;
-
-namespace Gca.Backends.Vala
-{
+using Vala;
 
 public class Service : Object
 {
@@ -51,8 +48,6 @@ public class Service : Object
 	public new void dispose(Document document)
 	{
 	}
-}
-
 }
 
 /* vi:ex:ts=4 */

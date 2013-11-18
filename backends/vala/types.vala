@@ -17,9 +17,6 @@
  * along with gnome-code-assistance.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Gca.Backends.Vala
-{
-
 public struct SourceLocation
 {
 	public int64 line;
@@ -57,7 +54,7 @@ public struct Fixit
 	public string replacement;
 }
 
-public enum Severity
+enum Severity
 {
 	NONE,
 	INFO,
@@ -73,8 +70,6 @@ public struct Diagnostic
 	public Fixit[] fixits;
 	public SourceRange[] locations;
 	public string message;
-}
-
 }
 
 /* vi:ex:ts=4 */

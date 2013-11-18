@@ -18,12 +18,9 @@
  * along with gnome-code-assistance.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using global::Vala;
+using Vala;
 
-namespace Gca.Backends.Vala
-{
-
-public class Diagnostics : Report
+class Diagnostics : Report
 {
 	private Diagnostic[] d_diagnostics;
 	public string path { get; set; }
@@ -129,8 +126,6 @@ public class Diagnostics : Report
 
 		diags_report(source, message, Severity.INFO);
 	}
-}
-
 }
 
 /* vi:ts=4: */

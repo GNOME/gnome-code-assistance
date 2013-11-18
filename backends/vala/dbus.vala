@@ -17,15 +17,15 @@
  * along with gnome-code-assistance.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Gca.Backends.Vala.DBus
+namespace DBus
 {
 
 [DBus (name = "org.gnome.CodeAssist.v1.Document")]
 public class Document : Object
 {
-	private Gca.Backends.Vala.Document? d_document;
+	private global::Document? d_document;
 
-	public Document(Gca.Backends.Vala.Document? document = null)
+	public Document(global::Document? document = null)
 	{
 		d_document = document;
 	}
@@ -34,9 +34,9 @@ public class Document : Object
 [DBus (name = "org.gnome.CodeAssist.v1.Diagnostics")]
 public class Diagnostics : Object
 {
-	private Gca.Backends.Vala.Document? d_document;
+	private global::Document? d_document;
 
-	public Diagnostics(Gca.Backends.Vala.Document? document = null)
+	public Diagnostics(global::Document? document = null)
 	{
 		d_document = document;
 	}
@@ -55,7 +55,7 @@ public class Diagnostics : Object
 }
 
 [DBus (name = "org.freedesktop.DBus")]
-interface FreedesktopDBus : Object {
+public interface FreedesktopDBus : Object {
 	public signal void name_owner_changed(string name, string oldowner, string newowner);
 }
 
@@ -65,25 +65,25 @@ public class Service : Object
 	class Document
 	{
 		public uint id;
-		public Gca.Backends.Vala.Document document;
+		public global::Document document;
 
 		public ObjectPath path;
 
-		public Gca.Backends.Vala.DBus.Document ddocument;
+		public DBus.Document ddocument;
 		public uint ddocument_regid;
 
-		public Gca.Backends.Vala.DBus.Diagnostics ddiagnostics;
+		public Diagnostics ddiagnostics;
 		public uint ddiagnostics_regid;
 
-		public Document(Gca.Backends.Vala.Document document, uint id)
+		public Document(global::Document document, uint id)
 		{
 			this.id = id;
 			this.document = document;
 
-			ddocument = new Gca.Backends.Vala.DBus.Document(document);
+			ddocument = new DBus.Document(document);
 			ddiagnostics_regid = 0;
 
-			ddiagnostics = new Gca.Backends.Vala.DBus.Diagnostics(document);
+			ddiagnostics = new DBus.Diagnostics(document);
 			ddiagnostics_regid = 0;
 		}
 	}
@@ -92,7 +92,7 @@ public class Service : Object
 	{
 		public uint id;
 		public string name;
-		public Gca.Backends.Vala.Service service;
+		public global::Service service;
 		public Gee.HashMap<string, Document> docs;
 		public uint nextid;
 
@@ -101,7 +101,7 @@ public class Service : Object
 			this.id = id;
 			this.name = name;
 
-			service = new Gca.Backends.Vala.Service();
+			service = new global::Service();
 			docs = new Gee.HashMap<string, Document>();
 
 			nextid = 0;
@@ -172,7 +172,7 @@ public class Service : Object
 
 	private Document make_document(App app, string path, string client_path)
 	{
-		var ndoc = new Gca.Backends.Vala.Document(path);
+		var ndoc = new global::Document(path);
 		ndoc.client_path = client_path;
 
 		var doc = new Document(ndoc, app.nextid);
@@ -285,7 +285,7 @@ public class Service : Object
 	}
 }
 
-public class Transport
+class Transport
 {
 	private Service d_service;
 	private MainLoop d_main;

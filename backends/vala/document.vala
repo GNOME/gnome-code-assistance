@@ -17,9 +17,6 @@
  * along with gnome-code-assistance.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Gca.Backends.Vala
-{
-
 public class Document : Object
 {
 	public string path { get; construct set; }
@@ -33,8 +30,6 @@ public class Document : Object
 	{
 		Object(path: path);
 	}
-}
-
 }
 
 /* vi:ex:ts=4 */
