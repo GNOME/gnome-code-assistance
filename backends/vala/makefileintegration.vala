@@ -17,62 +17,37 @@
  * along with gedit-code-assistant.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Gca.Backends.Vala
+class MakefileIntegration
 {
-
-public errordomain MakefileIntegrationError
-{
-	MISSING_MAKEFILE,
-	MISSING_TARGET,
-	MISSING_MAKE_OUTPUT
-}
-
-class MakefileIntegration : Object
-{
-	private class Cache
+	static uint file_hash(File f)
 	{
-		private File d_source;
-		private File? d_makefile;
-		private string[] d_args;
-
-		public Cache(File source, File? makefile, string[] args)
-		{
-			d_source = source;
-			d_makefile = makefile;
-			d_args = args;
-		}
-
-		public File makefile
-		{
-			get { return d_makefile; }
-		}
-
-		public File source
-		{
-			get { return d_source; }
-		}
-
-		public string[] args
-		{
-			get { return d_args; }
-			set { d_args = value; }
-		}
+		return f.hash();
 	}
 
-	private class Makefile
+	static bool file_equal(File f1, File f2)
 	{
-		private File d_file;
-		private Gee.ArrayList<File> d_sources;
-		private FileMonitor ?d_monitor;
-		private uint d_timeoutid;
+		return f1.equal(f2);
+	}
 
-		public signal void changed();
+	class Makefile
+	{
+		class Source
+		{
+			public TimeVal mtime;
+			public string[] flags;
+		}
+
+		private File d_file;
+		private Gee.HashMap<File, Source> d_sources;
+		private TimeVal d_mtime;
+		private FileMonitor? d_monitor;
 
 		public Makefile(File file)
 		{
 			d_file = file;
-			d_timeoutid = 0;
-			d_monitor = null;
+			d_sources = new Gee.HashMap<File, Source>(file_hash, file_equal);
+
+			update_mtime();
 
 			try
 			{
@@ -83,34 +58,7 @@ class MakefileIntegration : Object
 				return;
 			}
 
-			d_sources = new Gee.ArrayList<File>();
-
-			d_monitor.changed.connect(on_makefile_changed);
-		}
-
-		public bool valid
-		{
-			get
-			{
-				return d_monitor != null;
-			}
-		}
-
-		public void add(File source)
-		{
-			d_sources.add(source);
-		}
-
-		public bool remove(File source)
-		{
-			d_sources.remove(source);
-
-			return (d_sources.size == 0);
-		}
-
-		public Gee.ArrayList<File> sources
-		{
-			get { return d_sources; }
+			d_monitor.changed.connect(on_changed);
 		}
 
 		public File file
@@ -118,85 +66,312 @@ class MakefileIntegration : Object
 			get { return d_file; }
 		}
 
-		private void on_makefile_changed(File file, File ?other, FileMonitorEvent event_type)
+		private TimeVal file_mtime(File f)
 		{
-			if (event_type == FileMonitorEvent.CHANGED ||
-			    event_type == FileMonitorEvent.CREATED)
+			try
 			{
-				if (d_timeoutid != 0)
-				{
-					Source.remove(d_timeoutid);
-				}
+				var info = f.query_info(FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
+				return info.get_modification_time();
+			}
+			catch {}
 
-				d_timeoutid = Timeout.add(100, on_makefile_timeout);
+			return TimeVal() {
+				tv_sec = 0,
+				tv_usec = 0
+			};
+		}
+
+		private void update_mtime()
+		{
+			d_mtime = file_mtime(d_file);
+		}
+
+		private void on_changed()
+		{
+			update_mtime();
+		}
+
+		private Source make_source(string[] flags)
+		{
+			var ret = new Source();
+
+			ret.flags = flags;
+			ret.mtime = d_mtime;
+
+			return ret;
+		}
+
+		public void dispose()
+		{
+			if (d_monitor != null)
+			{
+				d_monitor.cancel();
+				d_monitor = null;
 			}
 		}
 
-		private bool on_makefile_timeout()
+		public void add(File source, string[] flags)
 		{
-			d_timeoutid = 0;
+			d_sources[file] = make_source(flags);
+		}
 
-			changed();
+		public bool remove(File source)
+		{
+			if (d_sources.unset(source) && d_sources.size == 0)
+			{
+				dispose();
+				return true;
+			}
 
 			return false;
 		}
-		
-	}
 
-	private Gee.HashMap<File, Cache> d_argsCache;
-	private Gee.HashMap<File, Makefile> d_makefileCache;
-
-	public signal void arguments_changed(File file);
-
-	construct
-	{
-		d_argsCache = new Gee.HashMap<File, Cache>();
-		d_makefileCache = new Gee.HashMap<File, Makefile>();
-	}
-
-	private File ?makefile_for(File file,
-	                           Cancellable ?cancellable = null) throws IOError,
-	                                                                   Error
-	{
-		File ?ret = null;
-
-		File? par = file.get_parent();
-
-		while (par != null && ret == null)
+		private bool newer(TimeVal t1, TimeVal t2)
 		{
-			File makefile = par.get_child("Makefile");
-
-			if (makefile.query_exists(cancellable))
+			if (t1.tv_sec == t2.tv_sec)
 			{
-				ret = makefile;
+				return t1.tv_usec > t2.tv_usec;
+			}
+			else
+			{
+				return t1.tv_sec > t2.tv_sec;
+			}
+		}
+
+		public bool up_to_date_for(File source)
+		{
+			var s = d_sources[source];
+
+			if (s != null)
+			{
+				return !newer(d_mtime, s.mtime);
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public string[]? flags_for_file(File source)
+		{
+			var s = d_sources[source];
+
+			if (s != null)
+			{
+				return s.flags;
+			}
+			else
+			{
+				return null;
+			}
+		}
+	}
+
+	private Gee.HashMap<File, Makefile> d_cache;
+	private Gee.HashMap<File, Makefile> d_file_to_makefile;
+
+	public MakefileIntegration()
+	{
+		d_cache = new Gee.HashMap<File, Makefile>(file_hash, file_equal);
+		d_file_to_makefile = new Gee.HashMap<File, Makefile>(file_hash, file_equal);
+	}
+
+	public bool changed_for_file(File f)
+	{
+		var makefile = makefile_for(f);
+
+		if (makefile == null)
+		{
+			return false;
+		}
+
+		var m = d_cache[makefile];
+
+		if (m != null)
+		{
+			return m.up_to_date_for(f);
+		}
+
+		return true;
+	}
+
+	public void dispose(File f)
+	{
+		var m = d_file_to_makefile[f];
+
+		if (m != null)
+		{
+			if (m.remove(f))
+			{
+				d_cache.unset(m.file);
 			}
 
-			par = par.get_parent();
+			d_file_to_makefile.unset(f);
 		}
-
-		if (ret != null)
-		{
-			log("GcaVala", LogLevelFlags.LEVEL_DEBUG,
-			    "Resolved makefile for `%s': `%s'",
-			    file.get_path(),
-			    ret.get_path());
-		}
-
-		return ret;
 	}
 
-	private string[] targets_from_make(File makefile,
-	                                   File source) throws SpawnError,
-	                                                       RegexError,
-	                                                       MakefileIntegrationError
+	public string[]? flags_for_file(File f)
+	{
+		var makefile = makefile_for(f);
+
+		if (makefile == null)
+		{
+			return null;
+		}
+
+		var m = d_cache[makefile];
+
+		if (m != null)
+		{
+			if (m.up_to_date_for(f))
+			{
+				return m.flags_for_file(f);
+			}
+		}
+
+		var targets = targets_from_make(makefile, f);
+		var flags = flags_from_targets(makefile, f, targets);
+
+		return update_cache(makefile, f, flags);
+	}
+
+	private string[]? update_cache(File makefile, File f, string[] flags)
+	{
+		var m = d_cache[makefile];
+
+		if (m == null)
+		{
+			m = new Makefile(makefile);
+			d_cache[makefile] = m;
+		}
+
+		m.add(f, flags);
+		d_file_to_makefile[f] = m;
+
+		return flags;
+	}
+
+	private File? find_subdir_with_path(File parent, string relpath)
+	{
+		// All dirs in parent, recursively
+		var dirs = new File[]{parent};
+
+		while (dirs.length != 0)
+		{
+			var d = dirs[0];
+			dirs = dirs[1:dirs.length];
+
+			FileEnumerator iter;
+
+			try
+			{
+				var attrs = FileAttribute.STANDARD_NAME + "," + FileAttribute.STANDARD_TYPE;
+				iter = d.enumerate_children(attrs, FileQueryInfoFlags.NONE);
+			} catch {
+				continue;
+			}
+
+			FileInfo? info;
+
+			try
+			{
+				while ((info = iter.next_file()) != null)
+				{
+					if (info.get_file_type() == FileType.DIRECTORY)
+					{
+						File dir = iter.get_child(info);
+						File child = dir.get_child(relpath);
+
+						if (child.query_exists())
+						{
+							var mf = makefile_for(child, false);
+
+							if (mf != null)
+							{
+								return mf;
+							}
+						}
+
+						dirs += dir;
+					}
+				}
+			} catch { continue; }
+		}
+
+		return null;
+	}
+
+	private File? subdir_makefile_for(File parent, File f)
+	{
+		var relpath = Path.get_dirname(parent.get_relative_path(f));
+		return find_subdir_with_path(parent, relpath);
+	}
+
+	private File ?makefile_for(File f, bool tryac = true)
+	{
+		var fromcache = d_file_to_makefile[f];
+
+		if (fromcache != null)
+		{
+			return fromcache.file;
+		}
+
+		var parent = f.get_parent();
+		var tocheck = new string[] {"configure.ac", "configure.in", "configure"};
+
+		while (parent != null)
+		{
+			var makefile = parent.get_child("Makefile");
+
+			if (makefile.query_exists())
+			{
+				return makefile;
+			}
+
+			foreach (var c in tocheck)
+			{
+				var cc = parent.get_child(c);
+
+				if (cc.query_exists())
+				{
+					var ret = subdir_makefile_for(parent, f);
+
+					if (ret != null)
+					{
+						return ret;
+					}
+
+					break;
+				}
+			}
+
+			parent = parent.get_parent();
+		}
+
+		return null;
+	}
+
+	private string[] targets_from_make(File makefile, File source)
 	{
 		File wd = makefile.get_parent();
-		string basen = wd.get_relative_path(source);
+		var relpath = wd.get_relative_path(source);
+
+		var lookfor = new string[] {
+			wd.get_relative_path(source)
+		};
+
+		var bname = source.get_basename();
+
+		if (bname != relpath)
+		{
+			lookfor += bname;
+		}
 
 		string[] args = new string[] {
 			"make",
 			"-p",
 			"-n",
+			"-s",
 			null
 		};
 
@@ -204,72 +379,100 @@ class MakefileIntegration : Object
 
 		/* Spawn make to find out which target has the source as a
 		   dependency */
-		Process.spawn_sync(wd.get_path(),
-		                   args,
-		                   null,
-		                   SpawnFlags.SEARCH_PATH |
-		                   SpawnFlags.STDERR_TO_DEV_NULL,
-		                   null,
-		                   out outstr);
-
-		/* Scan the output to find the target */
-		string reg = "^([^:\n]*?(\\.stamp:|:)).*%s".printf(Regex.escape_string(basen));
-
-		Regex regex = new Regex(reg, RegexCompileFlags.MULTILINE);
-		MatchInfo info;
-
-		var ret = new string[1];
-
-		if (regex.match(outstr, 0, out info))
+		try
 		{
-			while (true)
+			Process.spawn_sync(wd.get_path(),
+			                   args,
+			                   null,
+			                   SpawnFlags.SEARCH_PATH |
+			                   SpawnFlags.STDERR_TO_DEV_NULL,
+			                   null,
+			                   out outstr);
+		}
+		catch (SpawnError e)
+		{
+			return new string[0];
+		}
+
+		var targets = new string[0];
+		var found = new Gee.HashSet<string>();
+
+		while (lookfor.length > 0)
+		{
+			for (var i = 0; i < lookfor.length; i++)
+			{
+				lookfor[i] = Regex.escape_string(lookfor[i]);
+			}
+
+			var relookfor = string.joinv("|", lookfor);
+			lookfor = new string[0];
+
+			Regex reg;
+
+			try
+			{
+				reg = new Regex("^([^:\n ]+):.*\\b(%s)\\b".printf(relookfor), RegexCompileFlags.MULTILINE);
+			} catch (Error e) { stderr.printf("regex: %s\n", e.message); continue; }
+
+			MatchInfo info;
+
+			reg.match(outstr, 0, out info);
+
+			while (info.matches())
 			{
 				var target = info.fetch(1);
-				target = target.substring(0, target.length - 1);
 
-				if (target.has_suffix(".stamp"))
+				try
 				{
-					ret[0] = target;
-				}
-				else
+					info.next();
+				} catch {};
+
+				if (target[0] == '#' || target[0] == '.' || target.has_suffix("-am"))
 				{
-					ret += target;
+					continue;
 				}
 
-				if (!info.next())
+				if (found.contains(target))
 				{
-					break;
+					continue;
 				}
+
+				targets += target;
+				found.add(target);
+				lookfor += target;
 			}
 		}
 
-		if (ret[0] == null)
-		{
-			ret = ret[1:ret.length];
-		}
+		var sorted = new Gee.ArrayList<string>.wrap(targets);
 
-		if (ret.length != 0)
-		{
-			return ret;
-		}
+		sorted.sort((a, b) => {
+			var sa = a.has_suffix(".stamp");
+			var sb = b.has_suffix(".stamp");
 
-		throw new MakefileIntegrationError.MISSING_TARGET(
-			"Could not find make target for %s".printf(basen));
+			if (sa == sb)
+			{
+				return 0;
+			}
+
+			return sa ? -1 : 1;
+		});
+
+		return sorted.to_array();
 	}
 
-	private string[] ?flags_from_targets(File     makefile,
-	                                     File     source,
-	                                     string[] targets) throws SpawnError,
-	                                                              MakefileIntegrationError,
-	                                                              ShellError
+	private string[] flags_from_targets(File makefile, File source, string[] targets)
 	{
-		/* Fake make to build the target and extract the flags */
+		if (targets.length == 0)
+		{
+			return new string[0];
+		}
+
+		var fakevalac = "__GCA_VALA_COMPILE_ARGS__";
+
 		var wd = makefile.get_parent();
-		string relsource = wd.get_relative_path(source);
+		var relsource = wd.get_relative_path(source);
 
-		string fakecc = "__GCA_VALA_COMPILE_ARGS__";
-
-		string?[] args = new string?[] {
+		var args = new string?[] {
 			"make",
 			"-s",
 			"-i",
@@ -277,7 +480,7 @@ class MakefileIntegration : Object
 			"-W",
 			relsource,
 			"V=1",
-			"VALAC=" + fakecc
+			"VALAC=" + fakevalac
 		};
 
 		foreach (var target in targets)
@@ -287,267 +490,66 @@ class MakefileIntegration : Object
 
 		args += null;
 
-		log("GcaVala", LogLevelFlags.LEVEL_DEBUG,
-		    "Running: %s",
-		    string.joinv(" ", args));
-
 		string outstr;
 
-		Process.spawn_sync(makefile.get_parent().get_path(),
-		                   args,
-		                   null,
-		                   SpawnFlags.SEARCH_PATH |
-		                   SpawnFlags.STDERR_TO_DEV_NULL,
-		                   null,
-		                   out outstr);
+		try
+		{
+			Process.spawn_sync(wd.get_path(),
+			                   args,
+			                   null,
+			                   SpawnFlags.SEARCH_PATH |
+			                   SpawnFlags.STDERR_TO_DEV_NULL,
+			                   null,
+			                   out outstr);
+		}
+		catch (SpawnError e)
+		{
+			return new string[0];
+		}
 
 		/* Extract args */
-		int idx = outstr.last_index_of(fakecc);
+		int pos = outstr.index_of(fakevalac);
 
-		if (idx < 0)
+		if (pos < 0)
 		{
-			throw new MakefileIntegrationError.MISSING_MAKE_OUTPUT("Make output did not contain flags");
+			return new string[0];
+		}
+
+		int epos = outstr.index_of("\n", pos);
+
+		if (epos < 0)
+		{
+			epos = outstr.length;
 		}
 
 		string[] retargs;
-		string[] parts = outstr.substring(idx).split("\n");
+		var sargs = outstr[pos+fakevalac.length:epos-pos];
 
-		Shell.parse_argv(parts[0], out retargs);
+		try
+		{
+			Shell.parse_argv(sargs, out retargs);
+		}
+		catch (ShellError e)
+		{
+			return new string[0];
+		}
 
 		log("GcaVala", LogLevelFlags.LEVEL_DEBUG,
 		    "Parsed command: %s => '%s'\n",
-		    parts[0],
+		    sargs,
 		    string.joinv("', '", retargs));
 
 		return retargs;
 	}
-
-	private async void makefile_changed_async(Makefile makefile)
-	{
-		ThreadFunc<void *> func = () => {
-			foreach (File file in makefile.sources)
-			{
-				find_for_makefile(makefile.file, file);
-			}
-
-			return null;
-		};
-
-		try
-		{
-			new Thread<void *>.try("find makefile", func);
-			yield;
-		}
-		catch
-		{
-		}
-	}
-
-	private void on_makefile_changed(Makefile makefile)
-	{
-		makefile_changed_async.begin(makefile);
-	}
-
-	private void find_for_makefile(File makefile, File file)
-	{
-		string[] targets;
-		string[] args = {};
-
-		try
-		{
-			targets = targets_from_make(makefile, file);
-
-			log("GcaVala", LogLevelFlags.LEVEL_DEBUG,
-			    "Makefile make targets for `%s': `%s'",
-			    file.get_path(),
-			    string.joinv(", ", targets));
-
-			args = flags_from_targets(makefile, file, targets);
-
-			log("GcaVala", LogLevelFlags.LEVEL_DEBUG,
-			    "Compile flags for `%s': `%s`",
-			    file.get_path(),
-			    string.joinv("`, `", args));
-		}
-		catch (Error e)
-		{
-			stderr.printf("Makefile error: %s\n", e.message);
-		}
-
-		lock(d_makefileCache)
-		{
-			lock(d_argsCache)
-			{
-				if (d_argsCache.has_key(file))
-				{
-					d_argsCache[file].args = args;
-				}
-				else
-				{
-					Cache c = new Cache(file, makefile, args);
-					d_argsCache[file] = c;
-				}
-
-				if (!d_makefileCache.has_key(makefile))
-				{
-					Makefile m = new Makefile(makefile);
-					m.add(file);
-
-					m.changed.connect(on_makefile_changed);
-					d_makefileCache[makefile] = m;
-				}
-			}
-		}
-
-		changed_in_idle(file);
-	}
-
-	private void changed_in_idle(File file)
-	{
-		Idle.add(() => {
-			arguments_changed(file);
-			return false;
-		});
-	}
-
-	private async void find_async(File file)
-	{
-		ThreadFunc<void *> func = () => {
-			File ?makefile = null;
-
-			try
-			{
-				makefile = makefile_for(file);
-			}
-			catch (Error e)
-			{
-				makefile = null;
-			}
-
-			if (makefile == null)
-			{
-				Cache c = new Cache(file, null, new string[] {});
-				d_argsCache[file] = c;
-
-				changed_in_idle(file);
-				return null;
-			}
-
-			find_for_makefile(makefile, file);
-
-			lock(d_makefileCache)
-			{
-				if (d_makefileCache.has_key(file))
-				{
-					d_makefileCache[makefile].add(file);
-				}
-			}
-
-			return null;
-		};
-
-		try
-		{
-			new Thread<void *>.try("findasync", func);
-			yield;
-		}
-		catch
-		{
-		}
-	}
-
-	public new string[]? get(File file)
-	{
-		string[] ?ret = null;
-
-		lock(d_argsCache)
-		{
-			if (d_argsCache.has_key(file))
-			{
-				ret = d_argsCache[file].args;
-			}
-			else
-			{
-				monitor(file);
-			}
-		}
-
-		return ret;
-	}
-
-	public async string[] args_for_file(File file) throws MakefileIntegrationError {
-		lock(d_argsCache)
-		{
-			if (d_argsCache.has_key(file))
-			{
-				return d_argsCache[file].;
-
-				lock(d_makefileCache)
-				{
-					return 
-				}
-			}
-		}
-	}
-
-	public void monitor(File file)
-	{
-		bool hascache;
-
-		lock(d_argsCache)
-		{
-			hascache = d_argsCache.has_key(file);
-		}
-
-		if (hascache)
-		{
-			arguments_changed(file);
-		}
-		else
-		{
-			find_async.begin(file, (source, res) => find_async.end(res));
-		}
-	}
-
-	public void remove_monitor(File file)
-	{
-		lock(d_argsCache)
-		{
-			if (d_argsCache.has_key(file))
-			{
-				Cache c = d_argsCache[file];
-
-				lock (d_makefileCache)
-				{
-					if (d_makefileCache.has_key(c.makefile))
-					{
-						Makefile m = d_makefileCache[c.makefile];
-
-						if (m.remove(file))
-						{
-							d_makefileCache.unset(c.makefile);
-						}
-					}
-				}
-
-				d_argsCache.unset(file);
-			}
-		}
-	}
 }
 
+#if MAIN
 public static int main(string[] a){
-	var ml = new MainLoop();
-
 	MakefileIntegration it = new MakefileIntegration();
 
-	it.monitor(File.new_for_commandline_arg("dbus.vala"));
-
-	ml.run();
-
+	stdout.printf("Flags: %s\n", string.joinv(", ", it.flags_for_file(File.new_for_commandline_arg(a[1]))));
 	return 0;
 }
-
-}
+#endif
 
 /* vi:ex:ts=4 */
