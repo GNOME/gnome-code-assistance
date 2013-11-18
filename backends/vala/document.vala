@@ -17,18 +17,20 @@
  * along with gnome-code-assistance.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-public class Document : Object
+public class Document
 {
-	public string path { get; construct set; }
+	public uint id { get; set; }
+	public string path { get; set; }
 	public string data_path { get; set; }
 	public SourceLocation cursor { get; set; }
 	public string client_path { get; set; }
 
 	public Diagnostic[] diagnostics { get; set; }
 
-	public Document(string path)
+	public Document(uint id, string path)
 	{
-		Object(path: path);
+		this.id = id;
+		this.path = path;
 	}
 }
 

@@ -21,22 +21,22 @@ namespace DBus
 {
 
 [DBus (name = "org.gnome.CodeAssist.v1.Document")]
-public class Document : Object
+public class DocumentIface : Object
 {
-	private global::Document? d_document;
+	private Document? d_document;
 
-	public Document(global::Document? document = null)
+	public DocumentIface(Document? document = null)
 	{
 		d_document = document;
 	}
 }
 
 [DBus (name = "org.gnome.CodeAssist.v1.Diagnostics")]
-public class Diagnostics : Object
+public class DiagnosticsIface : Object
 {
-	private global::Document? d_document;
+	private Document? d_document;
 
-	public Diagnostics(global::Document? document = null)
+	public DiagnosticsIface(Document? document = null)
 	{
 		d_document = document;
 	}
@@ -60,30 +60,46 @@ public interface FreedesktopDBus : Object {
 }
 
 [DBus (name = "org.gnome.CodeAssist.v1.Service")]
-public class Service : Object
+public class ServiceIface : Object
 {
-	class Document
+	private Server d_server;
+
+	public ServiceIface(Server server)
 	{
-		public uint id;
-		public global::Document document;
+		d_server = server;
+	}
 
-		public ObjectPath path;
+	public ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	{
+		return d_server.parse(path, data_path, cursor, options, sender);
+	}
 
-		public DBus.Document ddocument;
+	public new void dispose(string path, GLib.BusName sender)
+	{
+		d_server.dispose(path, sender);
+	}
+}
+
+public class Server
+{
+	class ExportedDocument
+	{
+		public Document document;
+
+		public DocumentIface ddocument;
 		public uint ddocument_regid;
 
-		public Diagnostics ddiagnostics;
+		public DiagnosticsIface ddiagnostics;
 		public uint ddiagnostics_regid;
 
-		public Document(global::Document document, uint id)
+		public ExportedDocument(Document document)
 		{
-			this.id = id;
 			this.document = document;
 
-			ddocument = new DBus.Document(document);
+			ddocument = new DocumentIface(document);
 			ddiagnostics_regid = 0;
 
-			ddiagnostics = new DBus.Diagnostics(document);
+			ddiagnostics = new DiagnosticsIface(document);
 			ddiagnostics_regid = 0;
 		}
 	}
@@ -92,8 +108,8 @@ public class Service : Object
 	{
 		public uint id;
 		public string name;
-		public global::Service service;
-		public Gee.HashMap<string, Document> docs;
+		public Service service;
+		public Gee.HashMap<string, ExportedDocument> docs;
 		public uint nextid;
 
 		public App(uint id, string name)
@@ -101,8 +117,8 @@ public class Service : Object
 			this.id = id;
 			this.name = name;
 
-			service = new global::Service();
-			docs = new Gee.HashMap<string, Document>();
+			service = new Service();
+			docs = new Gee.HashMap<string, ExportedDocument>();
 
 			nextid = 0;
 		}
@@ -114,7 +130,7 @@ public class Service : Object
 	private uint d_nextid;
 	private FreedesktopDBus d_proxy;
 
-	public Service(MainLoop mloop, DBusConnection conn)
+	public Server(MainLoop mloop, DBusConnection conn)
 	{
 		d_main = mloop;
 		d_conn = conn;
@@ -170,19 +186,18 @@ public class Service : Object
 		return File.new_for_path(path).get_path();
 	}
 
-	private Document make_document(App app, string path, string client_path)
+	private ExportedDocument make_document(App app, string path, string client_path)
 	{
-		var ndoc = new global::Document(path);
+		var ndoc = new Document(app.nextid, path);
 		ndoc.client_path = client_path;
 
-		var doc = new Document(ndoc, app.nextid);
-
-		doc.path = new ObjectPath("/org/gnome/CodeAssist/v1/vala/%u/documents/%u".printf(app.id, doc.id));
+		var doc = new ExportedDocument(ndoc);
+		var rpath = remote_document_path(app, ndoc);
 
 		try
 		{
-			doc.ddocument_regid = d_conn.register_object(doc.path, doc.ddocument);
-			doc.ddiagnostics_regid = d_conn.register_object(doc.path, doc.ddiagnostics);
+			doc.ddocument_regid = d_conn.register_object(rpath, doc.ddocument);
+			doc.ddiagnostics_regid = d_conn.register_object(rpath, doc.ddiagnostics);
 		}
 		catch (IOError e)
 		{
@@ -195,10 +210,10 @@ public class Service : Object
 		return doc;
 	}
 
-	private Document ensure_document(App app, string path, string data_path, SourceLocation cursor)
+	private ExportedDocument ensure_document(App app, string path, string data_path, SourceLocation? cursor = null)
 	{
 		var cpath = clean_path(path);
-		Document doc;
+		ExportedDocument doc;
 
 		if (app.docs.has_key(cpath))
 		{
@@ -218,21 +233,22 @@ public class Service : Object
 			doc.document.data_path = doc.document.path;
 		}
 
-		doc.document.cursor = cursor;
+		if (cursor == null)
+		{
+			doc.document.cursor = SourceLocation() {
+				line = 0,
+				column = 0
+			};
+		}
+		else
+		{
+			doc.document.cursor = cursor;
+		}
+
 		return doc;
 	}
 
-	public ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
-	{
-		var app = ensure_app(sender);
-		var doc = ensure_document(app, path, data_path, cursor);
-
-		app.service.parse(doc.document, options);
-
-		return doc.path;
-	}
-
-	private void dispose_document(App a, Document ddoc)
+	private void dispose_document(App a, ExportedDocument ddoc)
 	{
 		a.service.dispose(ddoc.document);
 
@@ -264,6 +280,21 @@ public class Service : Object
 		}
 	}
 
+	private ObjectPath remote_document_path(App app, Document doc)
+	{
+		return (ObjectPath)("/org/gnome/CodeAssist/v1/vala/%u/documents/%u".printf(app.id, doc.id));
+	}
+
+	public ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	{
+		var app = ensure_app(sender);
+		var doc = ensure_document(app, path, data_path, cursor);
+
+		app.service.parse(doc.document, options);
+
+		return remote_document_path(app, doc.document);
+	}
+
 	public new void dispose(string path, GLib.BusName sender)
 	{
 		if (d_apps.has_key(sender))
@@ -287,7 +318,7 @@ public class Service : Object
 
 class Transport
 {
-	private Service d_service;
+	private Server d_server;
 	private MainLoop d_main;
 
 	public Transport()
@@ -297,13 +328,14 @@ class Transport
 
 	private void on_bus_aquired(DBusConnection conn)
 	{
-		d_service = new Service(d_main, conn);
+		d_server = new Server(d_main, conn);
 
 		try
 		{
-			conn.register_object("/org/gnome/CodeAssist/v1/vala", d_service);
-			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DBus.Document());
-			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DBus.Diagnostics());
+			conn.register_object("/org/gnome/CodeAssist/v1/vala", new ServiceIface(d_server));
+
+			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DocumentIface());
+			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DiagnosticsIface());
 		}
 		catch (Error e)
 		{
