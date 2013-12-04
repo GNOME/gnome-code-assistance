@@ -351,12 +351,19 @@ class MakefileIntegration:
             flags = self._filter_flags(makefile, shlex.split(m.group(2)))
 
             if m.group(1) == fakecxx:
-                # Force C++ mode
-                flags.append('-xc++')
+                flags = self._force_cxx_if_needed(flags)
 
             return flags
 
         return []
+
+    def _force_cxx_if_needed(self, flags):
+        for f in flags:
+            if f.startswith('-x'):
+                return flags
+
+        flags.append('-xc++')
+        return flags
 
     def _filter_flags(self, makefile, flags):
         # Keep only interesting flags:
@@ -364,6 +371,7 @@ class MakefileIntegration:
         # -D: defines
         # -W: warnings
         # -f: compiler flags
+        # -x: language
 
         i = 0
         inexpand = False
@@ -400,12 +408,12 @@ class MakefileIntegration:
 
                 ret.append('-I')
                 ret.append(ipath)
-            elif v == 'D' or v == 'f' or v == 'W':
+            elif v == 'D' or v == 'f' or v == 'W' or v == 'x':
                 # pass defines, compiler flags and warnings
                 ret.append(flag)
 
                 # Also add the argument if its not embedded
-                if v == 'D' and len(flag) == 2 and i < len(flags):
+                if (v == 'D' or v == 'x') and len(flag) == 2 and i < len(flags):
                     ret.append(flags[i])
                     i += 1
 
