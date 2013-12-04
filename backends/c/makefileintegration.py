@@ -347,10 +347,7 @@ class MakefileIntegration:
         regfind = re.compile(fakecc + '([^\n]*)$', re.M)
 
         for m in regfind.finditer(outstr):
-            flags = self._filter_flags(makefile, shlex.split(m.group(1)))
-
-            if len(flags) != 0:
-                return flags
+            return self._filter_flags(makefile, shlex.split(m.group(2)))
 
         return []
 
