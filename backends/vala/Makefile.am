@@ -42,6 +42,7 @@ backends_vala_libvalashared_la_VALAFLAGS =	\
 backends_vala_vala_VALAFLAGS =			\
 	$(backends_vala_common_valaflags)	\
 	--pkg libvalashared			\
+	--pkg gio-unix-2.0			\
 	--vapidir backends/vala
 
 backends_vala_valahelper_VALAFLAGS =		\

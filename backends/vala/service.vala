@@ -29,35 +29,33 @@ public class Service
 		d_makefile = new MakefileIntegration();
 	}
 
-	private char[] read_all(IOChannel f)
+	private uint8[] read_all(InputStream f)
 	{
-		char[] buffer = new char[4096];
-		char[] ret = new char[4096];
+		uint8[] buffer = new uint8[4096];
+		uint8[] ret = new uint8[4096];
 		ret.length = 0;
 
 		while (true)
 		{
-			size_t n;
-			IOStatus st;
+			ssize_t n;
 
 			try
 			{
-				st = f.read_chars(buffer, out n);
+				n = f.read(buffer);
 			}
 			catch
 			{
-				st = IOStatus.ERROR;
-				n = 0;
+				break;
+			}
+
+			if (n <= 0)
+			{
+				break;
 			}
 
 			for (var i = 0; i < n; i++)
 			{
 				ret += buffer[i];
-			}
-
-			if (st == IOStatus.EOF || st == IOStatus.ERROR)
-			{
-				break;
 			}
 		}
 
@@ -74,7 +72,15 @@ public class Service
 
 		try
 		{
-			Process.spawn_async_with_pipes(wd, argv, null, 0, null, out pid, out inp, out outp, null);
+			Process.spawn_async_with_pipes(wd,
+			                               argv,
+			                               null,
+			                               SpawnFlags.DO_NOT_REAP_CHILD,
+			                               null,
+			                               out pid,
+			                               out inp,
+			                               out outp,
+			                               null);
 		}
 		catch (SpawnError e)
 		{
@@ -82,10 +88,10 @@ public class Service
 			return Rpc.Reply();
 		}
 
-		var outstr = new IOChannel.unix_new(outp);
-		var instr = new IOChannel.unix_new(inp);
+		var outstr = new UnixInputStream(outp, true);
+		var instr = new UnixOutputStream(inp, true);
 
-		char[] retb = new char[0];
+		uint8[] retb = new uint8[0];
 
 		Thread<void*>? reader = null;
 		Thread<void*>? writer = null;
@@ -103,7 +109,7 @@ public class Service
 
 			try
 			{
-				outstr.shutdown(false);
+				outstr.close();
 			} catch {}
 		}
 
@@ -124,19 +130,19 @@ public class Service
 				};
 
 				Variant vv = cmd;
-				char[] data = new char[(int)vv.get_size()];
+				uint8[] data = new uint8[(int)vv.get_size()];
 
 				vv.store((void *)data);
 
 				try
 				{
 					size_t n;
-					instr.write_chars(data, out n);
+					instr.write_all(data, out n);
 				} catch {}
 
 				try
 				{
-					instr.shutdown(true);
+					instr.close();
 				} catch {}
 
 				return null;
@@ -148,7 +154,7 @@ public class Service
 
 			try
 			{
-				instr.shutdown(false);
+				instr.close();
 			} catch {}
 		}
 
@@ -171,8 +177,8 @@ public class Service
 
 		try
 		{
-			outstr.shutdown(false);
-			instr.shutdown(false);
+			outstr.close();
+			instr.close();
 		} catch {}
 
 		Rpc.Reply r = Rpc.Reply();

@@ -396,7 +396,7 @@ AC_ARG_ENABLE([vala],
               [enable_vala=auto])
 
 BACKEND_VALA_LIBVALA_VERSIONS="libvala-0.24 libvala-0.22 libvala-0.20"
-BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8"
+BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 gio-unix-2.0 >= 2.36"
 
 BACKEND_VALA_LIBVALA=
 for i in $BACKEND_VALA_LIBVALA_VERSIONS; do
