@@ -372,6 +372,7 @@ class MakefileIntegration:
         # -W: warnings
         # -f: compiler flags
         # -x: language
+        # -std=<std>: standard
 
         i = 0
         inexpand = False
@@ -416,6 +417,8 @@ class MakefileIntegration:
                 if (v == 'D' or v == 'x') and len(flag) == 2 and i < len(flags):
                     ret.append(flags[i])
                     i += 1
+            elif flag.startswith('-std='):
+                ret.append(flag)
 
         return ret
 
