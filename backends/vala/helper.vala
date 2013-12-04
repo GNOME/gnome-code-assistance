@@ -66,6 +66,8 @@ class Helper
 
 	private static void parse(ParserOptions opts)
 	{
+		CodeContext.push(opts.context);
+
 		var parser = new Parser();
 		parser.parse(opts.context);
 
@@ -76,6 +78,8 @@ class Helper
 		{
 			opts.context.check();
 		}
+
+		CodeContext.pop();
 	}
 
 	private static void extract_diagnostics(ParserOptions opts, Rpc.Document[] docs)
