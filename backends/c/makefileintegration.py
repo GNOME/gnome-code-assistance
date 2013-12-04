@@ -317,6 +317,7 @@ class MakefileIntegration:
             return []
 
         fakecc = '__GCA_C_COMPILE_FLAGS__'
+        fakecxx = '__GCA_CXX_COMPILE_FLAGS__'
 
         wd = os.path.dirname(makefile)
         relsource = os.path.relpath(source, wd)
@@ -330,7 +331,7 @@ class MakefileIntegration:
             relsource,
             'V=1',
             'CC=' + fakecc,
-            'CXX=' + fakecc,
+            'CXX=' + fakecxx,
         ]
 
         args += targets
@@ -344,10 +345,16 @@ class MakefileIntegration:
 
             return []
 
-        regfind = re.compile(fakecc + '([^\n]*)$', re.M)
+        regfind = re.compile('({0}|{1})([^\n]*)$'.format(fakecc, fakecxx), re.M)
 
         for m in regfind.finditer(outstr):
-            return self._filter_flags(makefile, shlex.split(m.group(2)))
+            flags = self._filter_flags(makefile, shlex.split(m.group(2)))
+
+            if m.group(1) == fakecxx:
+                # Force C++ mode
+                flags.append('-xc++')
+
+            return flags
 
         return []
 
