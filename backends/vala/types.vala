@@ -54,7 +54,7 @@ public struct Fixit
 	public string replacement;
 }
 
-enum Severity
+public enum Severity
 {
 	NONE,
 	INFO,
@@ -70,6 +70,18 @@ public struct Diagnostic
 	public Fixit[] fixits;
 	public SourceRange[] locations;
 	public string message;
+}
+
+public struct RemoteDocument
+{
+	public string path;
+	public ObjectPath remote_path;
+}
+
+public struct OpenDocument
+{
+	public string path;
+	public string data_path;
 }
 
 /* vi:ex:ts=4 */

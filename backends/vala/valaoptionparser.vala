@@ -23,8 +23,15 @@
  */
 
 using GLib;
+using Vala;
 
-class Vala.OptionParser {
+struct ParserOptions
+{
+	public CodeContext context;
+	public bool fatal_warnings;
+}
+
+class OptionParser {
 	static string basedir;
 	static string directory;
 	static bool version;
@@ -140,7 +147,7 @@ class Vala.OptionParser {
 		{ null }
 	};
 
-	private static bool apply (global::Vala.CodeContext context, string cwd) {
+	private static ParserOptions apply (CodeContext context, string[] args, string wd) {
 		context.assert = !disable_assert;
 		context.checking = enable_checking;
 		context.deprecated = deprecated;
@@ -164,18 +171,18 @@ class Vala.OptionParser {
 		context.includedir = includedir;
 		context.output = output;
 		if (basedir == null) {
-			context.basedir = CodeContext.realpath (cwd);
+			context.basedir = wd;
 		} else {
-			context.basedir = CodeContext.realpath (basedir);
+			context.basedir = realpath (wd, basedir);
 		}
 		if (directory != null) {
-			context.directory = CodeContext.realpath (directory);
+			context.directory = realpath (wd, directory);
 		} else {
 			context.directory = context.basedir;
 		}
-		context.vapi_directories = vapi_directories;
-		context.gir_directories = gir_directories;
-		context.metadata_directories = metadata_directories;
+		context.vapi_directories = realpaths(wd, vapi_directories);
+		context.gir_directories = realpaths(wd, gir_directories);
+		context.metadata_directories = realpaths(wd, metadata_directories);
 		context.debug = debug;
 		context.thread = thread;
 		context.mem_profiler = mem_profiler;
@@ -235,34 +242,142 @@ class Vala.OptionParser {
 
 		if (fast_vapis != null) {
 			foreach (string vapi in fast_vapis) {
-				var rpath = CodeContext.realpath (vapi);
+				var rpath = realpath (wd, vapi);
 				var source_file = new SourceFile (context, SourceFileType.FAST, rpath);
 				context.add_source_file (source_file);
 			}
 			context.use_fast_vapi = true;
 		}
 
-		return (context.report.get_errors () > 0 || (fatal_warnings && context.report.get_warnings () > 0));
+		return ParserOptions() {
+			fatal_warnings = fatal_warnings,
+			context = context
+		};
+	}
+
+	public static string[] real_sources(string wd)
+	{
+		return realpaths(wd, sources);
+	}
+
+	private static string[] realpaths(string wd, string[] paths)
+	{
+		var ret = new string[paths.length];
+
+		for (var i = 0; i < paths.length; i++)
+		{
+			ret[i] = realpath(wd, paths[i]);
+		}
+
+		return ret;
+	}
+
+	private static string realpath(string wd, string path)
+	{
+		var rpath = path;
+
+		if (!Path.is_absolute(path))
+		{
+			rpath = Path.build_filename(wd, rpath);
+		}
+
+		return File.new_for_path(rpath).get_path();
+	}
+
+	private static void clear()
+	{
+		basedir = null;
+		directory = null;
+		version = false;
+		api_version = false;
+		sources = null;
+		vapi_directories = null;
+		gir_directories = null;
+		metadata_directories = null;
+		vapi_filename = null;
+		library = null;
+		gir = null;
+		packages = null;
+		fast_vapis = null;
+		target_glib = null;
+		gresources = null;
+
+		ccode_only = false;
+		header_filename = null;
+		use_header = false;
+		internal_header_filename = null;
+		internal_vapi_filename = null;
+		fast_vapi_filename = null;
+		symbols_filename = null;
+		includedir = null;
+		compile_only = false;
+		output = null;
+		debug = false;
+		thread = false;
+		mem_profiler = false;
+		disable_assert = false;
+		enable_checking = false;
+		deprecated = false;
+		experimental = false;
+		experimental_non_null = false;
+		gobject_tracing = false;
+		disable_warnings = false;
+		cc_command = null;
+		cc_options = null;
+		dump_tree = null;
+		save_temps = false;
+		defines = null;
+		quiet_mode = false;
+		verbose_mode = false;
+		profile = null;
+		nostdpkg = false;
+		enable_version_header = false;
+		disable_version_header = false;
+		fatal_warnings = false;
+		dependencies = null;
+
+		entry_point = null;
+		run_output = false;
 	}
 
 	public static bool parse(string[] args) {
+		string[] myargs = args;
+
 		try {
+			unowned string[] unargs = myargs;
+
+			clear();
+
 			var opt_context = new OptionContext ("- Vala Compiler");
 			opt_context.set_help_enabled (false);
 			opt_context.add_main_entries (options, null);
 			opt_context.set_ignore_unknown_options (true);
-			opt_context.parse (ref args);
-		} catch { return false; }
+			opt_context.parse (ref unargs);
+		}
+		catch (Error e)
+		{
+			log("GcaVala",
+			    LogLevelFlags.LEVEL_WARNING,
+			    "Failed to parse flags `%s': %s",
+			    string.joinv(", ", args), e.message);
+
+			clear();
+			return false;
+		}
 
 		return true;
 	}
 
-	public static bool parse_and_apply(string cwd, global::Vala.CodeContext context, string[] args) {
-		if (!parse(args))
-		{
-			return false;
-		}
+	public static ParserOptions parse_and_apply(string wd, string[] args) {
+		parse(args);
 
-		return apply(context, cwd);
+		var context = new CodeContext();
+		context.report = new Diagnostics();
+
+		CodeContext.push(context);
+		var ret = apply(context, args, wd);
+		CodeContext.pop();
+
+		return ret;
 	}
 }

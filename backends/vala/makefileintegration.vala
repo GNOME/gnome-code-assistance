@@ -19,16 +19,6 @@
 
 class MakefileIntegration
 {
-	static uint file_hash(File f)
-	{
-		return f.hash();
-	}
-
-	static bool file_equal(File f1, File f2)
-	{
-		return f1.equal(f2);
-	}
-
 	class Makefile
 	{
 		class Source
@@ -45,7 +35,7 @@ class MakefileIntegration
 		public Makefile(File file)
 		{
 			d_file = file;
-			d_sources = new Gee.HashMap<File, Source>(file_hash, file_equal);
+			d_sources = new Gee.HashMap<File, Source>(HashUtils.File.hash, HashUtils.File.equal);
 
 			update_mtime();
 
@@ -172,8 +162,8 @@ class MakefileIntegration
 
 	public MakefileIntegration()
 	{
-		d_cache = new Gee.HashMap<File, Makefile>(file_hash, file_equal);
-		d_file_to_makefile = new Gee.HashMap<File, Makefile>(file_hash, file_equal);
+		d_cache = new Gee.HashMap<File, Makefile>(HashUtils.File.hash, HashUtils.File.equal);
+		d_file_to_makefile = new Gee.HashMap<File, Makefile>(HashUtils.File.hash, HashUtils.File.equal);
 	}
 
 	public bool changed_for_file(File f)
@@ -210,14 +200,18 @@ class MakefileIntegration
 		}
 	}
 
-	public string[]? flags_for_file(File f)
+	public string[]? flags_for_file(File f, out string? wd)
 	{
 		var makefile = makefile_for(f);
+
+		wd = null;
 
 		if (makefile == null)
 		{
 			return null;
 		}
+
+		wd = makefile.get_parent().get_path();
 
 		var m = d_cache[makefile];
 
@@ -523,7 +517,7 @@ class MakefileIntegration
 		}
 
 		string[] retargs;
-		var sargs = outstr[pos+fakevalac.length:epos-pos];
+		var sargs = outstr[pos:epos];
 
 		try
 		{
@@ -546,8 +540,8 @@ class MakefileIntegration
 #if MAIN
 public static int main(string[] a){
 	MakefileIntegration it = new MakefileIntegration();
-
-	stdout.printf("Flags: %s\n", string.joinv(", ", it.flags_for_file(File.new_for_commandline_arg(a[1]))));
+	string wd;
+	stdout.printf("Flags: %s\n", string.joinv(", ", it.flags_for_file(File.new_for_commandline_arg(a[1]), out wd)));
 	return 0;
 }
 #endif

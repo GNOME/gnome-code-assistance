@@ -32,6 +32,7 @@ BUILT_SOURCES =
 DISTCLEANFILES =
 gsettings_SCHEMAS =
 TESTS =
+noinst_PROGRAMS =
 
 include data/Makefile.am
 include backends/Makefile.am

@@ -586,6 +586,7 @@ backends/ruby/ruby
 backends/xml/org.gnome.CodeAssist.v1.xml.service
 backends/xml/xml
 backends/vala/org.gnome.CodeAssist.v1.vala.service
+backends/vala/config.vala
 backends/go/org.gnome.CodeAssist.v1.go.service
 backends/js/org.gnome.CodeAssist.v1.js.service
 backends/js/js

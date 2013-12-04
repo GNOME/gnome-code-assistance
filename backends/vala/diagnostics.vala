@@ -22,17 +22,33 @@ using Vala;
 
 class Diagnostics : Report
 {
-	private Diagnostic[] d_diagnostics;
-	public string path { get; set; }
+	private Gee.HashMap<string, Gee.ArrayList<Diagnostic?>> d_diagnostics;
 
-	public Diagnostics(string path)
+	public Diagnostics()
 	{
 		base();
 
-		this.path = path;
+		d_diagnostics = new Gee.HashMap<string, Gee.ArrayList<Diagnostic?>>();
+	}
 
-		d_diagnostics = new Diagnostic[20];
-		d_diagnostics.length = 0;
+	public Diagnostic[] diagnostics_for_path(string path)
+	{
+		Gee.ArrayList<Diagnostic?>? diagnostics = d_diagnostics[path];
+
+		if (diagnostics == null)
+		{
+			return new Diagnostic[0];
+		}
+
+		var ret = new Diagnostic[diagnostics.size];
+		ret.length = 0;
+
+		foreach (var d in diagnostics)
+		{
+			ret += d;
+		}
+
+		return ret;
 	}
 
 	private void diags_report(SourceReference? source, string message, Severity severity)
@@ -42,9 +58,12 @@ class Diagnostics : Report
 			return;
 		}
 
-		if (source.file.filename != path)
+		Gee.ArrayList<Diagnostic?>? diagnostics = d_diagnostics[source.file.filename];
+
+		if (diagnostics == null)
 		{
-			return;
+			diagnostics = new Gee.ArrayList<Diagnostic?>();
+			d_diagnostics[source.file.filename] = diagnostics;
 		}
 
 		var start = SourceLocation() {
@@ -71,17 +90,12 @@ class Diagnostics : Report
 			end = end
 		};
 
-		d_diagnostics += Diagnostic() {
+		diagnostics.add(Diagnostic() {
 			severity = severity,
 			fixits = new Fixit[] {},
 			locations = new SourceRange[] {range},
 			message = message
-		};
-	}
-
-	public Diagnostic[] diagnostics
-	{
-		get { return d_diagnostics; }
+		});
 	}
 
 	public override void err(SourceReference? source, string message)

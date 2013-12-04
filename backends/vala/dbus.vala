@@ -69,14 +69,30 @@ public class ServiceIface : Object
 		d_server = server;
 	}
 
-	public ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	public async ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
 	{
-		return d_server.parse(path, data_path, cursor, options, sender);
+		return yield d_server.parse(path, data_path, cursor, options, sender);
 	}
 
 	public new void dispose(string path, GLib.BusName sender)
 	{
 		d_server.dispose(path, sender);
+	}
+}
+
+[DBus (name = "org.gnome.CodeAssist.v1.Project")]
+public class ProjectIface : Object
+{
+	private Server d_server;
+
+	public ProjectIface(Server server)
+	{
+		d_server = server;
+	}
+
+	public async RemoteDocument[] parse_all(string path, OpenDocument[] documents, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	{
+		return yield d_server.parse_all(path, documents, cursor, options, sender);
 	}
 }
 
@@ -150,7 +166,10 @@ public class Server
 	{
 		if (newowner == "" && d_apps.has_key(oldowner))
 		{
-			dispose_app(d_apps[oldowner]);
+			lock(d_apps)
+			{
+				dispose_app(d_apps[oldowner]);
+			}
 		}
 	}
 
@@ -285,34 +304,78 @@ public class Server
 		return (ObjectPath)("/org/gnome/CodeAssist/v1/vala/%u/documents/%u".printf(app.id, doc.id));
 	}
 
-	public ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	public async ObjectPath parse(string path, string data_path, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
 	{
-		var app = ensure_app(sender);
-		var doc = ensure_document(app, path, data_path, cursor);
+		App app;
+		ExportedDocument doc;
 
-		app.service.parse(doc.document, options);
+		lock(d_apps)
+		{
+			app = ensure_app(sender);
+			doc = ensure_document(app, path, data_path, cursor);
+		}
+
+		yield app.service.parse(doc.document, options);
 
 		return remote_document_path(app, doc.document);
 	}
 
 	public new void dispose(string path, GLib.BusName sender)
 	{
-		if (d_apps.has_key(sender))
+		lock(d_apps)
 		{
-			var app = d_apps[sender];
-			var cpath = clean_path(path);
-
-			if (app.docs.has_key(cpath))
+			if (d_apps.has_key(sender))
 			{
-				dispose_document(app, app.docs[cpath]);
-				app.docs.unset(cpath);
+				var app = d_apps[sender];
+				var cpath = clean_path(path);
 
-				if (app.docs.size == 0)
+				if (app.docs.has_key(cpath))
 				{
-					dispose_app(app);
+					dispose_document(app, app.docs[cpath]);
+					app.docs.unset(cpath);
+
+					if (app.docs.size == 0)
+					{
+						dispose_app(app);
+					}
 				}
 			}
 		}
+	}
+
+	public async RemoteDocument[] parse_all(string path, OpenDocument[] documents, SourceLocation cursor, HashTable<string, Variant> options, GLib.BusName sender) throws Error
+	{
+		App app;
+		ExportedDocument doc;
+		Document[] opendocs;
+
+		lock(d_apps)
+		{
+			app = ensure_app(sender);
+			doc = ensure_document(app, path, "", cursor);
+
+			opendocs = new Document[documents.length];
+
+			for (var i = 0; i < documents.length; i++)
+			{
+				var rdoc = ensure_document(app, documents[i].path, documents[i].data_path);
+				opendocs[i] = rdoc.document;
+			}
+		}
+
+		var retdocs = yield app.service.parse_all(doc.document, opendocs, options);
+
+		var ret = new RemoteDocument[retdocs.length];
+
+		for (var i = 0; i < retdocs.length; i++)
+		{
+			ret[i] = RemoteDocument() {
+				path = retdocs[i].client_path,
+				remote_path = remote_document_path(app, retdocs[i])
+			};
+		}
+
+		return ret;
 	}
 }
 
@@ -333,6 +396,7 @@ class Transport
 		try
 		{
 			conn.register_object("/org/gnome/CodeAssist/v1/vala", new ServiceIface(d_server));
+			conn.register_object("/org/gnome/CodeAssist/v1/vala", new ProjectIface(d_server));
 
 			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DocumentIface());
 			conn.register_object("/org/gnome/CodeAssist/v1/vala/document", new DiagnosticsIface());
