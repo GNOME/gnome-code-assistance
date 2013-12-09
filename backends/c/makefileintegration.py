@@ -289,7 +289,7 @@ class MakefileIntegration:
             for match in reg.finditer(outstr):
                 target = match.group(1)
 
-                if target[0] == '#' or target[0] == '.' or '-am' in target:
+                if target[0] == '#' or '-am' in target:
                     continue
 
                 if target in found:
