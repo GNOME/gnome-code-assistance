@@ -62,7 +62,15 @@ valabackendservicedir = $(datadir)/dbus-1/services
 valabackendservice_DATA = \
 	backends/vala/org.gnome.CodeAssist.v1.vala.service
 
-CLEANFILES +=							\
+backends_vala_valahelper_vala.stamp: backends_vala_libvalashared_la_vala.stamp
+backends_vala_vala_vala.stamp: backends_vala_libvalashared_la_vala.stamp
+
+GITIGNOREFILES +=						\
+	backends/vala/$(DEPDIR)					\
+	backends/vala/.libs					\
+	backends/vala/.dirstamp					\
+	backends/vala/*.o					\
+	backends/vala/*.lo					\
 	$(backends_vala_vala_SOURCES:.vala=.c)			\
 	$(backends_vala_valahelper_SOURCES:.vala=.c)		\
 	$(backends_vala_libvalashared_la_SOURCES:.vala=.c)	\
@@ -71,13 +79,6 @@ CLEANFILES +=							\
 	backends_vala_vala_vala.stamp				\
 	backends_vala_valahelper_vala.stamp			\
 	backends_vala_libvalashared_la_vala.stamp
-
-GITIGNOREFILES +=				\
-	backends/vala/$(DEPDIR)			\
-	backends/vala/.libs			\
-	backends/vala/.dirstamp			\
-	backends/vala/*.o			\
-	backends/vala/*.lo
 
 EXTRA_DIST += $(valabackendservice_DATA)
 
