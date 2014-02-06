@@ -28,7 +28,7 @@ backend supports.
 
 ## Existing clients
 The only existing client currently is being developed as a plugin for gedit
-at https://git.gnome.org/browse/gedit-code-assistance.git. This serves as a
+at https://git.gnome.org/browse/gedit-code-assistance. This serves as a
 reference implementation for other clients.
 
 ## DBus objects and interfaces
