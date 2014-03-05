@@ -16,7 +16,8 @@ gobackendservice_DATA = \
 	backends/go/org.gnome.CodeAssist.v1.go.service
 
 EXTRA_DIST +=				\
-	backends/go/deps		\
 	$(gobackendservice_DATA)
 
 GITIGNOREDEPS += backends/go/Makefile.am
+
+include backends/go/deps.mk
