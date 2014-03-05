@@ -65,7 +65,7 @@ public class Service
 	private async Rpc.Reply spawn_helper(Document[] documents, string wd, string[] flags)
 	{
 		SourceFunc cb = spawn_helper.callback;
-		var argv = new string[] {Path.build_filename(Config.BackendExecDir, "valahelper")};
+		var argv = new string[] {Path.build_filename(Config.BACKENDEXECDIR, "valahelper")};
 
 		Pid pid;
 		int inp, outp;

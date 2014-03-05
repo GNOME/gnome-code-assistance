@@ -15,12 +15,13 @@ backends_vala_vala_SOURCES =			\
 	backends/vala/document.vala		\
 	backends/vala/service.vala		\
 	backends/vala/makefileintegration.vala	\
-	backends/vala/config.vala
+	backends/vala/config.vapi
 
 backends_vala_valahelper_SOURCES =		\
 	backends/vala/valaoptionparser.vala	\
 	backends/vala/diagnostics.vala		\
-	backends/vala/helper.vala
+	backends/vala/helper.vala		\
+	backends/vala/libvalashared.vapi
 
 backends_vala_common_valaflags =		\
 	--target-glib=2.36			\
