@@ -1,7 +1,7 @@
 installcheck-local: check-service
 
 check-service:
-	tests/service
+	$(srcdir)/tests/service
 
 EXTRA_DIST +=						\
 	tests/service					\
