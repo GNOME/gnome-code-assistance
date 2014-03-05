@@ -15,7 +15,8 @@ backends_vala_vala_SOURCES =			\
 	backends/vala/document.vala		\
 	backends/vala/service.vala		\
 	backends/vala/makefileintegration.vala	\
-	backends/vala/config.vapi
+	backends/vala/config.vapi		\
+	backends/vala/libvalashared.vapi
 
 backends_vala_valahelper_SOURCES =		\
 	backends/vala/valaoptionparser.vala	\
@@ -42,14 +43,10 @@ backends_vala_libvalashared_la_VALAFLAGS =	\
 
 backends_vala_vala_VALAFLAGS =			\
 	$(backends_vala_common_valaflags)	\
-	--pkg libvalashared			\
-	--pkg gio-unix-2.0			\
-	--vapidir backends/vala
+	--pkg gio-unix-2.0
 
 backends_vala_valahelper_VALAFLAGS =		\
-	$(backends_vala_common_valaflags)	\
-	--pkg libvalashared			\
-	--vapidir backends/vala
+	$(backends_vala_common_valaflags)
 
 backends_vala_libvalashared_la_CFLAGS = $(BACKEND_VALA_CFLAGS) -w
 
@@ -62,9 +59,6 @@ backends_vala_valahelper_LDADD = $(BACKEND_VALA_LIBS) backends/vala/libvalashare
 valabackendservicedir = $(datadir)/dbus-1/services
 valabackendservice_DATA = \
 	backends/vala/org.gnome.CodeAssist.v1.vala.service
-
-backends_vala_valahelper_vala.stamp: backends_vala_libvalashared_la_vala.stamp
-backends_vala_vala_vala.stamp: backends_vala_libvalashared_la_vala.stamp
 
 GITIGNOREFILES +=						\
 	backends/vala/$(DEPDIR)					\
