@@ -2204,6 +2204,9 @@ class TranslationUnit(ClangObject):
         if unsaved_files is None:
             unsaved_files = []
 
+        if isinstance(path, str):
+            path = path.encode('utf-8')
+
         unsaved_files_array = 0
         if len(unsaved_files):
             unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
