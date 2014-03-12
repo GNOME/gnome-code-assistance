@@ -1648,7 +1648,7 @@ class CompletionChunk:
         self.key = key
 
     def __repr__(self):
-        return "{'" + self.spelling + "', " + str(self.kind) + "}"
+        return "{'" + self.spelling.decode('utf-8') + "', " + str(self.kind) + "}"
 
     @CachedProperty
     def spelling(self):
@@ -1773,7 +1773,7 @@ class CodeCompletionResult(Structure):
 
 class CCRStructure(Structure):
     _fields_ = [('results', POINTER(CodeCompletionResult)),
-                ('numResults', c_int)]
+                ('numResults', c_uint)]
 
     def __len__(self):
         return self.numResults
@@ -1785,19 +1785,22 @@ class CCRStructure(Structure):
         return self.results[key]
 
 class CodeCompletionResults(ClangObject):
+
     def __init__(self, ptr):
         assert isinstance(ptr, POINTER(CCRStructure)) and ptr
-        self.ptr = self._as_parameter_ = ptr
-
-    def from_param(self):
-        return self._as_parameter_
+        self.obj = self._as_parameter_ = ptr
 
     def __del__(self):
         conf.lib.clang_disposeCodeCompleteResults(self)
 
-    @property
-    def results(self):
-        return self.ptr.contents
+    def __len__(self):
+        return len(self.obj.contents)
+
+    def __getitem__(self, key):
+        if len(self) <= key:
+            raise IndexError
+
+        return self.obj.contents[key]
 
     @property
     def diagnostics(self):
@@ -2225,7 +2228,7 @@ class TranslationUnit(ClangObject):
                 unsaved_files_array[i].length = len(contents)
         ptr = conf.lib.clang_codeCompleteAt(self, path, line, column,
                 unsaved_files_array, len(unsaved_files), options)
-        if ptr:
+        if ptr is not None:
             return CodeCompletionResults(ptr)
         return None
 
