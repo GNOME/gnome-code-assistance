@@ -1,5 +1,12 @@
 ===========================
-gnome-code-assistance 0.1.0
+gnome-code-assistance 0.3.1
+===========================
+ - Improvements in backends
+ - Added unit tests
+ - Lots of bugfixes
+
+===========================
+gnome-code-assistance 0.3.0
 ===========================
 
 gnome-code-assistance provides code assistance as a service for source code
