@@ -3,45 +3,55 @@ const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 const Types = imports.gnome.codeassistance.types;
 
-var ServiceIface = '<interface name="org.gnome.CodeAssist.v1.Service">          \
-  <method name="Parse">                                                         \
-    <arg direction="in"  type="s" name="path" />                                \
-    <arg direction="in"  type="s" name="dataPath" />                            \
-    <arg direction="in"  type="(xx)" name="cursor" />                           \
-    <arg direction="in"  type="a{sv}" name="options" />                         \
-    <arg direction="out" type="o" name="documentPath"/>                         \
-  </method>                                                                     \
-  <method name="Dispose">                                                       \
-    <arg direction="in"  type="s" name="path" />                                \
-  </method>                                                                     \
-</interface>';
+var ServiceIface = '<node>                                                      \
+  <interface name="org.gnome.CodeAssist.v1.Service">                            \
+    <method name="Parse">                                                       \
+      <arg direction="in"  type="s" name="path" />                              \
+      <arg direction="in"  type="s" name="dataPath" />                          \
+      <arg direction="in"  type="(xx)" name="cursor" />                         \
+      <arg direction="in"  type="a{sv}" name="options" />                       \
+      <arg direction="out" type="o" name="documentPath"/>                       \
+    </method>                                                                   \
+    <method name="Dispose">                                                     \
+      <arg direction="in"  type="s" name="path" />                              \
+    </method>                                                                   \
+  </interface>                                                                  \
+</node>';
 
-var ProjectIface = '<interface name="org.gnome.CodeAssist.v1.Project">          \
-  <method name="ParseAll">                                                      \
-    <arg direction="in"  type="s" name="path" />                                \
-    <arg direction="in"  type="a(ss)" name="documents" />                       \
-    <arg direction="in"  type="(xx)" name="cursor" />                           \
-    <arg direction="in"  type="a{sv}" name="options" />                         \
-    <arg direction="out" type="a(so)" name="documents" />                       \
-  </method>                                                                     \
-</interface>';
+var ProjectIface = '<node>                                                      \
+  <interface name="org.gnome.CodeAssist.v1.Project">                            \
+    <method name="ParseAll">                                                    \
+      <arg direction="in"  type="s" name="path" />                              \
+      <arg direction="in"  type="a(ss)" name="documents" />                     \
+      <arg direction="in"  type="(xx)" name="cursor" />                         \
+      <arg direction="in"  type="a{sv}" name="options" />                       \
+      <arg direction="out" type="a(so)" name="documents" />                     \
+    </method>                                                                   \
+  </interface>                                                                  \
+</node>';
 
-var DocumentIface = '<interface name="org.gnome.CodeAssist.v1.Document">        \
-</interface>';
+var DocumentIface = '<node>                                                     \
+  <interface name="org.gnome.CodeAssist.v1.Document">                           \
+  </interface>                                                                  \
+</node>';
 
-var DiagnosticsIface = '<interface name="org.gnome.CodeAssist.v1.Diagnostics">  \
-  <method name="Diagnostics">                                                   \
-    <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" name="diagnostics"/> \
-  </method>                                                                     \
-</interface>';
+var DiagnosticsIface = '<node>                                                  \
+  <interface name="org.gnome.CodeAssist.v1.Diagnostics">                        \
+    <method name="Diagnostics">                                                 \
+      <arg direction="out" type="a(ua((x(xx)(xx))s)a(x(xx)(xx))s)" name="diagnostics"/> \
+    </method>                                                                   \
+  </interface>                                                                  \
+</node>';
 
-var FreedesktopDBusIface = '<interface name="org.freedesktop.DBus">             \
-  <signal name="NameOwnerChanged">                                              \
-    <arg direction="out" type="s"/>                                             \
-    <arg direction="out" type="s"/>                                             \
-    <arg direction="out" type="s"/>                                             \
-  </signal>                                                                     \
-</interface>';
+var FreedesktopDBusIface = '<node>                                              \
+  <interface name="org.freedesktop.DBus">                                       \
+    <signal name="NameOwnerChanged">                                            \
+      <arg direction="out" type="s"/>                                           \
+      <arg direction="out" type="s"/>                                           \
+      <arg direction="out" type="s"/>                                           \
+    </signal>                                                                   \
+  </interface>                                                                  \
+</node>';
 
 let OpenDocument = function(vals) {
     this._init(vals);
