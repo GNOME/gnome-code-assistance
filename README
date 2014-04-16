@@ -169,7 +169,7 @@ but other services are optional.
 
 ### C
 Build dependencies    : llvm-dev (llvm-config)
-Run time dependencies : libclang
+Run time dependencies : libclang, python, python-dbus
 
 ### CSS
 Dependencies : ruby, ruby-dbus
