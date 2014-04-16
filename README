@@ -164,3 +164,37 @@ but other services are optional.
         Path     string
         DataPath string
     }
+
+## Backends
+
+### C
+Build dependencies    : llvm-dev (llvm-config)
+Run time dependencies : libclang
+
+### CSS
+Dependencies : ruby, ruby-dbus
+
+### Go
+Dependencies : go
+
+### JavaScript
+Dependencies : gjs
+
+### Json
+Dependencies : python, python-dbus, python-simplejson
+
+### Python
+Dependencies : python, python-dbus
+
+### Ruby
+Dependencies : ruby, ruby-dbus
+
+### Sh
+Dependencies : python, python-dbus, sh
+
+### Vala
+Build dependencies    : vala, libvala >= 0.20, libgee-0.8
+Run time dependencies : libvala >= 0.20, libgee-0.8
+
+### Xml
+Dependencies : python, python-dbus
