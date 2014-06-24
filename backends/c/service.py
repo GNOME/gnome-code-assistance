@@ -19,12 +19,14 @@ from gnome.codeassistance.c import clangimporter, makefileintegration, config
 from gnome.codeassistance import transport, types
 
 import clang.cindex as cindex
-import glob, os
+import glob, os, subprocess
 
 _did_libclang_config = False
+_global_sysinclude = None
 
 def config_libclang():
     global _did_libclang_config
+    global _global_sysinclude
 
     if _did_libclang_config:
         return
@@ -38,6 +40,13 @@ def config_libclang():
 
     if len(files) != 0:
         cindex.Config.set_library_file(files[0])
+
+    try:
+        _global_sysinclude = subprocess.check_output(['llvm-clang', '-print-file-name=include']).strip()
+    except:
+        pass
+
+    print(_global_sysinclude)
 
 class Service(transport.Service, transport.Project):
     language = 'c'
@@ -54,7 +63,14 @@ class Service(transport.Service, transport.Project):
         if (not doc.tu is None) and not self.makefile.changed_for_file(doc.path):
             doc.tu.reparse(unsaved)
         else:
+            global _global_sysinclude
+
             args = self.makefile.flags_for_file(doc.path)
+
+            if not _global_sysinclude is None:
+                args = list(args)
+                args.append('-isystem')
+                args.append(_global_sysinclude)
 
             doc.tu = cindex.TranslationUnit.from_source(doc.path,
                                                         args=args,
@@ -112,6 +128,7 @@ class Service(transport.Service, transport.Project):
         resolved = {}
 
         for d in tu.diagnostics:
+            print(d)
             if d.location is None or d.location.file is None:
                 continue
 
