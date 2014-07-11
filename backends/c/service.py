@@ -40,6 +40,13 @@ def config_libclang():
 
     if len(files) != 0:
         cindex.Config.set_library_file(files[0])
+    else:
+        import ctypes.util
+
+        libfile = ctypes.util.find_library('clang')
+
+        if not libfile is None:
+            cindex.Config.set_library_file(libfile)
 
     try:
         _global_sysinclude = subprocess.check_output(['llvm-clang', '-print-file-name=include']).strip()
