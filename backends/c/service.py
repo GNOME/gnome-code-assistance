@@ -140,7 +140,6 @@ class Service(transport.Service, transport.Project):
         resolved = {}
 
         for d in tu.diagnostics:
-            print(d)
             if d.location is None or d.location.file is None:
                 continue
 
