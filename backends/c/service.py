@@ -48,12 +48,17 @@ def config_libclang():
         if not libfile is None:
             cindex.Config.set_library_file(libfile)
 
-    try:
-        _global_sysinclude = subprocess.check_output(['llvm-clang', '-print-file-name=include']).strip()
-    except:
-        pass
+    trycmd = ('clang', 'llvm-clang')
 
-    print(_global_sysinclude)
+    for cmd in trycmd:
+        try:
+            sysdir = subprocess.check_output([cmd, '-print-file-name=include']).strip()
+
+            if sysdir and sysdir != 'include':
+                _global_sysinclude = sysdir
+                break
+        except:
+            pass
 
 class Service(transport.Service, transport.Project):
     language = 'c'
