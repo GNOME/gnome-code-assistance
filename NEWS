@@ -1,3 +1,9 @@
+============================
+gnome-code-assistance 3.14.0
+============================
+ - Improvements in the C and Vala backends
+ - gnome-code-assistance now uses the same versions as GNOME's
+
 ===========================
 gnome-code-assistance 0.3.1
 ===========================
