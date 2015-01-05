@@ -62,6 +62,7 @@ module Gnome::CodeAssistance
                 doc.diagnostics = []
 
                 f = File.new(doc.data_path, 'r')
+                importer = Sass::Importers::Filesystem.new(File.dirname(doc.path))
 
                 if doc.path.end_with?('.css')
                     cls = CssParser
@@ -70,7 +71,7 @@ module Gnome::CodeAssistance
                 end
 
                 begin
-                    parser = cls.new(f.read(), doc.path)
+                    parser = cls.new(f.read(), doc.path, importer)
                     parser.parse()
                 rescue Sass::SyntaxError => e
                     doc.diagnostics = [make_diagnostic(e)]
