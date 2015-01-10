@@ -268,9 +268,21 @@ fi
 ruby_sass=
 
 if test "x$enable_css" = "xyes"; then
-	$RUBY -rsass -e '' 2>/dev/null
-	if test $? -eq 0 ; then
-		ruby_sass=yes
+	AC_MSG_CHECKING([system provided sass])
+
+	MAJOR=`$RUBY -rsass -e 'puts Sass.version[[:major]]' 2>/dev/null`
+
+	if test $? -eq 0; then
+		MINOR=`$RUBY -rsass -e 'puts Sass.version[[:minor]]' 2>/dev/null`
+
+		if test "$MAJOR" -lt 3 || (test "$MAJOR" = "3" && test "$MINOR" -lt 3); then
+			AC_MSG_RESULT([no (required sass version >= 3.3 not found), using vendored sass gem])
+		else
+			ruby_sass=yes
+			AC_MSG_RESULT([yes, found sass $MAJOR.$MINOR])
+		fi
+	else
+		AC_MSG_RESULT([no, using vendored sass gem])
 	fi
 fi
 
