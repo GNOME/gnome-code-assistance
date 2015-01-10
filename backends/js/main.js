@@ -28,7 +28,6 @@ function Service() {
 
 Service.prototype = {
     _init: function() {
-    
     },
 
     'org.gnome.CodeAssist.v1.Service': {
