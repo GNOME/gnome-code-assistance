@@ -1,7 +1,7 @@
 jsbackenddir = $(GCA_JSBACKENDS_DIR)/js
 jsbackend_DATA = 				\
 	backends/js/main.js			\
-	backends/js/acorn.js
+	backends/js/deps/acorn.js
 
 jsbackendexecdir = $(GCA_BACKENDS_EXEC_DIR)
 jsbackendexec_SCRIPTS = \

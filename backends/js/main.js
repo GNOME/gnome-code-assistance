@@ -1,7 +1,7 @@
 const GLib = imports.gi.GLib;
 const Transport = imports.gnome.codeassistance.transport;
 const Types = imports.gnome.codeassistance.types;
-const Acorn = imports.gnome.codeassistance.js.acorn.acorn;
+const Acorn = imports.gnome.codeassistance.js.deps.acorn.acorn;
 
 function Document() {
     this._init();
