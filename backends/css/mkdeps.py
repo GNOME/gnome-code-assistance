@@ -4,10 +4,7 @@ import subprocess, os, re
 
 perdir = {}
 
-rethead = subprocess.check_output(['git', 'ls-tree', 'HEAD', '--name-only', '-r', '--', 'gems']).decode('utf-8').splitlines()
-retindex = subprocess.check_output(['git', 'ls-files', '--', 'gems']).decode('utf-8').splitlines()
-
-ret = rethead + retindex
+ret = subprocess.check_output(['git', 'ls-files', '--', 'gems']).decode('utf-8').splitlines()
 seen = {}
 
 for r in ret:
