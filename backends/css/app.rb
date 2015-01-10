@@ -17,7 +17,7 @@
 
 require 'gnome/codeassistance/transport'
 
-oursass = File.join(File.dirname(__FILE__), 'gems', 'sass-3.2.12', 'init.rb')
+oursass = File.join(File.dirname(__FILE__), 'gems', 'sass-3.4.9', 'init.rb')
 
 if FileTest.exist?(oursass)
     require oursass
