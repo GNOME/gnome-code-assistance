@@ -1,6 +1,7 @@
 # gnome code assistance python backend
 # Copyright (C) 2013  Jesse van den Kieboom <jessevdk@gnome.org>
 # Copyright (C) 2014  Elad Alfassa <elad@fedoraproject.org>
+# Copyright (C) 2015  Igor Gnatenko <ignatenko@src.gnome.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +21,49 @@ import ast
 import subprocess
 import re
 
+try:
+    from pylint import lint
+    from pylint.reporters.text import TextReporter
+except ImportError:
+    pass
+
 from gnome.codeassistance import transport, types
+
+class PyLint(object):
+    def __init__(self, data_path):
+        self.diagnostics = []
+        self.data_path = data_path
+
+    def write(self, st):
+        if st != "\n" and not st.startswith("*"):
+            result = st.split(":")
+            col = int(result[1]) + 1
+            loc = types.SourceLocation(line=result[0], column=col)
+
+            """
+            * (C) convention, for programming standard violation
+            * (R) refactor, for bad code smell
+            * (W) warning, for python specific problems
+            * (E) error, for much probably bugs in the code
+            * (F) fatal, if an error occurred which prevented pylint from doing
+            further processing.
+            """
+            if result[2] == "C" or result[2] == "R" or result[2] == "W":
+                severity = types.Diagnostic.Severity.INFO
+            else:
+                severity = types.Diagnostic.Severity.ERROR
+
+            self.diagnostics.append(
+                types.Diagnostic(severity=severity,
+                                 locations=[loc.to_range()],
+                                 message=result[3]))
+
+    def run(self):
+        args = [self.data_path, "-r", "n",
+                "--msg-template='{line}:{column}:{C}:{msg_id} {msg}'"]
+        lint.Run(args, reporter=TextReporter(self), exit=False)
+        return self.diagnostics
+
 
 class Service(transport.Service):
     language = 'python'
@@ -53,6 +96,14 @@ class Service(transport.Service):
         except FileNotFoundError:
             # PEP8 is not installed. Do nothing.
             pass
+
+        if "pylint" in options and options["pylint"]:
+            pylint = PyLint(doc.data_path)
+            diagnostics = pylint.run()
+
+            for diag in diagnostics:
+                doc.diagnostics.append(diag)
+
 
 class Document(transport.Document, transport.Diagnostics):
     pass
