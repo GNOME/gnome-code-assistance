@@ -1,4 +1,4 @@
-#!/usr/bin/env gjs
+#!/usr/bin/env GJS_DISABLE_EXTRA_WARNINGS=1 gjs
 
 imports.searchPath.unshift('@GCA_JSBACKENDS_ROOT_EX@');
 const Main = imports.gnome.codeassistance.js.main;
