@@ -454,7 +454,7 @@ if test "x$enable_vala" = "xauto"; then
 fi
 
 if test "x$enable_vala" != "xno"; then
-	
+
 	if test "x$VALAC" = "x"; then
 		AC_MSG_ERROR([Cannot find the "valac" compiler])
 	else
