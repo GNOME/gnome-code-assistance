@@ -171,12 +171,15 @@ dnl ruby support
 dnl ================================================================
 AC_PATH_PROGS([RUBY],[ruby2.0 ruby1.9.3 ruby1.9.2 ruby1.9.1 ruby])
 
+RUBY_MSG="requires ruby 2.0"
+
 if test "x$RUBY" != "x"; then
 	AC_MSG_CHECKING([ruby dbus])
 	$RUBY -rdbus -e '' 2>/dev/null
 	if test $? -ne 0 ; then
 		AC_MSG_RESULT([no])
 		RUBY=
+		RUBY_MSG="requires ruby dbus"
 	else
 		AC_MSG_RESULT([yes])
 	fi
@@ -210,7 +213,7 @@ AC_SUBST(RUBY_BASE)
 
 if test "x$enable_ruby" = "xauto"; then
 	if test "x$RUBY" = "x" || test "x$ruby_ripper" = "x"; then
-		AC_MSG_RESULT([no (requires ruby 2.0)])
+		AC_MSG_RESULT([no ($RUBY_MSG)])
 		enable_ruby=no
 	else
 		AC_MSG_RESULT([yes])
@@ -218,7 +221,7 @@ if test "x$enable_ruby" = "xauto"; then
 	fi
 elif test "x$enable_ruby" != "xno"; then
 	if test "x$RUBY" = "x" || test "x$ruby_ripper" = "x"; then
-		AC_MSG_ERROR([no (requires ruby 2.0)])
+		AC_MSG_ERROR([no ($RUBY_MSG)])
 	else
 		AC_MSG_RESULT([yes])
 		enable_ruby=yes
@@ -245,7 +248,7 @@ AC_MSG_CHECKING([css backend])
 
 if test "x$enable_css" = "xauto"; then
 	if test "x$RUBY" = "x"; then
-		AC_MSG_RESULT([no (requires ruby 2.0)])
+		AC_MSG_RESULT([no ($RUBY_MSG)])
 		enable_css=no
 	else
 		AC_MSG_RESULT([yes])
@@ -253,7 +256,7 @@ if test "x$enable_css" = "xauto"; then
 	fi
 elif test "x$enable_css" != "xno"; then
 	if test "x$RUBY" = "x"; then
-		AC_MSG_ERROR([no (requires ruby 2.0)])
+		AC_MSG_ERROR([no ($RUBY_MSG)])
 	else
 		AC_MSG_RESULT([yes])
 		enable_css=yes
