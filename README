@@ -185,7 +185,7 @@ Dependencies : python, python-dbus, python-simplejson
 
 ### Python
 Dependencies : python, python-dbus
-Optional dependencies : pylint (enabled only if you will pass "pylint" in "options" to dbus service)
+Optional dependencies : pylint (enabled only if you will pass "pylint" in "options" to dbus service), pep8 (run when present)
 
 ### Ruby
 Dependencies : ruby, ruby-dbus
