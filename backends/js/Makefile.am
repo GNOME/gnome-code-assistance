@@ -1,6 +1,9 @@
 jsbackenddir = $(GCA_JSBACKENDS_DIR)/js
 jsbackend_DATA = 				\
-	backends/js/main.js			\
+	backends/js/main.js
+
+jsbackenddepsdir = $(GCA_JSBACKENDS_DIR)/js/deps
+jsbackenddeps_DATA =				\
 	backends/js/deps/acorn.js
 
 jsbackendexecdir = $(GCA_BACKENDS_EXEC_DIR)
@@ -13,6 +16,7 @@ jsbackendservice_DATA = \
 
 EXTRA_DIST +=				\
 	$(jsbackend_DATA)		\
+	$(jsbackenddeps_DATA)		\
 	$(jsbackendservice_DATA)
 
 GITIGNOREDEPS += backends/js/Makefile.am
