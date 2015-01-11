@@ -2,7 +2,6 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 const Types = imports.gnome.codeassistance.types;
-const system = imports.system;
 
 var ServiceIface = '<node>                                                      \
   <interface name="org.gnome.CodeAssist.v1.Service">                            \
@@ -487,7 +486,7 @@ Transport.prototype = {
     },
 
     onNameLost: function(conn, name) {
-        system.exit(1);
+        this.main.quit();
     },
 
     run: function() {
