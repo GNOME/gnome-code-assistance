@@ -486,13 +486,12 @@ Transport.prototype = {
     },
 
     run: function() {
-        GLib.idle_add(GLib.PRIORITY_DEFAULT, Lang.bind(this, function() {
-            Gio.DBus.session.own_name('org.gnome.CodeAssist.v1.' + this.service.language,
-                                      Gio.BusNameOwnerFlags.NONE,
-                                      Lang.bind(this, this.onBusAcquired),
-                                      Lang.bind(this, this.onNameAcquired),
-                                      Lang.bind(this, this.onNameLost));
-        }));
+        Gio.bus_own_name(Gio.BusType.SESSION,
+                         'org.gnome.CodeAssist.v1.' + this.service.language,
+                         Gio.BusNameOwnerFlags.NONE,
+                         Lang.bind(this, this.onBusAcquired),
+                         Lang.bind(this, this.onNameAcquired),
+                         Lang.bind(this, this.onNameLost));
 
         this.main.run();
     }
