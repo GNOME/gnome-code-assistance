@@ -180,9 +180,11 @@ Service.prototype = {
     },
 
     _jshint: function(doc, contents, options) {
-        if (!options.jshint) {
+        if (options.jshint !== undefined && !options.jshint) {
             return;
         }
+
+        var enabled = !!options.jshint || !!contents.match(/(\/\/|\/\*)\s*jshint/g);
 
         // Setup jshint options
         let searchPaths = this._jshintrcSearchPaths(doc);
@@ -199,10 +201,15 @@ Service.prototype = {
                 let opts = this._jshintOptions(rc);
 
                 if (opts) {
+                    enabled = true;
                     rcopts = opts;
                     break;
                 }
             }
+        }
+
+        if (!enabled) {
+            return;
         }
 
         if (JsHint(contents)) {
