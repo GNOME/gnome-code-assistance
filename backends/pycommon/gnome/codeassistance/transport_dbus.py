@@ -88,8 +88,10 @@ class Service:
         information. Finally @options contains backend specific options provided
         by a client.
 
-        @doc is an object of the register document type and should be populated
-        by the implementation.
+        doc: the document needing to be parsed.
+
+        options: an implementation specific set of options passed by the client
+
         """
         pass
 
@@ -127,6 +129,24 @@ class Project:
              in docs and the project documents that were processed.
           4) Return the subset of documents which have newly processed information
 
+        """
+        pass
+
+class Completion:
+    def complete(self, doc, options):
+        """compute completions at the cursor of a document.
+
+        @doc is an object of the register document type and should be populated
+        by the implementation.
+        """
+        pass
+
+class ProjectCompletion:
+    def complete_all(self, doc, docs, options):
+        """compute completions at the cursor of a document.
+
+        @doc is an object of the register document type and should be populated
+        by the implementation.
         """
         pass
 
@@ -284,6 +304,29 @@ class ServeProject(dbus.service.Object):
 
         return [types.RemoteDocument(d.client_path, d._object_path).to_tuple() for d in parsed]
 
+class ServeCompletion(dbus.service.Object):
+    @dbus.service.method('org.gnome.CodeAssist.v1.Completion',
+                         in_signature='ss(xx)a{sv}', out_signature='a' + types.Completion.signature,
+                         sender_keyword='sender')
+    def Complete(self, path, data_path, cursor, options, sender=None):
+        app = self.ensure_app(sender)
+        doc = self.ensure_document(app, path, data_path, types.SourceLocation.from_tuple(cursor))
+
+        return [x.to_tuple() for x in app.service.complete(doc, options)]
+
+class ServeProjectCompletion(dbus.service.Object):
+    @dbus.service.method('org.gnome.CodeAssist.v1.ProjectCompletion',
+                         in_signature='sa(ss)(xx)a{sv}', out_signature='a' + types.Completion.signature,
+                         sender_keyword='sender')
+    def CompleteAll(self, path, documents, cursor, options, sender=None):
+        app = self.ensure_app(sender)
+        doc = self.ensure_document(app, path, '', types.SourceLocation.from_tuple(cursor))
+
+        opendocs = [types.OpenDocument.from_tuple(d) for d in documents]
+        docs = [self.ensure_document(app, d.path, d.data_path) for d in opendocs]
+
+        return [x.to_tuple() for x in app.service.complete_all(doc, docs, options)]
+
 class Transport():
     def __init__(self, service, document, srvtype=Server):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -302,7 +345,9 @@ class Transport():
     def make_server_cls(self, service):
         types = {
             Service: ServeService,
-            Project: ServeProject
+            Project: ServeProject,
+            Completion: ServeCompletion,
+            ProjectCompletion: ServeProjectCompletion
         }
 
         bases = inspect.getmro(service)[1:]

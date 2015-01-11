@@ -109,4 +109,38 @@ class Diagnostic:
     def to_tuple(self):
         return (self.severity, [f.to_tuple() for f in self.fixits], [l.to_tuple() for l in self.locations], self.message)
 
+class Completion:
+    class Chunk:
+        signature = '(si)'
+
+        class Type:
+            TEXT = 0
+            PLACEHOLDER = 1
+
+        def __init__(self, text, type=Type.TEXT):
+            self.text = text
+            self.type = type
+
+        def __repr__(self):
+            return '<Completion.Chunk: {0}, {1}>'.format(self.text, self.type)
+
+        def to_tuple(self):
+            return (self.text, self.type)
+
+    signature = '(sa' + Chunk.signature + 'si)'
+
+    def __init__(self, text, chunks, description='', priority=0):
+        self.text = text
+        self.chunks = chunks
+        self.description = description
+        self.priority = priority
+
+    def __repr__(self):
+        chunks = [repr(chunk) for chunk in self.chunks]
+        return '<Completion: {0}, [{1}], {2}, {3}>'.format(self.text, ', '.join(chunks), self.description, self.priority)
+
+    def to_tuple(self):
+        chunks = [chunk.to_tuple() for chunk in self.chunks]
+        return (self.text, chunks, self.description, self.priority)
+
 # ex:ts=4:et:
