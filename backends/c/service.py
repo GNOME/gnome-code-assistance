@@ -60,7 +60,8 @@ def config_libclang():
         except:
             pass
 
-class Service(transport.Service, transport.Project):
+class Service(transport.Service, transport.Project,
+              transport.Completion, transport.ProjectCompletion):
     language = 'c'
 
     def __init__(self):
@@ -71,7 +72,7 @@ class Service(transport.Service, transport.Project):
         self.index = cindex.Index.create(True)
         self.makefile = makefileintegration.MakefileIntegration()
 
-    def _parse(self, doc, docs, unsaved, options):
+    def _ensure_tu(self, doc, docs, unsaved, options):
         if (not doc.tu is None) and not self.makefile.changed_for_file(doc.path):
             doc.tu.reparse(unsaved)
         else:
@@ -92,6 +93,8 @@ class Service(transport.Service, transport.Project):
         for u in unsaved:
             u[1].close()
 
+    def _parse(self, doc, docs, unsaved, options):
+        self._ensure_tu(doc, docs, unsaved, options)
         return self._process(doc, docs)
 
     def parse_all(self, doc, docs, options):
@@ -105,6 +108,68 @@ class Service(transport.Service, transport.Project):
             unsaved = []
 
         self._parse(doc, [doc], unsaved, options)
+
+    def _complete(self, doc, docs, unsaved, options):
+        self._ensure_tu(doc, docs, unsaved, options)
+
+        self._process(doc, docs)
+
+        if not doc.tu:
+            return []
+
+        ret = doc.tu.codeComplete(doc.path,
+                                  doc.cursor.line,
+                                  doc.cursor.column,
+                                  unsaved_files=unsaved)
+
+        items = []
+
+        for item in ret:
+            s = item.string
+            av = s.availability
+
+            if av.name == 'NotAvailable' or av.name == 'NotAccessible':
+                continue
+
+            text = ''
+            description = ''
+            chunks = []
+
+            for chunk in s:
+                spelling = chunk.spelling.decode('utf-8')
+
+                if chunk.kind.name in ('Optional', 'CurrentParameter', 'ResultType'):
+                    continue
+
+                if chunk.kind.name == 'Informative':
+                    description = spelling
+                    continue
+
+                if chunk.kind.name == 'TypedText':
+                    text = spelling
+
+                if chunk.kind.name == 'Placeholder':
+                    type = types.Completion.Chunk.Type.PLACEHOLDER
+                else:
+                    type = types.Completion.Chunk.Type.TEXT
+
+                chunks.append(types.Completion.Chunk(spelling, type=type))
+
+            items.append(types.Completion(text, chunks, description=description, priority=s.priority))
+
+        return items
+
+    def complete_all(self, doc, docs, options):
+        unsaved = [(d.path, open(d.data_path, 'rb')) for d in docs if d.data_path != d.path]
+        return self._complete(doc, docs, unsaved, options)
+
+    def complete(self, doc, options):
+        if doc.data_path != doc.path:
+            unsaved = [(doc.path, open(doc.data_path, 'rb'))]
+        else:
+            unsaved = []
+
+        self._complete(doc, [doc], unsaved, options)
 
     def _included_docs(self, doc, docmap):
         includes = doc.tu.get_includes()
@@ -228,6 +293,7 @@ if __name__ == '__main__':
         docs[i].path = os.path.abspath(v)
         docs[i].data_path = docs[i].path
 
-    print(s.parse_all(docs[0], docs, {}))
+    docs[0].cursor = types.SourceLocation(line=1, column=2)
+    print(s.complete_all(docs[0], docs, {}))
 
 # ex:ts=4:et:
