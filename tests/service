@@ -454,8 +454,7 @@ try:
     os.environ['DBUS_SESSION_BUS_PID'] = str(daemon.pid)
 
     for testfile in testfiles:
-        if testfile.endswith('js.json'):
-            run_test(testfile)
+        run_test(testfile)
 finally:
     daemon.terminate()
     print(daemon.stdout.read().decode('utf-8'))
