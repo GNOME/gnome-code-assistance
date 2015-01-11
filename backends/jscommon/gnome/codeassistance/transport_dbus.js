@@ -235,6 +235,7 @@ Server.prototype = {
 
         this.apps = {};
         this.nextid = 0;
+        this.services = {};
 
         let path = '/org/gnome/CodeAssist/v1/' + service.language;
 
@@ -243,6 +244,8 @@ Server.prototype = {
             if (s in service.prototype) {
                 let serv = new ServerServices[s](this);
                 serv.dbus.export(conn, path);
+
+                this.services[s] = serv;
             }
         }
 
