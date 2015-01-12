@@ -24,6 +24,25 @@ import glob, os, subprocess
 _did_libclang_config = False
 _global_sysinclude = None
 
+class UnsavedFile(object):
+    def __init__(self, *args, **kwargs):
+        self._file = open(*args, **kwargs)
+
+    def close(self, do_close=False):
+        if do_close:
+            self._file.close()
+        else:
+            self._file.seek(0)
+
+    def read(self, *args, **kwargs):
+        return self._file.read(*args, **kwargs)
+
+    def tell(self):
+        return self._file.tell()
+
+    def seek(self, *args, **kwargs):
+        return self._file.seek(*args, **kwargs)
+
 def config_libclang():
     global _did_libclang_config
     global _global_sysinclude
@@ -168,11 +187,16 @@ class Service(transport.Service, transport.Project,
 
     def complete(self, doc, options):
         if doc.data_path != doc.path:
-            unsaved = [(doc.path, open(doc.data_path, 'rb'))]
+            unsaved = [(doc.path, UnsavedFile(doc.data_path, 'rb'))]
         else:
             unsaved = []
 
-        self._complete(doc, [doc], unsaved, options)
+        ret = self._complete(doc, [doc], unsaved, options)
+
+        for (_,f) in unsaved:
+            f.close(do_close=True)
+
+        return ret
 
     def _included_docs(self, doc, docmap):
         includes = doc.tu.get_includes()
