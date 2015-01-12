@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import ast
+import jedi
 import subprocess
 import re
 
@@ -65,8 +66,27 @@ class PyLint(object):
         return self.diagnostics
 
 
-class Service(transport.Service):
+class Service(transport.Service, transport.Completion):
     language = 'python'
+
+    def complete(self, doc, options):
+        items = []
+        file_content = []
+        with open(doc.data_path, "r") as f:
+           file_content = f.readlines()
+        source = "".join(file_content)
+        script = jedi.Script(source,
+                             doc.cursor.line + 1,
+                             doc.cursor.column - 1,
+                             "example.py")
+        completions = script.completions()
+        completions = sorted(completions, key=lambda d: d.name)
+        for comp in completions:
+            items.append(types.Completion(
+                comp.name,
+                [types.Completion.Chunk(comp.name)],
+                description=comp.description))
+        return items
 
     def parse(self, doc, options):
         doc.diagnostics = []
