@@ -141,6 +141,10 @@ class Completion:
         """
         pass
 
+    def completion_triggers(self):
+        """return a list of triggers that activate completion."""
+        pass
+
 class ProjectCompletion:
     def complete_all(self, doc, docs, options):
         """compute completions at the cursor of a document.
@@ -313,6 +317,13 @@ class ServeCompletion(dbus.service.Object):
         doc = self.ensure_document(app, path, data_path, types.SourceLocation.from_tuple(cursor))
 
         return [x.to_tuple() for x in app.service.complete(doc, options)]
+
+    @dbus.service.method('org.gnome.CodeAssist.v1.Completion',
+                         in_signature='', out_signature='as',
+                         sender_keyword='sender')
+    def CompletionTriggers(self, sender=None):
+        app = self.ensure_app(sender)
+        return app.service.completion_triggers()
 
 class ServeProjectCompletion(dbus.service.Object):
     @dbus.service.method('org.gnome.CodeAssist.v1.ProjectCompletion',

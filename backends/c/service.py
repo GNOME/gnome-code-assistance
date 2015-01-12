@@ -159,6 +159,9 @@ class Service(transport.Service, transport.Project,
 
         return items
 
+    def completion_triggers(self):
+        return ['.', '->', '#']
+
     def complete_all(self, doc, docs, options):
         unsaved = [(d.path, open(d.data_path, 'rb')) for d in docs if d.data_path != d.path]
         return self._complete(doc, docs, unsaved, options)
