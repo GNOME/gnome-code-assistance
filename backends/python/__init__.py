@@ -24,8 +24,9 @@ import re
 try:
     from pylint import lint
     from pylint.reporters.text import TextReporter
+    HAS_PYLINT = True
 except ImportError:
-    pass
+    HAS_PYLINT = False
 
 from gnome.codeassistance import transport, types
 
@@ -97,7 +98,7 @@ class Service(transport.Service):
             # PEP8 is not installed. Do nothing.
             pass
 
-        if "pylint" in options and options["pylint"]:
+        if HAS_PYLINT and "pylint" in options and options["pylint"]:
             pylint = PyLint(doc.data_path)
             diagnostics = pylint.run()
 
