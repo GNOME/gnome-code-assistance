@@ -43,14 +43,18 @@ class CssParser < Sass::SCSS::CssParser
     extend ColumnInfo
 
     @sass_script_parser = Class.new(Sass::Script::CssParser)
-    @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
+    if Sass.version[[:major]]==3 and Sass.version[[:minor]]<22
+      @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
+    end
 end
 
 class ScssParser < Sass::SCSS::Parser
     extend ColumnInfo
 
     @sass_script_parser = Class.new(Sass::Script::Parser)
-    @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
+    if Sass.version[[:major]]==3 and Sass.version[[:minor]]<22
+      @sass_script_parser.send(:include, Sass::SCSS::ScriptParser)
+    end
 end
 
 module Gnome::CodeAssistance
