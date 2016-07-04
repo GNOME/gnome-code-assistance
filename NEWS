@@ -1,4 +1,12 @@
 ============================
+gnome-code-assistance 3.16.1
+============================
+- Fix compatibility with sass 3.4.22
+- Support vala 0.34
+- Fix crash when pylint is not available
+- Update javascript dependencies
+
+============================
 gnome-code-assistance 3.16.0
 ============================
  - Update sass
