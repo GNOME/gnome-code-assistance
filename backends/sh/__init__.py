@@ -1,5 +1,6 @@
 # gnome code assistance sh backend
 # Copyright (C) 2013  Paolo Borelli <pborelli@gnome.org>
+# Copyright (C) 2016  Elad Alfassa <elad@fedoraproject.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,6 +50,28 @@ class Service(transport.Service):
                                                             locations=[loc.to_range()],
                                                             message=m.group(2)))
         except Error as e:
+            pass
+
+        try:
+            p = subprocess.Popen(['shellcheck', '-f', 'gcc', doc.data_path],
+                                 stdout=subprocess.PIPE)
+            for line in iter(p.stdout.readline, ''):
+                if not line:
+                    break
+                line = line.decode()
+                result = re.search(':(\d*):(\d*): (\w*):(.*)', line).groups()
+                loc = types.SourceLocation(line=result[0], column=result[1])
+                if result[2] == 'error':
+                    severity = types.Diagnostic.Severity.ERROR
+                elif result[2] == 'warning':
+                    severity = types.Diagnostic.Severity.WARNING
+                else:
+                    severity = types.Diagnostic.Severity.INFO
+                doc.diagnostics.append(types.Diagnostic(severity=severity,
+                                                        locations=[loc.to_range()],
+                                                        message=result[3]))
+        except FileNotFoundError:
+            # shellcheck is not installed. Do nothing.
             pass
 
     def dispose(self, doc):
