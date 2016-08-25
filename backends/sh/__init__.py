@@ -36,23 +36,6 @@ class Service(transport.Service):
         doc.diagnostics = []
 
         try:
-            p = subprocess.Popen(["/bin/bash", "-n", doc.data_path], stdout=DEVNULL, stderr=subprocess.PIPE)
-
-            for l in iter(p.stderr.readline, ''):
-                if not l:
-                    break
-
-                m = Service.pattern.match(l.decode())
-                if m:
-                    loc = types.SourceLocation(line=m.group(1))
-
-                    doc.diagnostics.append(types.Diagnostic(severity=types.Diagnostic.Severity.ERROR,
-                                                            locations=[loc.to_range()],
-                                                            message=m.group(2)))
-        except Error as e:
-            pass
-
-        try:
             p = subprocess.Popen(['shellcheck', '-f', 'gcc', doc.data_path],
                                  stdout=subprocess.PIPE)
             for line in iter(p.stdout.readline, ''):
@@ -71,8 +54,24 @@ class Service(transport.Service):
                                                         locations=[loc.to_range()],
                                                         message=result[3]))
         except FileNotFoundError:
-            # shellcheck is not installed. Do nothing.
-            pass
+            # shellcheck is not installed. Check with bash dry run mode instead.
+            try:
+                p = subprocess.Popen(["/bin/bash", "-n", doc.data_path],
+                                     stdout=DEVNULL, stderr=subprocess.PIPE)
+
+                for l in iter(p.stderr.readline, ''):
+                    if not l:
+                        break
+
+                    m = Service.pattern.match(l.decode())
+                    if m:
+                        loc = types.SourceLocation(line=m.group(1))
+
+                        doc.diagnostics.append(types.Diagnostic(severity=types.Diagnostic.Severity.ERROR,
+                                                                locations=[loc.to_range()],
+                                                                message=m.group(2)))
+            except Exception as e:
+                pass
 
     def dispose(self, doc):
         pass
