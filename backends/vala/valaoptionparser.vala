@@ -187,6 +187,7 @@ class OptionParser {
 		context.thread = thread;
 		context.mem_profiler = mem_profiler;
 		context.save_temps = save_temps;
+
 		if (profile == "gobject-2.0" || profile == "gobject" || profile == null) {
 			// default profile
 			context.profile = Profile.GOBJECT;
@@ -194,6 +195,7 @@ class OptionParser {
 		} else {
 			Report.error (null, "Unknown profile %s".printf (profile));
 		}
+
 		nostdpkg |= fast_vapi_filename != null;
 		context.nostdpkg = nostdpkg;
 
@@ -213,12 +215,14 @@ class OptionParser {
 
 		int glib_major = 2;
 		int glib_minor = 18;
+
 		if (target_glib != null && target_glib.scanf ("%d.%d", out glib_major, out glib_minor) != 2) {
 			Report.error (null, "Invalid format for --target-glib");
 		}
 
 		context.target_glib_major = glib_major;
 		context.target_glib_minor = glib_minor;
+
 		if (context.target_glib_major != 2) {
 			Report.error (null, "This version of valac only supports GLib 2");
 		}
