@@ -414,6 +414,7 @@ BACKEND_VALA_LIBVALA_VERSIONS="libvala-0.36 libvala-0.34 libvala-0.32 libvala-0.
 BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 gio-unix-2.0 >= 2.36"
 
 BACKEND_VALA_LIBVALA=
+
 for i in $BACKEND_VALA_LIBVALA_VERSIONS; do
 	if test "x$BACKEND_VALA_LIBVALA" = "x"; then
 		BACKEND_VALA_LIBVALA="$i"
@@ -427,10 +428,6 @@ for i in $BACKEND_VALA_LIBVALA_VERSIONS; do
 		break
 	fi
 done
-
-if test "x$libvala_found" != "xyes"; then
-	BACKEND_VALA_MODULES="$BACKEND_VALA_MODULES $BACKEND_VALA_LIBVALA"
-fi
 
 AC_SUBST(BACKEND_VALA_LIBVALA)
 
@@ -467,9 +464,29 @@ if test "x$enable_vala" != "xno"; then
 	fi
 fi
 
+# Check for deprecated threading support
+AS_IF([test x$enable_vala = xyes],[
+	cflags_save="${CFLAGS}"
+	libs_save="${LIBS}"
+	CFLAGS="${CFLAGS} ${BACKEND_VALA_CFLAGS}"
+	LIBS="${LIBS} ${BACKEND_VALA_LIBS}"
+
+	AC_MSG_CHECKING([if vala CodeContext supports thread property])
+
+	AC_TRY_LINK([#include <vala.h>],[
+		vala_code_context_set_thread (NULL, TRUE);
+	], [have_vala_code_context_set_thread=yes], [have_vala_code_context_set_thread=no])
+
+	CFLAGS="${cflags_save}"
+	LIBS="${libs_save}"
+])
+AC_MSG_RESULT([$have_vala_code_context_set_thread])
+
 color_enable_var("$enable_vala", [enable_vala_msg])
 
 AM_CONDITIONAL(BACKENDS_VALA_ENABLE, test "x$enable_vala" = "xyes")
+AM_CONDITIONAL(BACKENDS_VALA_ENABLE_VALA_CODE_CONTEXT_SET_THREAD, test x$have_vala_code_context_set_thread = xyes)
+
 AC_SUBST(BACKEND_VALA_LIBVALA)
 
 

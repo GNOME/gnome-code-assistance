@@ -34,6 +34,10 @@ if ENABLE_DEBUG
 backends_vala_common_valaflags += --debug -X -O0
 endif
 
+if BACKENDS_VALA_ENABLE_VALA_CODE_CONTEXT_SET_THREAD
+backends_vala_common_valaflags += -D ENABLE_VALA_CODE_CONTEXT_SET_THREAD
+endif
+
 backends_vala_libvalashared_la_VALAFLAGS =	\
 	$(backends_vala_common_valaflags)	\
 	--library libvalashared			\

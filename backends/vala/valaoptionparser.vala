@@ -184,7 +184,11 @@ class OptionParser {
 		context.gir_directories = realpaths(wd, gir_directories);
 		context.metadata_directories = realpaths(wd, metadata_directories);
 		context.debug = debug;
+
+#if ENABLE_VALA_CODE_CONTEXT_SET_THREAD
 		context.thread = thread;
+#endif
+
 		context.mem_profiler = mem_profiler;
 		context.save_temps = save_temps;
 
