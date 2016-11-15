@@ -96,7 +96,16 @@ AC_ARG_ENABLE([c],
               [enable_c=auto])
 
 if test "x$enable_c" = "xauto"; then
-	AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+	AC_PATH_PROGS([LLVM_CONFIG], [ \
+		llvm-config-5.0 llvm-config50 \
+		llvm-config-4.0 llvm-config40 \
+		llvm-config-3.9 llvm-config39 \
+		llvm-config-3.8 llvm-config38 \
+		llvm-config-3.7 llvm-config37 \
+		llvm-config-3.6 llvm-config36 \
+		llvm-config-3.5 llvm-config35 \
+		llvm-config \
+		llvm-config-6.0 llvm-config-devel])
 
 	AC_MSG_CHECKING([c backend])
 
@@ -108,7 +117,16 @@ if test "x$enable_c" = "xauto"; then
 		enable_c=yes
 	fi
 elif test "x$enable_c" != "xno"; then
-	AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+	AC_PATH_PROGS([LLVM_CONFIG], [ \
+		llvm-config-5.0 llvm-config50 \
+		llvm-config-4.0 llvm-config40 \
+		llvm-config-3.9 llvm-config39 \
+		llvm-config-3.8 llvm-config38 \
+		llvm-config-3.7 llvm-config37 \
+		llvm-config-3.6 llvm-config36 \
+		llvm-config-3.5 llvm-config35 \
+		llvm-config \
+		llvm-config-6.0 llvm-config-devel])
 
 	AC_MSG_CHECKING([c backend])
 
