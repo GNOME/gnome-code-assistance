@@ -2,6 +2,7 @@
 # Copyright (C) 2013  Jesse van den Kieboom <jessevdk@gnome.org>
 # Copyright (C) 2014  Elad Alfassa <elad@fedoraproject.org>
 # Copyright (C) 2015  Igor Gnatenko <ignatenko@src.gnome.org>
+# Copyright (C) 2017  Luke Benstead <kazade@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +28,13 @@ try:
     HAS_PYLINT = True
 except ImportError:
     HAS_PYLINT = False
+
+try:
+    from pyflakes.api import checkPath as pyflakes_check
+    from pyflakes.reporter import Reporter
+    HAS_PYFLAKES = True
+except ImportError:
+    HAS_PYFLAKES = False
 
 from gnome.codeassistance import transport, types
 
@@ -66,6 +74,52 @@ class PyLint(object):
         return self.diagnostics
 
 
+class Pyflakes(object):
+    def __init__(self, data_path):
+        self.data_path = data_path
+
+    def run(self):
+
+        class PyflakesReporter(Reporter):
+            """
+                Custom reporter, nested as parent class will not have been imported
+                if pyflakes wasn't available
+            """
+            def __init__(self):
+                self.diagnostics = []
+
+            def unexpectedError(self, filename, msg):
+                loc = types.SourceLocation(line=0, column=0)
+                severity = types.Diagnostic.Severity.ERROR
+                self.diagnostics.append(
+                    types.Diagnostic(severity=severity,
+                                     locations=[loc.to_range()],
+                                     message=str(msg)))
+
+            def syntaxError(self, filename, msg, lineno, offset, text):
+                severity = types.Diagnostic.Severity.ERROR
+                col = int(offset) + 1
+                loc = types.SourceLocation(line=lineno, column=col)
+                self.diagnostics.append(
+                    types.Diagnostic(severity=severity,
+                                     locations=[loc.to_range()],
+                                     message=str(msg)))
+
+            def flake(self, message):
+                loc = types.SourceLocation(line=message.lineno,
+                                           column=int(message.col) + 1)
+                severity = types.Diagnostic.Severity.WARNING
+                text = message.message % message.message_args
+                self.diagnostics.append(
+                    types.Diagnostic(severity=severity,
+                                     locations=[loc.to_range()],
+                                     message=text))
+
+        reporter = PyflakesReporter()
+        pyflakes_check(self.data_path, reporter=reporter)
+        return reporter.diagnostics
+
+
 class Service(transport.Service):
     language = 'python'
 
@@ -102,6 +156,12 @@ class Service(transport.Service):
             pylint = PyLint(doc.data_path)
             diagnostics = pylint.run()
 
+            for diag in diagnostics:
+                doc.diagnostics.append(diag)
+
+        if HAS_PYFLAKES:
+            pyflakes = Pyflakes(doc.data_path)
+            diagnostics = pyflakes.run()
             for diag in diagnostics:
                 doc.diagnostics.append(diag)
 
