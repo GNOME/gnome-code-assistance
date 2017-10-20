@@ -50,4 +50,8 @@ if BACKENDS_JSON_ENABLE
 include backends/json/Makefile.am
 endif
 
+if BACKENDS_YAML_ENABLE
+include backends/yaml/Makefile.am
+endif
+
 GITIGNOREDEPS += backends/Makefile.am

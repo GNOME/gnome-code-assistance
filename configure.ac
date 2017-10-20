@@ -401,6 +401,38 @@ color_enable_var("$enable_xml", [enable_xml_msg])
 AM_CONDITIONAL(BACKENDS_XML_ENABLE, test "x$enable_xml" = "xyes")
 
 
+dnl ================================================================
+dnl yaml backend configuration
+dnl ================================================================
+AC_ARG_ENABLE([yaml],
+              AS_HELP_STRING([--enable-yaml],[enable yaml backend]),
+              [enable_yaml=$enableval],
+              [enable_yaml=auto])
+
+AC_MSG_CHECKING([yaml backend])
+
+if test "x$enable_yaml" = "xauto"; then
+	if test "x$python_found" = "xno"; then
+		AC_MSG_RESULT([no])
+		enable_yaml=no
+	else
+		AC_MSG_RESULT([yes])
+		enable_yaml=yes
+	fi
+elif test "x$enable_yaml" != "xno"; then
+	if test "x$python_found" = "xno"; then
+		AC_MSG_ERROR([python not found])
+	else
+		AC_MSG_RESULT([yes])
+		enable_yaml=yes
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+color_enable_var("$enable_yaml", [enable_yaml_msg])
+
+AM_CONDITIONAL(BACKENDS_YAML_ENABLE, test "x$enable_yaml" = "xyes")
 
 dnl ================================================================
 dnl vala backend configuration
@@ -629,6 +661,8 @@ backends/css/org.gnome.CodeAssist.v1.css.service
 backends/css/css
 backends/json/org.gnome.CodeAssist.v1.json.service
 backends/json/json
+backends/yaml/org.gnome.CodeAssist.v1.yaml.service
+backends/yaml/yaml
 data/org.gnome.codeassistance.gschema.xml
 tests/dbus.conf
 ])
@@ -655,5 +689,6 @@ Configuration:
 		shell:          $enable_sh_msg
 		css:            $enable_css_msg
 		json:           $enable_json_msg
+		yaml:           $enable_yaml_msg
 "
 

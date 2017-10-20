@@ -199,3 +199,6 @@ Run time dependencies : libvala >= 0.20, libgee-0.8
 
 ### Xml
 Dependencies : python, python-dbus
+
+### Yaml
+Dependencies : python, yamllint
