@@ -36,7 +36,7 @@ class PyLint(object):
         self.data_path = data_path
 
     def write(self, st):
-        if st != "\n" and not st.startswith("*"):
+        if st != "\n" and not st.startswith("*") and ":" in st:
             result = st.split(":")
             col = int(result[1]) + 1
             loc = types.SourceLocation(line=result[0], column=col)
