@@ -97,6 +97,8 @@ AC_ARG_ENABLE([c],
 
 if test "x$enable_c" = "xauto"; then
 	AC_PATH_PROGS([LLVM_CONFIG], [ \
+		llvm-config-8 llvm-config80 \
+		llvm-config-7 llvm-config70 \
 		llvm-config-6.0 llvm-config60 \
 		llvm-config-5.0 llvm-config50 \
 		llvm-config-4.0 llvm-config40 \
@@ -106,7 +108,7 @@ if test "x$enable_c" = "xauto"; then
 		llvm-config-3.6 llvm-config36 \
 		llvm-config-3.5 llvm-config35 \
 		llvm-config \
-		llvm-config-7 llvm-config-devel])
+		llvm-config-9 llvm-config-devel])
 
 	AC_MSG_CHECKING([c backend])
 
@@ -119,6 +121,7 @@ if test "x$enable_c" = "xauto"; then
 	fi
 elif test "x$enable_c" != "xno"; then
 	AC_PATH_PROGS([LLVM_CONFIG], [ \
+		llvm-config-7 llvm-config70 \
 		llvm-config-6.0 llvm-config60 \
 		llvm-config-5.0 llvm-config50 \
 		llvm-config-4.0 llvm-config40 \
@@ -128,7 +131,7 @@ elif test "x$enable_c" != "xno"; then
 		llvm-config-3.6 llvm-config36 \
 		llvm-config-3.5 llvm-config35 \
 		llvm-config \
-		llvm-config-7 llvm-config-devel])
+		llvm-config-8 llvm-config-devel])
 
 	AC_MSG_CHECKING([c backend])
 
@@ -462,7 +465,7 @@ AC_ARG_ENABLE([vala],
               [enable_vala=$enableval],
               [enable_vala=auto])
 
-BACKEND_VALA_LIBVALA_VERSIONS="libvala-0.42 libvala-0.40 libvala-0.38 libvala-0.36 libvala-0.34 libvala-0.32 libvala-0.30 libvala-0.28 libvala-0.26 libvala-0.24 libvala-0.22 libvala-0.20"
+BACKEND_VALA_LIBVALA_VERSIONS="libvala-0.46 libvala-0.44 libvala-0.42 libvala-0.40 libvala-0.38 libvala-0.36 libvala-0.34 libvala-0.32 libvala-0.30 libvala-0.28 libvala-0.26 libvala-0.24 libvala-0.22 libvala-0.20"
 BACKEND_VALA_MODULES="gobject-2.0 >= 2.36 glib-2.0 >= 2.36 gio-2.0 >= 2.36 gee-0.8 gio-unix-2.0 >= 2.36"
 
 BACKEND_VALA_LIBVALA=
