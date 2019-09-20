@@ -217,6 +217,13 @@ class OptionParser {
 			context.add_define ("VALA_0_%d".printf (i));
 		}
 
+#if VALA_0_44
+		if (target_glib == null) {
+			target_glib = "2.18";
+		}
+
+		context.set_target_glib_version(target_glib);
+#else
 		int glib_major = 2;
 		int glib_minor = 18;
 
@@ -234,6 +241,7 @@ class OptionParser {
 		for (int i = 16; i <= glib_minor; i += 2) {
 			context.add_define ("GLIB_2_%d".printf (i));
 		}
+#endif
 
 		if (!nostdpkg) {
 			/* default packages */
